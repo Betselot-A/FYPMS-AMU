@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+    <defs>
+        <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#0F172A"/>
+            <stop offset="1" stop-color="#1E293B"/>
+        </linearGradient>
+        <linearGradient id="pGrad" x1="90" y1="130" x2="300" y2="390" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#3B82F6"/>
+            <stop offset="1" stop-color="#8B5CF6"/>
+        </linearGradient>
+        <linearGradient id="hGrad" x1="250" y1="130" x2="420" y2="390" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#38BDF8"/>
+            <stop offset="1" stop-color="#2DD4BF"/>
+        </linearGradient>
+        <filter id="shadow">
+            <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.3"/>
+        </filter>
+    </defs>
+
+    <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+    
+    <!-- P Shape -->
+    <path d="M 90 130 H 200 C 255.2 130 300 174.8 300 230 C 300 285.2 255.2 330 200 330 H 150 V 390 H 90 V 130 Z M 150 190 V 270 H 200 C 222.1 270 240 252.1 240 230 C 240 207.9 222.1 190 200 190 H 150 Z" fill="url(#pGrad)" filter="url(#shadow)"/>
+
+    <!-- H Shape (Interlocking) -->
+    <g filter="url(#shadow)">
+        <!-- Left vertical bar (overlaps P) -->
+        <rect x="250" y="190" width="60" height="200" rx="16" fill="url(#hGrad)" opacity="0.9"/>
+        <!-- Crossbar -->
+        <rect x="290" y="260" width="90" height="60" rx="16" fill="url(#hGrad)" opacity="0.9"/>
+        <!-- Right vertical bar -->
+        <rect x="360" y="130" width="60" height="260" rx="16" fill="url(#hGrad)" opacity="0.9"/>
+    </g>
+</svg>

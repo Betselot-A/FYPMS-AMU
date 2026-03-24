@@ -1,0 +1,111 @@
+// ============================================================
+// ProjectHub Project & Proposal Model
+// ============================================================
+
+const mongoose = require("mongoose");
+
+const milestoneSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  dueDate: { type: Date },
+  status: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
+  },
+  description: { type: String, default: "" },
+});
+
+const proposalSchema = new mongoose.Schema({
+  title: { type: String, required: true, trim: true },
+  description: { type: String, default: "" },
+  submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  submittedAt: { type: Date, default: Date.now },
+});
+
+const projectSchema = new mongoose.Schema(
+  {
+    // Set after coordinator approves a proposal
+    title: {
+      type: String,
+      trim: true,
+      default: "Untitled Group",
+    },
+    description: {
+      type: String,
+      default: "",
+    },
+    // Array of student user IDs
+    groupMembers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    // Up to 3 proposals submitted by the student group
+    proposals: {
+      type: [proposalSchema],
+      validate: [(val) => val.length <= 3, "A group can submit at most 3 proposals"],
+      default: [],
+    },
+    // Proposal approval workflow
+    proposalStatus: {
+      type: String,
+      enum: ["pending", "approved"],
+      default: "pending",
+    },
+    approvedProposalIndex: {
+      type: Number,
+      default: null,
+    },
+    // Advisor (staff member)
+    advisorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    // Examiner (staff member)
+    examinerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    status: {
+      type: String,
+      enum: ["pending", "in-progress", "under-review", "completed"],
+      default: "pending",
+    },
+    deadline: {
+      type: Date,
+    },
+    progress: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    milestones: [milestoneSchema],
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Transform output
+projectSchema.set("toJSON", {
+  transform: (_doc, ret) => {
+    ret.id = ret._id;
+    delete ret._id;
+    delete ret.__v;
+    // Also transform milestone _id
+    if (ret.milestones) {
+      ret.milestones = ret.milestones.map((m) => {
+        m.id = m._id;
+        delete m._id;
+        return m;
+      });
+    }
+    return ret;
+  },
+});
+
+module.exports = mongoose.model("Project", projectSchema);
