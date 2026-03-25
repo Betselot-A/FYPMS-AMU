@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 25% 10%;
 
-    --primary: 211 77% 50%;
+    --primary: 201 89% 51%; /* Vibrantly blue from 'Get Started' */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 20% 94%;
@@ -24,7 +24,7 @@
     --muted: 210 15% 95%;
     --muted-foreground: 220 10% 46%;
 
-    --accent: 168 60% 42%;
+    --accent: 165 72% 43%; /* Vibrant teal from 'Learn More' */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -32,7 +32,7 @@
 
     --border: 214 20% 90%;
     --input: 214 20% 90%;
-    --ring: 211 77% 50%;
+    --ring: 201 89% 51%;
 
     --radius: 0.625rem;
 
@@ -40,20 +40,20 @@
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --info: 200 80% 50%;
+    --info: 201 89% 51%;
     --info-foreground: 0 0% 100%;
 
     --sidebar-background: 220 25% 12%;
     --sidebar-foreground: 210 20% 90%;
-    --sidebar-primary: 220 72% 60%;
+    --sidebar-primary: 201 89% 55%;
     --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 220 20% 20%;
     --sidebar-accent-foreground: 210 20% 90%;
     --sidebar-border: 220 20% 22%;
-    --sidebar-ring: 220 72% 50%;
+    --sidebar-ring: 201 89% 51%;
 
-    --gradient-primary: linear-gradient(135deg, hsl(211 77% 50%), hsl(200 80% 50%));
-    --gradient-accent: linear-gradient(135deg, hsl(168 60% 42%), hsl(142 60% 42%));
+    --gradient-primary: linear-gradient(135deg, #0ea5e9, #2563eb);
+    --gradient-accent: linear-gradient(135deg, #10b981, #059669);
     --shadow-card: 0 1px 3px 0 hsl(220 25% 10% / 0.06), 0 1px 2px -1px hsl(220 25% 10% / 0.06);
     --shadow-elevated: 0 10px 25px -5px hsl(220 25% 10% / 0.08), 0 8px 10px -6px hsl(220 25% 10% / 0.04);
   }
