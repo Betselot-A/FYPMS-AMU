@@ -14,6 +14,7 @@ const {
   submitProposal,
   approveProposal,
   assignStaff,
+  bulkCreateProjects,
 } = require("../controllers/projectController");
 const { protect } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
@@ -27,6 +28,7 @@ router.get("/:id", getProjectById);
 
 // Coordinator-only: create, update, delete
 router.post("/", authorize("coordinator", "admin"), createProject);
+router.post("/bulk", authorize("coordinator", "admin"), bulkCreateProjects);
 router.put("/:id", authorize("coordinator", "admin"), updateProject);
 router.delete("/:id", authorize("coordinator", "admin"), deleteProject);
 

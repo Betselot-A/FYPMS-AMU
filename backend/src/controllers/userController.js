@@ -365,6 +365,31 @@ const bulkDeleteUsers = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/users/:id/reset-password
+ * Admin only
+ */
+const resetUserPassword = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const Settings = require("../models/Settings");
+    let settings = await Settings.findOne();
+    const defaultPass = settings ? settings.defaultPassword : "Welcome@123";
+
+    user.password = defaultPass;
+    user.mustChangePassword = true;
+    await user.save();
+
+    res.json({ message: `Password reset to default for ${user.name}` });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -374,4 +399,5 @@ module.exports = {
   bulkCreateUsers,
   bulkUploadUsersFromFile,
   bulkDeleteUsers,
+  resetUserPassword,
 };

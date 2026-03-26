@@ -25,6 +25,10 @@ const proposalSchema = new mongoose.Schema({
 const projectSchema = new mongoose.Schema(
   {
     // Set after coordinator approves a proposal
+    department: {
+      type: String,
+      default: "",
+    },
     title: {
       type: String,
       trim: true,

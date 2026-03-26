@@ -41,9 +41,9 @@ const projectService = {
   createGroup: (data: CreateGroupRequest) =>
     apiClient.post<Project>("/projects", { ...data, title: "Awaiting Proposal" }),
 
-  // POST /api/projects — full project create
-  create: (data: CreateProjectRequest) =>
-    apiClient.post<Project>("/projects", data),
+  // POST /api/projects/bulk — mass create groups (admin)
+  bulkCreate: (groups: { title: string; groupMembers: string[] }[]) =>
+    apiClient.post<{ message: string; projects: Project[] }>("/projects/bulk", { groups }),
 
   // PUT /api/projects/:id (coordinator/admin)
   update: (id: string, data: UpdateProjectRequest) =>

@@ -35,6 +35,7 @@ export interface Project {
   id: string;
   title: string;
   description: string;
+  department: string;
   groupMembers: string[]; // user IDs
   advisorId: string;
   examinerId?: string;

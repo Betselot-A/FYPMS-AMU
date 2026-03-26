@@ -4,6 +4,7 @@
 
 const Project = require("../models/Project");
 const Notification = require("../models/Notification");
+const Settings = require("../models/Settings");
 
 /**
  * GET /api/projects
@@ -21,7 +22,10 @@ const getProjects = async (req, res, next) => {
     } else if (role === "staff") {
       filter.$or = [{ advisorId: userId }, { examinerId: userId }];
     }
-    // coordinator & admin see all
+    // coordinator & admin see all, but coordinator is filtered by department
+    if (role === "coordinator") {
+      filter.department = req.user.department;
+    }
 
     if (status) filter.status = status;
     if (advisorId) filter.advisorId = advisorId;
@@ -68,8 +72,14 @@ const getProjectById = async (req, res, next) => {
  */
 const createProject = async (req, res, next) => {
   try {
-    const { title, description, groupMembers, advisorId, examinerId, deadline, milestones } =
+    const { title, description, groupMembers, advisorId, examinerId, deadline, milestones, department } =
       req.body;
+
+    // Force department for coordinator
+    let projectDept = department;
+    if (req.user.role === "coordinator") {
+      projectDept = req.user.department;
+    }
 
     const project = await Project.create({
       title,
@@ -77,6 +87,7 @@ const createProject = async (req, res, next) => {
       groupMembers: groupMembers || [],
       advisorId: advisorId || null,
       examinerId: examinerId || null,
+      department: projectDept || "",
       deadline,
       milestones: milestones || [],
     });
@@ -97,6 +108,38 @@ const createProject = async (req, res, next) => {
       .populate("examinerId", "name email");
 
     res.status(201).json(populated);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/projects/bulk
+ * Admin/Coordinator — bulk create projects (groups)
+ */
+const bulkCreateProjects = async (req, res, next) => {
+  try {
+    const { groups } = req.body;
+    if (!groups || !Array.isArray(groups)) {
+      return res.status(400).json({ message: "Invalid groups data" });
+    }
+
+    const createdProjects = [];
+    for (const group of groups) {
+      const project = await Project.create({
+        title: group.title || "Untitled Group",
+        groupMembers: group.groupMembers || [],
+        department: req.user.role === "coordinator" ? req.user.department : (group.department || ""),
+        status: "pending",
+        proposalStatus: "approved", // Bulk created projects skip proposal
+      });
+      createdProjects.push(project);
+    }
+
+    res.status(201).json({
+      message: `Successfully created ${createdProjects.length} groups`,
+      projects: createdProjects,
+    });
   } catch (error) {
     next(error);
   }
@@ -209,6 +252,27 @@ const updateMilestone = async (req, res, next) => {
  */
 const submitProposal = async (req, res, next) => {
   try {
+    // Enforce global settings before accepting any proposal
+    const systemSettings = await Settings.findOne();
+    if (systemSettings) {
+      if (systemSettings.allowProposals === false) {
+        return res.status(403).json({
+          error: "PROPOSALS_DISABLED",
+          message: "Proposal submissions are currently disabled by the system administrator.",
+        });
+      }
+
+      if (systemSettings.registrationDeadline) {
+        const deadline = new Date(systemSettings.registrationDeadline);
+        if (new Date() > deadline) {
+          return res.status(403).json({
+            error: "DEADLINE_PASSED",
+            message: `The proposal submission deadline has passed (${deadline.toDateString()}).`,
+          });
+        }
+      }
+    }
+
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: "Project not found" });
 
@@ -317,4 +381,5 @@ module.exports = {
   submitProposal,
   approveProposal,
   assignStaff,
+  bulkCreateProjects,
 };

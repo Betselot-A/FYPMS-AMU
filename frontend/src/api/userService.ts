@@ -65,6 +65,9 @@ const userService = {
 
   bulkDelete: (userIds: string[]) =>
     apiClient.delete<{ message: string; deletedCount: number }>("/users/bulk", { data: { userIds } }),
+
+  resetPassword: (id: string) =>
+    apiClient.post<{ message: string }>(`/users/${id}/reset-password`),
 };
 
 export default userService;

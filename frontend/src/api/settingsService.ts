@@ -5,21 +5,18 @@
 import apiClient from "./client";
 
 export interface SystemSettings {
+  id: string;
   systemName: string;
-  academicYear: string;
-  semester: string;
-  evaluationWeights: {
-    advisor: number;
-    coordinator: number;
-    examiner: number;
-    documentation: number;
-  };
-  notifications: {
-    emailOnSubmission: boolean;
-    emailOnGrade: boolean;
-    emailOnAnnouncement: boolean;
-    emailOnDeadline: boolean;
-  };
+  defaultPassword: string;
+  academicSemester: string;
+  academicYear: number;
+  allowProposals: boolean;
+  registrationDeadline?: string;
+  smtpHost: string;
+  smtpPort: number;
+  smtpUser: string;
+  smtpPassword: string;
+  emailFrom: string;
 }
 
 const settingsService = {

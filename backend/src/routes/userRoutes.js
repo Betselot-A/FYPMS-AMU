@@ -13,6 +13,7 @@ const {
   bulkCreateUsers,
   bulkUploadUsersFromFile,
   bulkDeleteUsers,
+  resetUserPassword,
 } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
@@ -36,5 +37,6 @@ router.get("/:id", getUserById);
 // Admin-only update & delete
 router.put("/:id", authorize("admin"), updateUser);
 router.delete("/:id", authorize("admin"), deleteUser);
+router.post("/:id/reset-password", authorize("admin"), resetUserPassword);
 
 module.exports = router;

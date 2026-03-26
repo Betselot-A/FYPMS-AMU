@@ -68,6 +68,7 @@ const getNavConfig = (user: User): NavItem[] => {
       return [
         { label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, path: "/dashboard" },
         { label: "Announcements", icon: <Megaphone className="w-4 h-4" />, path: "/dashboard/coordinator/announcements" },
+        { label: "Student Grouping", icon: <Users className="w-4 h-4" />, path: "/dashboard/coordinator/grouping" },
         { label: "Project Setup", icon: <FolderOpen className="w-4 h-4" />, path: "/dashboard/coordinator/project-setup" },
         { label: "Criteria Setup", icon: <Settings className="w-4 h-4" />, path: "/dashboard/coordinator/criteria-setup" },
         { label: "Project Mgmt", icon: <Wrench className="w-4 h-4" />, path: "/dashboard/coordinator/project-management" },
@@ -86,7 +87,7 @@ const getNavConfig = (user: User): NavItem[] => {
     case "admin":
       return [
         { label: "Manage Users", icon: <UserCog className="w-4 h-4" />, path: "/dashboard/admin/users" },
-        { label: "Student Grouping", icon: <Users className="w-4 h-4" />, path: "/dashboard/admin/grouping" },
+        { label: "Group Analysis", icon: <Users className="w-4 h-4" />, path: "/dashboard/admin/grouping" },
         { label: "Grade System", icon: <BarChart3 className="w-4 h-4" />, path: "/dashboard/admin/grade-system" },
         { label: "Passwords", icon: <Key className="w-4 h-4" />, path: "/dashboard/admin/passwords" },
         { label: "Settings", icon: <Settings className="w-4 h-4" />, path: "/dashboard/admin/settings" },
