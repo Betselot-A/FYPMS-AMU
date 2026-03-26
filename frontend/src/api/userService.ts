@@ -49,6 +49,22 @@ const userService = {
   // Bulk operations
   bulkCreate: (users: CreateUserRequest[]) =>
     apiClient.post<{ created: number; errors: string[] }>("/users/bulk", { users }),
+
+  bulkUpload: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.post<{
+      message: string;
+      createdCount: number;
+      createdUsers: { name: string; email: string; role: string; tempPassword: string }[];
+      errors: string[];
+    }>("/users/bulk-upload", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+
+  bulkDelete: (userIds: string[]) =>
+    apiClient.delete<{ message: string; deletedCount: number }>("/users/bulk", { data: { userIds } }),
 };
 
 export default userService;

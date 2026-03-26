@@ -3,6 +3,9 @@
 // ============================================================
 
 const User = require("../models/User");
+const fs = require("fs");
+const csv = require("csv-parser");
+const XLSX = require("xlsx");
 
 // Helper: generate random temp password
 const generateTempPassword = () => {
@@ -22,7 +25,16 @@ const getUsers = async (req, res, next) => {
     const filter = {};
 
     if (role) filter.role = role;
-    if (department) filter.department = department;
+    
+    // Departmental Isolation: Coordinators can only see their own department
+    if (req.user.role === "coordinator") {
+      filter.department = req.user.department;
+      // Filter students and staff only (optional, but usually coordinators manage these)
+      filter.role = { $in: ["student", "staff"] };
+    } else if (department) {
+      filter.department = department;
+    }
+
     if (search) {
       filter.$or = [
         { name: { $regex: search, $options: "i" } },
@@ -77,6 +89,12 @@ const createUser = async (req, res, next) => {
       });
     }
 
+    // Departmental Isolation: Coordinators force their department
+    let userDept = department;
+    if (req.user.role === "coordinator") {
+      userDept = req.user.department;
+    }
+
     const tempPassword = generateTempPassword();
 
     const user = await User.create({
@@ -84,7 +102,7 @@ const createUser = async (req, res, next) => {
       email,
       password: tempPassword,
       role,
-      department,
+      department: userDept,
       staffAssignment: staffAssignment || { isAdvisor: false, isExaminer: false },
       mustChangePassword: true,
     });
@@ -132,13 +150,23 @@ const updateUser = async (req, res, next) => {
  */
 const deleteUser = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
     if (!user) {
       return res.status(404).json({
         error: "NOT_FOUND",
         message: "User not found",
       });
     }
+
+    // Departmental Isolation: Coordinators can only delete users in their department
+    if (req.user.role === "coordinator" && user.department !== req.user.department) {
+      return res.status(403).json({
+        error: "FORBIDDEN",
+        message: "You can only delete users from your own department",
+      });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
     res.json({ message: "User deleted" });
   } catch (error) {
     next(error);
@@ -164,13 +192,19 @@ const bulkCreateUsers = async (req, res, next) => {
           continue;
         }
 
+        // Departmental Isolation: Coordinators force their department
+        let userDept = department;
+        if (req.user.role === "coordinator") {
+          userDept = req.user.department;
+        }
+
         const tempPassword = generateTempPassword();
         await User.create({
           name,
           email,
           password: tempPassword,
           role,
-          department,
+          department: userDept,
           staffAssignment: staffAssignment || { isAdvisor: false, isExaminer: false },
           mustChangePassword: true,
         });
@@ -186,6 +220,151 @@ const bulkCreateUsers = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/users/bulk-upload
+ * Admin — bulk create users from uploaded CSV file
+ */
+const bulkUploadUsersFromFile = async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({
+      error: "MISSING_FILE",
+      message: "No file uploaded. Please provide a CSV file.",
+    });
+  }
+
+  const results = [];
+  const errors = [];
+  const createdUsers = [];
+  const fileExtension = req.file.originalname.split(".").pop().toLowerCase();
+
+  const processRows = async (rows) => {
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i];
+      const name = row.name || row.Name || row.fullname || row.FullName || row["Full Name"];
+      const email = row.email || row.Email;
+      let role = row.role || row.Role || "student";
+      let department = row.department || row.Department || "";
+
+      // Departmental Isolation: Coordinators force their department
+      if (req.user.role === "coordinator") {
+        department = req.user.department;
+      }
+
+      if (!name || !email) {
+        errors.push(`Row ${i + 1}: Name and email are required.`);
+        continue;
+      }
+
+      role = role.toLowerCase().trim();
+      if (!["admin", "student", "staff", "coordinator"].includes(role)) {
+        role = "student";
+      }
+
+      try {
+        const existing = await User.findOne({ email: email.toLowerCase() });
+        if (existing) {
+          errors.push(`Row ${i + 1}: Email '${email}' already exists.`);
+          continue;
+        }
+
+        const tempPassword = generateTempPassword();
+        const user = await User.create({
+          name,
+          email: email.toLowerCase(),
+          password: tempPassword,
+          role,
+          department,
+          mustChangePassword: true,
+        });
+
+        createdUsers.push({
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          tempPassword,
+        });
+      } catch (err) {
+        errors.push(`Row ${i + 1}: ${err.message}`);
+      }
+    }
+
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+
+    res.json({
+      message: `Processed ${rows.length} rows.`,
+      createdCount: createdUsers.length,
+      createdUsers,
+      errors,
+    });
+  };
+
+  if (fileExtension === "csv") {
+    fs.createReadStream(req.file.path)
+      .pipe(csv())
+      .on("data", (data) => results.push(data))
+      .on("end", () => processRows(results))
+      .on("error", (err) => {
+        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+        next(err);
+      });
+  } else if (["xlsx", "xls"].includes(fileExtension)) {
+    try {
+      const workbook = XLSX.readFile(req.file.path);
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+      await processRows(rows);
+    } catch (err) {
+      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+      next(err);
+    }
+  } else {
+    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+    return res.status(400).json({
+      error: "INVALID_FILE_TYPE",
+      message: "Unsupported file type. Please upload CSV or Excel (.xlsx, .xls).",
+    });
+  }
+};
+
+/**
+ * DELETE /api/users/bulk
+ * Admin — delete multiple users
+ */
+const bulkDeleteUsers = async (req, res, next) => {
+  try {
+    const { userIds } = req.body;
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      return res.status(400).json({
+        error: "MISSING_IDS",
+        message: "No user IDs provided for deletion",
+      });
+    }
+
+    // Departmental Isolation: Coordinators check IDs
+    if (req.user.role === "coordinator") {
+      const targetUsers = await User.find({ _id: { $in: userIds } });
+      const invalidUsers = targetUsers.filter(u => u.department !== req.user.department);
+      if (invalidUsers.length > 0) {
+        return res.status(403).json({
+          error: "FORBIDDEN",
+          message: "You can only delete users from your own department",
+        });
+      }
+    }
+
+    const result = await User.deleteMany({ _id: { $in: userIds } });
+
+    res.json({
+      message: `Successfully deleted ${result.deletedCount} users`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -193,4 +372,6 @@ module.exports = {
   updateUser,
   deleteUser,
   bulkCreateUsers,
+  bulkUploadUsersFromFile,
+  bulkDeleteUsers,
 };

@@ -11,9 +11,12 @@ const {
   updateUser,
   deleteUser,
   bulkCreateUsers,
+  bulkUploadUsersFromFile,
+  bulkDeleteUsers,
 } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
+const upload = require("../middleware/uploadMiddleware");
 
 // All routes require authentication
 router.use(protect);
@@ -24,6 +27,8 @@ router.get("/", authorize("admin", "coordinator"), getUsers);
 // Admin-only CRUD
 router.post("/", authorize("admin"), createUser);
 router.post("/bulk", authorize("admin"), bulkCreateUsers);
+router.post("/bulk-upload", authorize("admin"), upload.single("file"), bulkUploadUsersFromFile);
+router.delete("/bulk", authorize("admin"), bulkDeleteUsers);
 
 // Authenticated users can view a single user
 router.get("/:id", getUserById);

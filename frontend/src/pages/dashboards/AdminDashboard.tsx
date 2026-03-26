@@ -8,11 +8,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, FolderOpen, Shield, Settings, Trash2, Eye, EyeOff, RefreshCw, Copy, CheckCircle2 } from "lucide-react";
+import { Users, FolderOpen, Shield, Settings, Trash2, Eye, EyeOff, RefreshCw, Copy, CheckCircle2, FileUp, Download, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Checkbox } from "@/components/ui/checkbox";
 import userService from "@/api/userService";
 import { UserRole, User } from "@/types";
 import { toast } from "sonner";
@@ -22,6 +24,12 @@ const AdminDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const limit = 20;
+
   // Map of userId -> tempPassword, only stored in memory (never saved to DB)
   const [tempPasswords, setTempPasswords] = useState<Record<string, string>>({});
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
@@ -32,11 +40,24 @@ const AdminDashboard = () => {
     department: "",
   });
 
+  // Bulk Upload State
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [bulkResults, setBulkResults] = useState<{
+    createdCount: number;
+    createdUsers: { name: string; email: string; role: string; tempPassword: string }[];
+    errors: string[];
+  } | null>(null);
+
+  // Selection State
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await userService.getAll();
+      const res = await userService.getAll({ page: currentPage, limit });
       setUsers(res.data.users);
+      setTotalUsers(res.data.total);
     } catch (error: any) {
       const status = error?.response?.status;
       if (status === 401) {
@@ -49,11 +70,12 @@ const AdminDashboard = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentPage, limit]);
 
   useEffect(() => {
     fetchUsers();
-  }, [fetchUsers]);
+    setSelectedUserIds([]); // Clear selection on page change
+  }, [fetchUsers, currentPage]);
 
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,6 +112,42 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedUserIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete ${selectedUserIds.length} selected users?`)) return;
+
+    setIsSubmitting(true);
+    try {
+      await userService.bulkDelete(selectedUserIds);
+      setUsers((prev) => prev.filter((u) => !selectedUserIds.includes(u.id)));
+      setSelectedUserIds([]);
+      toast.success(`Successfully deleted ${selectedUserIds.length} users.`);
+      fetchUsers(); // Refresh to get correct total and pagination
+    } catch (error: any) {
+      toast.error("Bulk deletion failed", {
+        description: error.response?.data?.message || "An error occurred",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const toggleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedUserIds(users.map((u) => u.id));
+    } else {
+      setSelectedUserIds([]);
+    }
+  };
+
+  const toggleSelectUser = (userId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedUserIds((prev) => [...prev, userId]);
+    } else {
+      setSelectedUserIds((prev) => prev.filter((id) => id !== userId));
+    }
+  };
+
   const handleCopyPassword = (userId: string) => {
     navigator.clipboard.writeText(tempPasswords[userId]);
     toast.info("Password copied to clipboard!");
@@ -103,6 +161,48 @@ const AdminDashboard = () => {
     acc[u.role] = (acc[u.role] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
+
+  const handleBulkUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await userService.bulkUpload(selectedFile);
+      setBulkResults(response.data);
+      if (response.data.createdCount > 0) {
+        toast.success(`Successfully imported ${response.data.createdCount} users`);
+        fetchUsers();
+      }
+      if (response.data.errors.length > 0) {
+        toast.warning(`Imported with ${response.data.errors.length} errors`);
+      }
+    } catch (error: any) {
+      toast.error("Bulk upload failed", {
+        description: error.response?.data?.message || "An error occurred",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDownloadResults = () => {
+    if (!bulkResults) return;
+    const headers = ["Name", "Email", "Role", "Temporary Password"];
+    const rows = bulkResults.createdUsers.map(u => [u.name, u.email, u.role, u.tempPassword]);
+    const csvContent = [headers, ...rows].map(r => r.map(cell => `"${cell}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `bulk_import_results_${new Date().toISOString().split("T")[0]}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const totalPages = Math.ceil(totalUsers / limit);
 
   return (
     <div>
@@ -167,6 +267,11 @@ const AdminDashboard = () => {
               <CardDescription>Manage all system users. Temporary passwords are shown once and cleared after first login.</CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              {selectedUserIds.length > 0 && (
+                <Button size="sm" variant="destructive" className="text-xs" onClick={handleBulkDelete} disabled={isSubmitting}>
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete Selected ({selectedUserIds.length})
+                </Button>
+              )}
               <Button size="sm" variant="outline" onClick={fetchUsers} disabled={isLoading}>
                 <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
               </Button>
@@ -216,6 +321,127 @@ const AdminDashboard = () => {
                   </form>
                 </DialogContent>
               </Dialog>
+
+              <Dialog open={isBulkDialogOpen} onOpenChange={(open) => {
+                setIsBulkDialogOpen(open);
+                if (!open) {
+                  setBulkResults(null);
+                  setSelectedFile(null);
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline" className="text-xs">
+                    <FileUp className="w-3.5 h-3.5 mr-1.5" /> Bulk Import
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Bulk Import Users</DialogTitle>
+                    <DialogDescription>
+                      Upload a CSV file with user details. We'll generate temporary passwords for each.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  {!bulkResults ? (
+                    <form onSubmit={handleBulkUpload} className="space-y-6 py-4">
+                      <div className="bg-muted/50 p-6 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-center">
+                        <FileUp className="w-10 h-10 text-muted-foreground mb-3" />
+                        <p className="text-sm font-medium mb-1">Click to select or drag and drop</p>
+                        <p className="text-xs text-muted-foreground mb-4">Supported formats: .csv, .xlsx, .xls</p>
+                        <Input 
+                          type="file" 
+                          accept=".csv, .xlsx, .xls" 
+                          required 
+                          onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                          className="max-w-[250px] cursor-pointer"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-end">
+                        <Button type="submit" disabled={!selectedFile || isSubmitting} className="gradient-primary">
+                          {isSubmitting ? "Uploading..." : "Import Users"}
+                        </Button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div className="space-y-6 py-4">
+                      <Alert className={bulkResults.errors.length > 0 ? "bg-amber-500/10 border-amber-500/20" : "bg-green-500/10 border-green-500/20"}>
+                        <CheckCircle2 className="h-4 w-4" />
+                        <AlertTitle>Import Complete</AlertTitle>
+                        <AlertDescription>
+                          Created {bulkResults.createdCount} users. {bulkResults.errors.length > 0 ? `Encountered ${bulkResults.errors.length} errors.` : "All rows processed successfully."}
+                        </AlertDescription>
+                      </Alert>
+
+                      {bulkResults.createdUsers.length > 0 && (
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold">Generated Passwords</h4>
+                            <div className="flex items-center gap-2">
+                              <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={handleDownloadResults}>
+                                <Download className="w-3 h-3 mr-1" /> Download CSV
+                              </Button>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Copy these now</p>
+                            </div>
+                          </div>
+                          <div className="border rounded-lg overflow-hidden border-border bg-card">
+                            <table className="w-full text-xs">
+                              <thead className="bg-muted/50 border-b border-border">
+                                <tr>
+                                  <th className="text-left py-2 px-3 font-medium">Name</th>
+                                  <th className="text-left py-2 px-3 font-medium">Email</th>
+                                  <th className="text-left py-2 px-3 font-medium">Temp Password</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border">
+                                {bulkResults.createdUsers.map((u, i) => (
+                                  <tr key={i} className="hover:bg-muted/20">
+                                    <td className="py-2 px-3 text-foreground font-medium">{u.name}</td>
+                                    <td className="py-2 px-3 text-muted-foreground">{u.email}</td>
+                                    <td className="py-2 px-3">
+                                      <div className="flex items-center gap-2">
+                                        <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-primary">{u.tempPassword}</code>
+                                        <button 
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(u.tempPassword);
+                                            toast.info(`Copied password for ${u.name}`);
+                                          }}
+                                          className="text-muted-foreground hover:text-primary"
+                                        >
+                                          <Copy className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {bulkResults.errors.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-semibold text-destructive flex items-center gap-1.5">
+                            <AlertCircle className="w-4 h-4" /> Errors
+                          </h4>
+                          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 max-h-[150px] overflow-y-auto">
+                            <ul className="text-xs text-destructive space-y-1">
+                              {bulkResults.errors.map((err, i) => (
+                                <li key={i}>{err}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      )}
+
+                      <DialogFooter>
+                        <Button onClick={() => setIsBulkDialogOpen(false)}>Close</Button>
+                      </DialogFooter>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
         </CardHeader>
@@ -224,6 +450,13 @@ const AdminDashboard = () => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
+                  <th className="py-3 px-2 w-10">
+                    <Checkbox 
+                      checked={users.length > 0 && selectedUserIds.length === users.length}
+                      onCheckedChange={(checked) => toggleSelectAll(!!checked)}
+                      aria-label="Select all"
+                    />
+                  </th>
                   <th className="text-left py-3 px-2 text-muted-foreground font-medium">User</th>
                   <th className="text-left py-3 px-2 text-muted-foreground font-medium">Email</th>
                   <th className="text-left py-3 px-2 text-muted-foreground font-medium">Role</th>
@@ -242,8 +475,16 @@ const AdminDashboard = () => {
                     const initials = u.name.split(" ").map((n) => n[0]).join("");
                     const tempPw = tempPasswords[u.id];
                     const isVisible = visiblePasswords[u.id];
+                    const isSelected = selectedUserIds.includes(u.id);
                     return (
-                      <tr key={u.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                      <tr key={u.id} className={`border-b border-border/50 hover:bg-muted/30 transition-colors ${isSelected ? "bg-primary/5" : ""}`}>
+                        <td className="py-3 px-2">
+                          <Checkbox 
+                            checked={isSelected}
+                            onCheckedChange={(checked) => toggleSelectUser(u.id, !!checked)}
+                            aria-label={`Select ${u.name}`}
+                          />
+                        </td>
                         <td className="py-3 px-2">
                           <div className="flex items-center gap-2">
                             <Avatar className="w-7 h-7">
@@ -295,6 +536,50 @@ const AdminDashboard = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+              <p className="text-xs text-muted-foreground">
+                Showing <span className="font-medium text-foreground">{(currentPage - 1) * limit + 1}</span> to{" "}
+                <span className="font-medium text-foreground">{Math.min(currentPage * limit, totalUsers)}</span> of{" "}
+                <span className="font-medium text-foreground">{totalUsers}</span> users
+              </p>
+              <div className="flex items-center gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-8 text-xs px-3" 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                <div className="flex items-center gap-1 mx-2">
+                  {Array.from({ length: totalPages }).map((_, i) => (
+                    <Button 
+                      key={i} 
+                      size="sm" 
+                      variant={currentPage === i + 1 ? "default" : "ghost"} 
+                      className={`h-7 w-7 p-0 text-xs ${currentPage === i + 1 ? "gradient-primary" : ""}`}
+                      onClick={() => setCurrentPage(i + 1)}
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-8 text-xs px-3" 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -38,9 +38,12 @@ const fileFilter = (_req, file, cb) => {
     "image/png",
     "image/gif",
     "text/plain",
+    "text/csv",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ];
 
-  if (allowed.includes(file.mimetype)) {
+  if (allowed.includes(file.mimetype) || file.originalname.endsWith(".csv")) {
     cb(null, true);
   } else {
     cb(new Error(`File type '${file.mimetype}' is not allowed`), false);
