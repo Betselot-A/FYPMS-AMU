@@ -10,13 +10,13 @@ import SupportPage from "./pages/SupportPage";
 import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
+import NotificationsPage from "./pages/NotificationsPage";
 import NotFound from "./pages/NotFound";
 
 // Student sub-pages
 import UploadFilesPage from "./pages/student/UploadFilesPage";
 import SubmitPage from "./pages/student/SubmitPage";
 import ProjectStatusPage from "./pages/student/ProjectStatusPage";
-import NotificationsPage from "./pages/student/NotificationsPage";
 import ChatPage from "./pages/student/ChatPage";
 import ResultsPage from "./pages/student/ResultsPage";
 import EditProfilePage from "./pages/student/EditProfilePage";
@@ -31,7 +31,6 @@ import ProjectEvaluatePage from "./pages/staff/ProjectEvaluatePage";
 import ProjectGradesPage from "./pages/staff/ProjectGradesPage";
 import ProjectStatusPage_ from "./pages/staff/ProjectStatusPage";
 import StaffMessagesPage from "./pages/staff/StaffMessagesPage";
-import StaffNotificationsPage from "./pages/staff/StaffNotificationsPage";
 
 // Coordinator sub-pages
 import GroupingPage from "./pages/coordinator/GroupingPage";
@@ -49,6 +48,7 @@ import GradeSystemPage from "./pages/admin/GradeSystemPage";
 import PasswordManagementPage from "./pages/admin/PasswordManagementPage";
 import StudentGroupingPage from "./pages/admin/StudentGroupingPage";
 import AdminSettingsPage from "./pages/admin/AdminSettingsPage";
+import AdminMessagesPage from "./pages/admin/AdminMessagesPage";
 import AdminDashboard from "./pages/dashboards/AdminDashboard";
 import RequireRole from "@/components/RequireRole";
 
@@ -72,8 +72,7 @@ const App = () => (
             <Route path="/dashboard/project/submit" element={<DashboardPage><SubmitPage /></DashboardPage>} />
             <Route path="/dashboard/project/status" element={<DashboardPage><ProjectStatusPage /></DashboardPage>} />
             <Route path="/dashboard/notifications" element={<DashboardPage><NotificationsPage /></DashboardPage>} />
-            <Route path="/dashboard/chat-advisor" element={<DashboardPage><ChatPage recipientRole="advisor" /></DashboardPage>} />
-            <Route path="/dashboard/chat-examiner" element={<DashboardPage><ChatPage recipientRole="examiner" /></DashboardPage>} />
+            <Route path="/dashboard/messages" element={<DashboardPage><ChatPage /></DashboardPage>} />
             <Route path="/dashboard/results" element={<DashboardPage><ResultsPage /></DashboardPage>} />
             <Route path="/dashboard/profile" element={<DashboardPage><EditProfilePage /></DashboardPage>} />
 
@@ -87,7 +86,7 @@ const App = () => (
             <Route path="/dashboard/staff/project/:projectId/grades" element={<DashboardPage><ProjectGradesPage /></DashboardPage>} />
             <Route path="/dashboard/staff/project/:projectId/status" element={<DashboardPage><ProjectStatusPage_ /></DashboardPage>} />
             <Route path="/dashboard/staff/messages" element={<DashboardPage><StaffMessagesPage /></DashboardPage>} />
-            <Route path="/dashboard/staff/notifications" element={<DashboardPage><StaffNotificationsPage /></DashboardPage>} />
+
 
             {/* Coordinator routes */}
             <Route path="/dashboard/coordinator/grouping" element={<DashboardPage><GroupingPage /></DashboardPage>} />
@@ -99,12 +98,13 @@ const App = () => (
             <Route path="/dashboard/coordinator/advisor-mark" element={<DashboardPage><AdvisorMarkPage /></DashboardPage>} />
             <Route path="/dashboard/coordinator/students" element={<DashboardPage><AllStudentsPage /></DashboardPage>} />
             <Route path="/dashboard/coordinator/reports" element={<DashboardPage><EvaluationReportPage /></DashboardPage>} />
+            <Route path="/dashboard/coordinator/messages" element={<DashboardPage><AdminMessagesPage /></DashboardPage>} />
 
-            {/* Admin routes — admin only */}
             <Route path="/dashboard/admin/users" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><AdminDashboard /></DashboardPage></RequireRole>} />
             <Route path="/dashboard/admin/grouping" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><StudentGroupingPage /></DashboardPage></RequireRole>} />
             <Route path="/dashboard/admin/grade-system" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><GradeSystemPage /></DashboardPage></RequireRole>} />
             <Route path="/dashboard/admin/passwords" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><PasswordManagementPage /></DashboardPage></RequireRole>} />
+            <Route path="/dashboard/admin/messages" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><AdminMessagesPage /></DashboardPage></RequireRole>} />
             <Route path="/dashboard/admin/settings" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><AdminSettingsPage /></DashboardPage></RequireRole>} />
 
             {/* Legacy routes */}

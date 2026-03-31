@@ -3,17 +3,36 @@
 // ============================================================
 
 const Notification = require("../models/Notification");
+const User = require("../models/User");
 
 /**
  * GET /api/notifications
- * Authenticated — get current user's notifications
+ * Authenticated — get current user's notifications (inbox)
  */
 const getNotifications = async (req, res, next) => {
   try {
     const notifications = await Notification.find({ userId: req.user._id })
+      .populate("senderId", "name role")
       .sort({ createdAt: -1 });
 
     res.json(notifications);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/notifications/sent
+ * Admin/Coordinator — get messages they sent
+ */
+const getSentNotifications = async (req, res, next) => {
+  try {
+    const sent = await Notification.find({ senderId: req.user._id })
+      .populate("userId", "name email role department")
+      .sort({ createdAt: -1 })
+      .limit(100);
+
+    res.json(sent);
   } catch (error) {
     next(error);
   }
@@ -46,7 +65,7 @@ const markAsRead = async (req, res, next) => {
 
 /**
  * PUT /api/notifications/read-all
- * Mark all notifications as read
+ * Mark all of current user's notifications as read
  */
 const markAllAsRead = async (req, res, next) => {
   try {
@@ -63,22 +82,48 @@ const markAllAsRead = async (req, res, next) => {
 
 /**
  * POST /api/notifications
- * Admin — send notification to user(s)
+ * Admin/Coordinator — send a notification to a specific user or all users
+ * Body: { userId?, userIds?, subject?, message, type? }
+ *   - userId: single target user
+ *   - userIds: array of target user IDs
+ *   - If neither provided: broadcast to all non-admin users
  */
 const createNotification = async (req, res, next) => {
   try {
-    const { userId, userIds, message, type } = req.body;
+    const { userId, userIds, subject, message, type } = req.body;
 
-    // Support single or bulk notifications
-    const targets = userIds || [userId];
+    if (!message || message.trim() === "") {
+      return res.status(400).json({ error: "VALIDATION", message: "Message is required" });
+    }
+
+    let targets = [];
+
+    if (userIds && Array.isArray(userIds) && userIds.length > 0) {
+      targets = userIds;
+    } else if (userId) {
+      targets = [userId];
+    } else {
+      // Broadcast to all non-admin users (excluding sender)
+      const nonAdmins = await User.find({ 
+        role: { $ne: "admin" },
+        _id: { $ne: req.user._id }
+      }).select("_id");
+      targets = nonAdmins.map((u) => u._id.toString());
+    }
+
+    // Ensure the sender is never in the target list (even if manually added)
+    targets = targets.filter((uid) => uid !== req.user._id.toString());
+
     const notifications = targets.map((uid) => ({
       userId: uid,
-      message,
+      senderId: req.user._id,
+      subject: subject || "",
+      message: message.trim(),
       type: type || "info",
     }));
 
     const created = await Notification.insertMany(notifications);
-    res.status(201).json(created);
+    res.status(201).json({ sent: created.length, notifications: created });
   } catch (error) {
     next(error);
   }
@@ -86,6 +131,7 @@ const createNotification = async (req, res, next) => {
 
 module.exports = {
   getNotifications,
+  getSentNotifications,
   markAsRead,
   markAllAsRead,
   createNotification,

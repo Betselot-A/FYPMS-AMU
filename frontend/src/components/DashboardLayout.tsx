@@ -12,7 +12,7 @@ import {
   GraduationCap, LayoutDashboard, FolderOpen, MessageSquare,
   Bell, Users, ClipboardCheck, BarChart3, Settings, LogOut, Award, UserCog,
   FileUp, Send, Activity, ChevronDown, ChevronRight, UserPen, Video, Clock,
-  Megaphone, Wrench, Key, UserCheck,
+  Megaphone, Wrench, Key, UserCheck, Mail,
 } from "lucide-react";
 import type { User } from "@/types";
 
@@ -35,14 +35,7 @@ const getStudentNav = (): NavItem[] => [
     ],
   },
   { label: "Notifications", icon: <Bell className="w-4 h-4" />, path: "/dashboard/notifications" },
-  {
-    label: "Communicate",
-    icon: <MessageSquare className="w-4 h-4" />,
-    children: [
-      { label: "With Advisor", icon: <MessageSquare className="w-4 h-4" />, path: "/dashboard/chat-advisor" },
-      { label: "With Examiner", icon: <Video className="w-4 h-4" />, path: "/dashboard/chat-examiner" },
-    ],
-  },
+  { label: "Messages", icon: <MessageSquare className="w-4 h-4" />, path: "/dashboard/messages" },
   { label: "Results", icon: <Award className="w-4 h-4" />, path: "/dashboard/results" },
   { label: "Edit Profile", icon: <UserPen className="w-4 h-4" />, path: "/dashboard/profile" },
 ];
@@ -51,7 +44,7 @@ const getStaffNav = (user: User): NavItem[] => {
   const items: NavItem[] = [
     { label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, path: "/dashboard" },
     { label: "Messages", icon: <MessageSquare className="w-4 h-4" />, path: "/dashboard/staff/messages" },
-    { label: "Notifications", icon: <Bell className="w-4 h-4" />, path: "/dashboard/staff/notifications" },
+    { label: "Notifications", icon: <Bell className="w-4 h-4" />, path: "/dashboard/notifications" },
     { label: "Edit Profile", icon: <UserPen className="w-4 h-4" />, path: "/dashboard/profile" },
   ];
 
@@ -82,6 +75,8 @@ const getNavConfig = (user: User): NavItem[] => {
         },
         { label: "All Students", icon: <Users className="w-4 h-4" />, path: "/dashboard/coordinator/students" },
         { label: "Reports", icon: <BarChart3 className="w-4 h-4" />, path: "/dashboard/coordinator/reports" },
+        { label: "Send Message", icon: <Mail className="w-4 h-4" />, path: "/dashboard/coordinator/messages" },
+        { label: "Notifications", icon: <Bell className="w-4 h-4" />, path: "/dashboard/notifications" },
         { label: "Edit Profile", icon: <UserPen className="w-4 h-4" />, path: "/dashboard/profile" },
       ];
     case "admin":
@@ -90,6 +85,7 @@ const getNavConfig = (user: User): NavItem[] => {
         { label: "Group Analysis", icon: <Users className="w-4 h-4" />, path: "/dashboard/admin/grouping" },
         { label: "Grade System", icon: <BarChart3 className="w-4 h-4" />, path: "/dashboard/admin/grade-system" },
         { label: "Passwords", icon: <Key className="w-4 h-4" />, path: "/dashboard/admin/passwords" },
+        { label: "Send Message", icon: <Mail className="w-4 h-4" />, path: "/dashboard/admin/messages" },
         { label: "Settings", icon: <Settings className="w-4 h-4" />, path: "/dashboard/admin/settings" },
         { label: "Notifications", icon: <Bell className="w-4 h-4" />, path: "/dashboard/notifications" },
         { label: "Edit Profile", icon: <UserPen className="w-4 h-4" />, path: "/dashboard/profile" },

@@ -27,19 +27,21 @@ const features = [
 
 const LandingPage = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative overflow-hidden">
       <LandingNavbar />
+      {/* Background Decorative Element */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-6xl h-[500px] -z-10 opacity-20 blur-[120px] bg-gradient-to-r from-[#02a3fe] to-[#28c7b9] rounded-full pointer-events-none" />
 
       {/* Hero */}
-      <section className="pt-32 pb-20 px-4">
-        <div className="container mx-auto text-center max-w-3xl">
+      <section className="pt-32 pb-20 px-4 relative overflow-hidden">
+        <div className="container mx-auto text-center max-w-3xl relative z-10">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-medium mb-6">
             <Sparkles className="w-4 h-4" />
             Streamline Your Final Year Project
           </div>
-          <h1 className="text-4xl md:text-6xl font-display font-bold text-foreground leading-tight mb-6">
-            Where Great Projects{" "}
-            <span className="bg-clip-text text-transparent" style={{ backgroundImage: "var(--gradient-primary)" }}>
+          <h1 className="text-5xl md:text-7xl font-luxury text-foreground leading-tight mb-6 tracking-wide">
+            Where Great Projects <br />
+            <span className="bg-clip-text text-transparent bg-gradient-hero" style={{ backgroundImage: "var(--gradient-hero)" }}>
               Come to Life
             </span>
           </h1>
@@ -48,12 +50,12 @@ const LandingPage = () => {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Link to="/login">
-              <Button size="lg" className="gradient-primary text-primary-foreground px-8 text-base">
+              <Button size="lg" className="gradient-primary text-primary-foreground px-8 text-base shadow-lg hover:shadow-glow-primary hover:scale-[1.02] transition-all duration-300">
                 Get Started <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
             </Link>
             <Link to="/about">
-              <Button size="lg" variant="outline" className="px-8 text-base">
+              <Button size="lg" className="gradient-accent text-primary-foreground px-8 text-base shadow-lg hover:shadow-glow-accent hover:scale-[1.02] transition-all duration-300">
                 Learn More
               </Button>
             </Link>
@@ -62,33 +64,39 @@ const LandingPage = () => {
       </section>
 
       {/* Decorative divider */}
-      <div className="container mx-auto px-4">
-        <div className="h-px bg-border" />
+      <div className="container mx-auto px-4 py-8">
+        <div className="luxury-line" />
       </div>
 
-      {/* Features */}
-      <section className="py-20 px-4">
-        <div className="container mx-auto max-w-5xl">
-          <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-3">
+      {/* Features - Boxless Luxury Grid */}
+      <section className="py-20 px-4 relative">
+        <div className="absolute top-1/2 left-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px] -z-10 -translate-y-1/2" />
+        <div className="container mx-auto max-w-6xl">
+          <div className="text-center mb-20 animate-fade-in text-luxury">
+            <h2 className="text-4xl md:text-5xl font-luxury text-foreground mb-4 tracking-wider">
               Everything You Need
             </h2>
-            <p className="text-muted-foreground max-w-lg mx-auto">
-              A complete toolkit for managing final year projects from proposal to presentation.
+            <p className="text-muted-foreground max-w-lg mx-auto text-lg">
+              A complete toolkit for managing final year projects from proposal to presentation, beautifully refined.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-16">
+            {features.map((f, i) => (
               <div
                 key={f.title}
-                className="group p-6 rounded-xl border border-border bg-card hover:shadow-elevated transition-all duration-300"
+                className="group relative pl-8 py-2 hover:pl-10 transition-all duration-500"
               >
-                <div className="w-11 h-11 rounded-lg gradient-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <f.icon className="w-5 h-5 text-primary-foreground" />
+                {/* Floating Side Bar Instead of a Box */}
+                <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-border to-transparent group-hover:via-primary transition-colors duration-500" />
+                
+                <div className="mb-4">
+                  <div className="inline-flex p-3 rounded-full bg-primary/5 text-primary group-hover:scale-110 group-hover:bg-primary/10 transition-all duration-300">
+                     <f.icon className="w-6 h-6" />
+                  </div>
                 </div>
-                <h3 className="text-lg font-semibold text-card-foreground mb-1">{f.title}</h3>
-                <p className="text-sm text-muted-foreground">{f.desc}</p>
+                <h3 className="text-2xl font-luxury text-foreground mb-3">{f.title}</h3>
+                <p className="text-base text-muted-foreground leading-relaxed">{f.desc}</p>
               </div>
             ))}
           </div>
@@ -98,16 +106,16 @@ const LandingPage = () => {
       {/* CTA */}
       <section className="py-20 px-4">
         <div className="container mx-auto max-w-2xl text-center">
-          <div className="rounded-2xl gradient-primary p-10 md:p-14">
+          <div className="rounded-2xl gradient-primary p-10 md:p-14 shadow-elevated">
             <GraduationCap className="w-12 h-12 text-primary-foreground mx-auto mb-4" />
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-primary-foreground mb-3">
+            <h2 className="text-2xl md:text-3xl font-luxury font-bold text-primary-foreground mb-3">
               Ready to Collaborate?
             </h2>
-            <p className="text-primary-foreground/80 mb-8 max-w-md mx-auto">
+            <p className="text-primary-foreground/80 mb-8 max-w-md mx-auto text-lg leading-relaxed">
               Contact your administrator to get your account credentials and start managing your project today.
             </p>
             <Link to="/login">
-              <Button size="lg" variant="secondary" className="px-8 text-base font-semibold">
+              <Button size="lg" variant="secondary" className="px-8 text-base font-semibold text-primary">
                 Sign In Now
               </Button>
             </Link>

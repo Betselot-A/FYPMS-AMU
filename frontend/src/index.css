@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Inter:wght@300;400;500;600;700;800&family=Cormorant+Garamond:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 220 25% 10%;
 
-    --primary: 201 89% 51%; /* Vibrantly blue from 'Get Started' */
+    --primary: 202 98% 49%; /* Vibrantly blue from 'Get Started' image */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 20% 94%;
@@ -24,7 +24,7 @@
     --muted: 210 15% 95%;
     --muted-foreground: 220 10% 46%;
 
-    --accent: 165 72% 43%; /* Vibrant teal from 'Learn More' */
+    --accent: 174 67% 47%; /* Vibrant teal from 'Learn More' image */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
@@ -52,10 +52,13 @@
     --sidebar-border: 220 20% 22%;
     --sidebar-ring: 201 89% 51%;
 
-    --gradient-primary: linear-gradient(135deg, #0ea5e9, #2563eb);
-    --gradient-accent: linear-gradient(135deg, #10b981, #059669);
+    --gradient-primary: linear-gradient(95deg, #02a3fe 0%, #1e60e8 100%);
+    --gradient-accent: linear-gradient(95deg, #28c7b9 0%, #199b82 100%);
+    --gradient-hero: linear-gradient(135deg, #02a3fe, #28c7b9);
     --shadow-card: 0 1px 3px 0 hsl(220 25% 10% / 0.06), 0 1px 2px -1px hsl(220 25% 10% / 0.06);
     --shadow-elevated: 0 10px 25px -5px hsl(220 25% 10% / 0.08), 0 8px 10px -6px hsl(220 25% 10% / 0.04);
+    --shadow-glow-primary: 0 0 18px -2px rgb(2 163 254 / 0.4);
+    --shadow-glow-accent: 0 0 18px -2px rgb(40 199 185 / 0.4);
   }
 
   .dark {
@@ -88,7 +91,7 @@
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    font-size: 18px; /* Slightly larger for professional dashboard feel */
+    font-size: 18px;
   }
 
   h1, h2, h3 {
@@ -96,11 +99,21 @@
     color: hsl(var(--foreground));
   }
 
-  /* Specific "University Management" text style requested by user */
+  /* Specific "University Management" text style */
   .text-university {
     font-size: 22px;
     font-weight: 400;
     line-height: normal;
+  }
+
+  @keyframes orbit {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+  }
+
+  @keyframes counter-orbit {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(-360deg); }
   }
 }
 
@@ -113,11 +126,62 @@
     background: var(--gradient-accent);
   }
 
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .shadow-glow-primary {
+    box-shadow: var(--shadow-glow-primary);
+  }
+
+  .shadow-glow-accent {
+    box-shadow: var(--shadow-glow-accent);
+  }
+
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
 
   .shadow-elevated {
     box-shadow: var(--shadow-elevated);
+  }
+
+  .font-luxury {
+    font-family: 'Cormorant Garamond', serif;
+  }
+
+  .luxury-line {
+    background: linear-gradient(90deg, transparent, hsl(var(--foreground) / 0.1), transparent);
+    height: 1px;
+    width: 100%;
+  }
+
+  .luxury-glow {
+    position: relative;
+  }
+  
+  .luxury-glow::before {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    background: radial-gradient(circle, var(--gradient-primary) 0%, transparent 70%);
+    opacity: 0.15;
+    z-index: -1;
+    border-radius: 50%;
+    filter: blur(20px);
+  }
+
+  /* Orbit ring animation */
+  .animate-orbit {
+    animation: orbit 30s linear infinite;
+  }
+
+  .animate-counter-orbit {
+    animation: counter-orbit 30s linear infinite;
+  }
+
+  .animate-orbit-pause:hover .animate-orbit,
+  .animate-orbit-pause:hover .animate-counter-orbit {
+    animation-play-state: paused;
   }
 }

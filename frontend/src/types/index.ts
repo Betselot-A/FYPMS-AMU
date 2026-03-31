@@ -78,10 +78,17 @@ export interface Feedback {
 export interface Notification {
   id: string;
   userId: string;
+  senderId?: {
+    id: string;
+    name: string;
+    role: string;
+  } | string;
+  subject?: string;
   message: string;
   type: "info" | "warning" | "success" | "deadline";
   read: boolean;
   date: string;
+  createdAt?: string;
 }
 
 export interface Message {

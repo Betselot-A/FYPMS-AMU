@@ -1,6 +1,6 @@
 // ============================================================
-// Student: Notifications Page — Real API Connected
-// Shows in-app messages sent by admin/coordinators
+// Shared Notifications Page — Real API Connected
+// Shows in-app messages sent by admin/coordinators to any user role
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -85,7 +85,7 @@ const NotificationsPage = () => {
             )}
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Messages and alerts from your admin and coordinators.
+            Stay updated with messages and alerts from the system.
           </p>
         </div>
         {unreadCount > 0 && (
@@ -131,7 +131,7 @@ const NotificationsPage = () => {
             <div className="divide-y divide-border/50">
               {notifications.map((n) => {
                 const cfg = typeConfig[n.type] || typeConfig.info;
-                const date = new Date(n.date || n.createdAt).toLocaleDateString("en-US", {
+                const date = new Date(n.date || n.createdAt || "").toLocaleDateString("en-US", {
                   month: "short",
                   day: "numeric",
                   year: "numeric",
