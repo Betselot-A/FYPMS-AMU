@@ -5,19 +5,18 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { mockUsers } from "@/data/mockData";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Send, Video, VideoOff, Mic, MicOff, PhoneOff, Loader2, MessageSquare, ShieldCheck, UserCog } from "lucide-react";
+import { Send, Video, VideoOff, Mic, MicOff, PhoneOff, Loader2, MessageSquare, ShieldCheck, UserCog, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
-import { notificationService } from "@/api";
+import { notificationService, projectService, userService } from "@/api";
 import { cn } from "@/lib/utils";
-import type { Notification } from "@/types";
+import type { Notification, User as UserType } from "@/types";
 
-type RecipientRole = "advisor" | "examiner";
+type RecipientRole = "advisor" | "examiner" | "admin";
 
 const ChatPage = () => {
   const { user } = useAuth();
@@ -25,20 +24,41 @@ const ChatPage = () => {
   const [newMessage, setNewMessage] = useState("");
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingContacts, setIsLoadingContacts] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [inCall, setInCall] = useState(false);
   const [videoOn, setVideoOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
 
-  if (!user) return null;
+  // Real contact state
+  const [advisor, setAdvisor] = useState<UserType | null>(null);
+  const [examiner, setExaminer] = useState<UserType | null>(null);
+  const [admin, setAdmin] = useState<UserType | null>(null);
 
-  // Find recipients
-  const advisor = mockUsers.find(u => u.role === "staff" && u.staffAssignment?.isAdvisor);
-  const examiner = mockUsers.find(u => u.role === "staff" && u.staffAssignment?.isExaminer);
+  const fetchContacts = useCallback(async () => {
+    if (!user) return;
+    try {
+      setIsLoadingContacts(true);
+      // 1. Fetch Student's Project to get staff details
+      const projectRes = await projectService.getAll();
+      const myProject = projectRes.data[0]; // Students only have one project
 
-  const activeRecipient = activeRole === "advisor" ? advisor : examiner;
-  const recipientName = activeRecipient?.name || (activeRole === "advisor" ? "Your Advisor" : "Your Examiner");
-  const recipientInitials = recipientName.split(" ").map((n) => n[0]).join("").toUpperCase();
+      if (myProject) {
+        if (myProject.advisorId) setAdvisor(myProject.advisorId as unknown as UserType);
+        if (myProject.examinerId) setExaminer(myProject.examinerId as unknown as UserType);
+      }
+
+      // 2. Fetch Admin for System Support
+      const userRes = await userService.getAll({ role: "admin", limit: 1 });
+      if (userRes.data.users.length > 0) {
+        setAdmin(userRes.data.users[0]);
+      }
+    } catch (error) {
+      console.error("Error fetching contacts:", error);
+    } finally {
+      setIsLoadingContacts(false);
+    }
+  }, [user]);
 
   // Fetch messages
   const fetchMessages = useCallback(async () => {
@@ -46,6 +66,11 @@ const ChatPage = () => {
       setIsLoading(true);
       const res = await notificationService.getAll();
       setNotifications(res.data);
+      // Auto-scroll to bottom after loading
+      setTimeout(() => {
+        const scrollArea = document.getElementById("chat-scroll-area");
+        if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
+      }, 100);
     } catch {
       toast.error("Could not load chat history");
     } finally {
@@ -54,20 +79,34 @@ const ChatPage = () => {
   }, []);
 
   useEffect(() => {
+    fetchContacts();
     fetchMessages();
-  }, [fetchMessages]);
+  }, [fetchContacts, fetchMessages]);
+
+  const activeRecipient = activeRole === "advisor" ? advisor : activeRole === "examiner" ? examiner : admin;
+  const recipientName = activeRecipient?.name || (activeRole === "advisor" ? "Your Advisor" : activeRole === "examiner" ? "Your Examiner" : "System Support");
+  const recipientInitials = recipientName.split(" ").map((n) => n[0] || "").join("").toUpperCase();
 
   const chat = notifications.filter(
     (n) => {
-      const sId = typeof n.senderId === 'object' ? n.senderId.id : n.senderId;
-      return (n.userId === user.id && sId === activeRecipient?.id) ||
-        (sId === user.id && n.userId === activeRecipient?.id);
+      if (!activeRecipient?.id || !n.userId) return false;
+      const sId = typeof n.senderId === 'object' ? (n.senderId as any).id : n.senderId;
+      const uId = typeof n.userId === 'object' ? (n.userId as any).id : n.userId;
+      
+      // Use string comparison to be safe
+      const myId = user?.id?.toString();
+      const targetId = activeRecipient.id?.toString();
+      const msgRecipientId = uId?.toString();
+      const msgSenderId = sId?.toString();
+
+      return (msgRecipientId === myId && msgSenderId === targetId) ||
+             (msgSenderId === myId && msgRecipientId === targetId);
     }
   ).sort((a, b) => new Date(a.date || a.createdAt || 0).getTime() - new Date(b.date || b.createdAt || 0).getTime());
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeRecipient?.id) return;
+    if (!newMessage.trim() || !activeRecipient?.id || !user) return;
 
     setIsSending(true);
     try {
@@ -78,7 +117,7 @@ const ChatPage = () => {
         type: "info"
       });
       setNewMessage("");
-      fetchMessages();
+      await fetchMessages(); // Refetch will trigger auto-scroll
     } catch {
       toast.error("Failed to send message");
     } finally {
@@ -98,6 +137,8 @@ const ChatPage = () => {
     toast("Call ended", { description: "The video call has been disconnected." });
   };
 
+  if (!user) return null;
+
   return (
     <div className="space-y-6">
       <div>
@@ -114,224 +155,248 @@ const ChatPage = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-2 space-y-1 flex-1 overflow-y-auto">
-            {/* Advisor Button */}
-            <button
-              onClick={() => { setActiveRole("advisor"); setInCall(false); }}
-              className={cn(
-                "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all",
-                activeRole === "advisor" 
-                  ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary"
-                  : "hover:bg-muted/50 text-foreground"
-              )}
-            >
-              <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                activeRole === "advisor" ? "bg-primary-foreground/20" : "bg-primary/10"
-              )}>
-                <UserCog className="w-5 h-5" />
+            {isLoadingContacts ? (
+              <div className="py-8 flex flex-col items-center justify-center gap-2 opacity-50">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span className="text-[10px] font-medium tracking-widest uppercase">Loading Contacts</span>
               </div>
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold truncate leading-tight">Advisor</p>
-                <p className={cn(
-                  "text-[10px] truncate opacity-70",
-                  activeRole === "advisor" ? "text-primary-foreground" : "text-muted-foreground"
-                )}>
-                  {advisor?.name || "Unassigned"}
-                </p>
-              </div>
-            </button>
+            ) : (
+              <>
+                {/* Advisor Button */}
+                <button
+                  onClick={() => { setActiveRole("advisor"); setInCall(false); }}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all",
+                    activeRole === "advisor" 
+                      ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary"
+                      : "hover:bg-muted/50 text-foreground"
+                  )}
+                >
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                    activeRole === "advisor" ? "bg-primary-foreground/20" : "bg-primary/10"
+                  )}>
+                    <UserCog className="w-5 h-5" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-sm font-semibold truncate leading-tight">Advisor</p>
+                    <p className={cn(
+                      "text-[10px] truncate opacity-70",
+                      activeRole === "advisor" ? "text-primary-foreground" : "text-muted-foreground"
+                    )}>
+                      {advisor?.name || "Unassigned"}
+                    </p>
+                  </div>
+                </button>
 
-            {/* Examiner Button */}
-            <button
-              onClick={() => { setActiveRole("examiner"); setInCall(false); }}
-              className={cn(
-                "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all",
-                activeRole === "examiner" 
-                  ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary"
-                  : "hover:bg-muted/50 text-foreground"
-              )}
-            >
-              <div className={cn(
-                "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
-                activeRole === "examiner" ? "bg-primary-foreground/20" : "bg-primary/10"
-              )}>
-                <ShieldCheck className="w-5 h-5" />
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-sm font-semibold truncate leading-tight">Examiner</p>
-                <p className={cn(
-                  "text-[10px] truncate opacity-70",
-                  activeRole === "examiner" ? "text-primary-foreground" : "text-muted-foreground"
-                )}>
-                  {examiner?.name || "Unassigned"}
-                </p>
-              </div>
-            </button>
+                {/* Examiner Button */}
+                <button
+                  onClick={() => { setActiveRole("examiner"); setInCall(false); }}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all",
+                    activeRole === "examiner"
+                      ? "bg-primary text-primary-foreground shadow-md ring-1 ring-primary"
+                      : "hover:bg-muted/50 text-foreground"
+                  )}
+                >
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                    activeRole === "examiner" ? "bg-primary-foreground/20" : "bg-primary/10"
+                  )}>
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-sm font-semibold truncate leading-tight">Examiner</p>
+                    <p className={cn(
+                      "text-[10px] truncate opacity-70",
+                      activeRole === "examiner" ? "text-primary-foreground" : "text-muted-foreground"
+                    )}>
+                      {examiner?.name || "Unassigned"}
+                    </p>
+                  </div>
+                </button>
+
+                {/* Separator */}
+                <div className="py-2 px-3">
+                  <div className="h-px bg-border w-full" />
+                </div>
+
+                {/* Support Button */}
+                <button
+                  onClick={() => { setActiveRole("admin"); setInCall(false); }}
+                  className={cn(
+                    "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all border border-transparent",
+                    activeRole === "admin"
+                      ? "bg-amber-500 text-white shadow-md ring-1 ring-amber-500"
+                      : "hover:border-amber-200 hover:bg-amber-500/5 text-foreground"
+                  )}
+                >
+                  <div className={cn(
+                    "w-10 h-10 rounded-full flex items-center justify-center shrink-0",
+                    activeRole === "admin" ? "bg-white/20" : "bg-amber-100"
+                  )}>
+                    <HelpCircle className={cn("w-5 h-5", activeRole === "admin" ? "text-white" : "text-amber-600")} />
+                  </div>
+                  <div className="overflow-hidden">
+                    <p className="text-sm font-semibold truncate leading-tight">System Support</p>
+                    <p className={cn(
+                      "text-[10px] truncate uppercase font-bold tracking-widest",
+                      activeRole === "admin" ? "text-white/80" : "text-amber-600/80"
+                    )}>
+                      {admin ? "Admin Active" : "Report Issue"}
+                    </p>
+                  </div>
+                </button>
+              </>
+            )}
           </CardContent>
         </Card>
 
-        {/* Main Content: Chat & Video */}
-        <div className="lg:col-span-3 grid grid-cols-1 xl:grid-cols-2 gap-6 h-full">
-          {/* Chat Card */}
-          <Card className="shadow-card flex flex-col overflow-hidden h-full">
-            <CardHeader className="border-b border-border py-4 bg-background/50 backdrop-blur-sm sticky top-0 z-10">
-              <div className="flex items-center gap-3">
+        {/* Chat Area */}
+        <Card className="lg:col-span-3 shadow-card flex flex-col overflow-hidden relative">
+          {/* Header */}
+          <CardHeader className="py-4 px-6 border-b border-border bg-muted/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
                 <Avatar className="w-10 h-10 ring-2 ring-primary/10">
-                  <AvatarFallback className="bg-primary/5 text-primary text-xs font-bold">{recipientInitials}</AvatarFallback>
+                  <AvatarFallback className="bg-primary/5 text-primary font-bold">
+                    {recipientInitials}
+                  </AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle className="text-sm">{recipientName}</CardTitle>
-                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{activeRole}</p>
+                  <CardTitle className="text-base leading-tight">{recipientName}</CardTitle>
+                  <Badge variant="outline" className="text-[9px] py-0 h-4 mt-1 bg-background">
+                    {activeRole.toUpperCase()}
+                  </Badge>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/5">
-              {isLoading ? (
-                <div className="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground animate-pulse">
-                  <Loader2 className="w-6 h-6 animate-spin" />
-                  <p className="text-xs font-medium">Synchronizing messages...</p>
-                </div>
-              ) : chat.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
-                  <MessageSquare className="w-12 h-12 mb-3 stroke-1" />
-                  <p className="text-sm font-medium">No messages yet.</p>
-                  <p className="text-xs mt-1">Start the conversation with your {activeRole}!</p>
-                </div>
-              ) : (
-                chat.map((n) => {
-                  const isMe = n.senderId === user.id || (typeof n.senderId === 'object' && n.senderId.id === user.id);
-                  return (
-                    <div key={n.id} className={cn("flex", isMe ? "justify-end" : "justify-start")}>
-                      <div className={cn(
-                        "max-w-[85%] px-4 py-2.5 rounded-2xl text-sm shadow-sm",
-                        isMe
-                          ? "bg-primary text-primary-foreground rounded-br-sm"
-                          : "bg-background border border-border text-foreground rounded-bl-sm"
-                      )}>
-                        <p className="leading-relaxed">{n.message}</p>
-                        <p className={cn(
-                          "text-[9px] mt-1.5 opacity-70 font-medium",
-                          isMe ? "text-right" : "text-left"
-                        )}>
-                          {new Date(n.date || n.createdAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </CardContent>
-            <div className="p-4 border-t border-border bg-background">
-              <form onSubmit={handleSend} className="flex gap-2">
-                <Input
-                  placeholder="Type your message..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  className="flex-1 h-11 bg-muted/30 border-none focus-visible:ring-primary/20"
-                  disabled={isSending}
-                />
-                <Button
-                  type="submit"
-                  size="icon"
-                  disabled={isSending || !newMessage.trim()}
-                  className="h-11 w-11 rounded-xl gradient-primary text-primary-foreground shrink-0 shadow-md transition-transform active:scale-95"
-                >
-                  {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              <div className="flex items-center gap-2">
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors" onClick={startCall}>
+                  <Video className="w-5 h-5" />
                 </Button>
-              </form>
+                <Button variant="ghost" size="icon" className="rounded-full hover:bg-primary/10 hover:text-primary transition-colors">
+                  <Mic className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
-          </Card>
+          </CardHeader>
 
-          {/* Context Panel (Video or Info) */}
-          <Card className={cn(
-            "shadow-card overflow-hidden h-full transition-all duration-300",
-            activeRole === "examiner" ? "opacity-100 translate-y-0" : "hidden xl:flex xl:opacity-50 xl:grayscale xl:pointer-events-none"
-          )}>
-            <CardHeader className="border-b border-border py-4 bg-primary/5">
-              <CardTitle className="text-sm flex items-center gap-2">
-                <Video className="w-4 h-4 text-primary" /> Video Conference
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-0 flex-1 flex flex-col">
-              {!inCall ? (
-                <div className="flex flex-col items-center justify-center flex-1 p-8 text-center bg-sidebar/10">
-                  <div className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center mb-6 ring-8 ring-primary/5">
-                    <Video className="w-10 h-10 text-primary" />
-                  </div>
-                  <h3 className="text-lg font-bold text-foreground mb-2">Connect Remotely</h3>
-                  <p className="text-sm text-muted-foreground mb-8 max-w-[240px] mx-auto">
-                    Face-to-face discussion with your examiner about your project progress and evaluation.
-                  </p>
-                  <Button 
-                    onClick={startCall} 
-                    disabled={activeRole !== "examiner"}
-                    className="gradient-primary text-primary-foreground px-8 h-11 rounded-full shadow-lg shadow-primary/20"
-                  >
-                    <Video className="w-4 h-4 mr-2" /> Start Meeting
-                  </Button>
+          {/* Messages */}
+          <CardContent id="chat-scroll-area" className="flex-1 overflow-y-auto p-6 space-y-4 bg-muted/5 scroll-smooth">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground opacity-50">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <p className="text-xs font-medium tracking-widest uppercase">Fetching Messages</p>
+              </div>
+            ) : chat.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center p-12 space-y-4">
+                <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center shadow-inner">
+                  <MessageSquare className="w-10 h-10 text-muted-foreground/30" />
                 </div>
-              ) : (
-                <div className="flex flex-col flex-1 bg-zinc-950 text-white relative">
-                  {/* Remote video area */}
-                  <div className="flex-1 flex flex-col items-center justify-center p-6 text-center space-y-4">
-                    <Avatar className="w-24 h-24 ring-4 ring-primary/30 ring-offset-4 ring-offset-zinc-950">
-                      <AvatarFallback className="bg-zinc-800 text-white text-2xl font-bold">
-                        {recipientInitials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <p className="text-lg font-semibold">{recipientName}</p>
-                      <Badge variant="outline" className="mt-2 bg-primary/10 text-primary border-primary/20 animate-pulse">
-                        LIVE CONNECTION
-                      </Badge>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">No history found</h3>
+                  <p className="text-sm text-muted-foreground max-w-[240px] mx-auto mt-2">
+                    Start a new conversation with your {activeRole}. Your messages will be stored securely.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              chat.map((msg) => {
+                const sId = typeof msg.senderId === 'object' ? msg.senderId.id : msg.senderId;
+                const isOwn = sId === user.id;
+                return (
+                  <div key={msg.id} className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
+                    <div className={cn(
+                      "max-w-[75%] px-5 py-3 rounded-2xl text-sm shadow-sm transition-all hover:shadow-md",
+                      isOwn 
+                        ? "bg-primary text-primary-foreground rounded-br-sm" 
+                        : "bg-background border border-border text-foreground rounded-bl-sm"
+                    )}>
+                      <p className="leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                      <p className={cn(
+                        "text-[9px] mt-2 font-medium opacity-60",
+                        isOwn ? "text-right" : "text-left"
+                      )}>
+                        {new Date(msg.date || msg.createdAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
                     </div>
                   </div>
+                );
+              })
+            )}
+          </CardContent>
 
-                  {/* Local video preview */}
-                  <div className="absolute top-4 right-4 w-32 h-44 rounded-xl bg-zinc-800 border-2 border-zinc-700 overflow-hidden shadow-2xl flex items-center justify-center">
-                    {!videoOn ? (
-                      <div className="flex flex-col items-center gap-1 opacity-50">
-                        <VideoOff className="w-6 h-6" />
-                        <span className="text-[10px] font-bold uppercase tracking-tighter">OFF</span>
-                      </div>
-                    ) : (
-                       <span className="text-[10px] font-bold uppercase tracking-tighter opacity-70">YOU</span>
-                    )}
-                  </div>
+          {/* Input Area */}
+          <div className="p-4 bg-background border-t border-border">
+            <form onSubmit={handleSend} className="flex gap-3">
+              <Input
+                placeholder={activeRecipient?.id ? `Message ${recipientName}...` : "Contact unassigned"}
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                disabled={isSending || !activeRecipient?.id}
+                className="h-12 bg-muted/20 border-none shadow-inner focus-visible:ring-primary rounded-xl"
+              />
+              <Button 
+                type="submit" 
+                disabled={isSending || !newMessage.trim() || !activeRecipient?.id}
+                className="h-12 px-6 rounded-xl gradient-primary shadow-lg shadow-primary/20 transition-transform active:scale-95"
+              >
+                {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+              </Button>
+            </form>
+          </div>
 
-                  {/* Video Controls */}
-                  <div className="p-6 bg-zinc-900/90 backdrop-blur-md flex items-center justify-center gap-4">
-                    <Button
-                      variant={micOn ? "outline" : "destructive"}
-                      size="icon"
-                      className="rounded-full w-12 h-12 bg-zinc-800/50 border-zinc-700 hover:bg-zinc-700"
-                      onClick={() => setMicOn(!micOn)}
-                    >
-                      {micOn ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-                    </Button>
-                    <Button
-                      variant={videoOn ? "outline" : "destructive"}
-                      size="icon"
-                      className="rounded-full w-12 h-12 bg-zinc-800/50 border-zinc-700 hover:bg-zinc-700"
-                      onClick={() => setVideoOn(!videoOn)}
-                    >
-                      {videoOn ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-                    </Button>
-                    <div className="w-px h-8 bg-zinc-800 mx-2" />
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="rounded-full w-14 h-14 shadow-lg shadow-destructive/20 active:scale-90 transition-transform"
-                      onClick={endCall}
-                    >
-                      <PhoneOff className="w-6 h-6 fill-current" />
-                    </Button>
-                  </div>
+          {/* Call Overlay */}
+          {inCall && (
+            <div className="absolute inset-0 z-50 bg-slate-900 flex flex-col p-6 animate-in fade-in duration-300">
+              <div className="flex-1 relative rounded-2xl overflow-hidden bg-slate-800 shadow-2xl border border-white/5">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Avatar className="w-32 h-32 ring-4 ring-primary animate-pulse">
+                    <AvatarFallback className="bg-slate-700 text-primary-foreground text-4xl font-bold">
+                      {recipientInitials}
+                    </AvatarFallback>
+                  </Avatar>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                <div className="absolute bottom-6 left-6 flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-white text-xs font-black uppercase tracking-widest bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-md border border-white/10">
+                    Live Call with {recipientName}
+                  </span>
+                </div>
+              </div>
+              <div className="h-24 flex items-center justify-center gap-6 mt-4">
+                <Button
+                  size="icon"
+                  className={cn(
+                    "w-14 h-14 rounded-full shadow-xl transition-all",
+                    videoOn ? "bg-slate-700 hover:bg-slate-600" : "bg-red-500 hover:bg-red-600"
+                  )}
+                  onClick={() => setVideoOn(!videoOn)}
+                >
+                  {videoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
+                </Button>
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  className="w-16 h-16 rounded-full shadow-xl hover:scale-110 active:scale-90 transition-all bg-red-600"
+                  onClick={endCall}
+                >
+                  <PhoneOff className="w-8 h-8" />
+                </Button>
+                <Button
+                  size="icon"
+                  className={cn(
+                    "w-14 h-14 rounded-full shadow-xl transition-all",
+                    micOn ? "bg-slate-700 hover:bg-slate-600" : "bg-red-500 hover:bg-red-600"
+                  )}
+                  onClick={() => setMicOn(!micOn)}
+                >
+                  {micOn ? <Mic className="w-6 h-6" /> : <MicOff className="w-6 h-6" />}
+                </Button>
+              </div>
+            </div>
+          )}
+        </Card>
       </div>
     </div>
   );

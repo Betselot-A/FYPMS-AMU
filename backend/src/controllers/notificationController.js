@@ -11,8 +11,12 @@ const User = require("../models/User");
  */
 const getNotifications = async (req, res, next) => {
   try {
-    const notifications = await Notification.find({ userId: req.user._id })
+    // Fetch messages where user is either recipient OR sender
+    const notifications = await Notification.find({
+      $or: [{ userId: req.user._id }, { senderId: req.user._id }]
+    })
       .populate("senderId", "name role")
+      .populate("userId", "name role")
       .sort({ createdAt: -1 });
 
     res.json(notifications);
@@ -96,14 +100,21 @@ const createNotification = async (req, res, next) => {
       return res.status(400).json({ error: "VALIDATION", message: "Message is required" });
     }
 
+    const isAdminOrCoordinator = ["admin", "coordinator"].includes(req.user.role);
     let targets = [];
 
     if (userIds && Array.isArray(userIds) && userIds.length > 0) {
       targets = userIds;
     } else if (userId) {
       targets = [userId];
+    } else if (!isAdminOrCoordinator) {
+      // Students/Staff trying to broadcast
+      return res.status(403).json({
+        error: "FORBIDDEN",
+        message: "You are not authorized to broadcast messages to all users.",
+      });
     } else {
-      // Broadcast to all non-admin users (excluding sender)
+      // Broadcast to all non-admin users (excluding sender) — ONLY for Admin/Coordinator
       const nonAdmins = await User.find({ 
         role: { $ne: "admin" },
         _id: { $ne: req.user._id }

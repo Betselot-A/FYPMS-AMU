@@ -22,8 +22,8 @@ const upload = require("../middleware/uploadMiddleware");
 // All routes require authentication
 router.use(protect);
 
-// Admin & Coordinator can list users
-router.get("/", authorize("admin", "coordinator"), getUsers);
+// Authenticated users can list users (Students/Staff will be filtered in controller)
+router.get("/", getUsers);
 
 // Admin-only CRUD
 router.post("/", authorize("admin"), createUser);

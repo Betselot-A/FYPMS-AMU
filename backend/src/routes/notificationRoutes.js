@@ -26,7 +26,7 @@ router.get("/sent", authorize("admin", "coordinator"), getSentNotifications);
 router.put("/read-all", markAllAsRead);
 router.put("/:id/read", markAsRead);
 
-// Admin/Coordinator: send notifications
-router.post("/", authorize("admin", "coordinator"), createNotification);
+// Admin/Coordinator/Student/Staff: send notifications (direct messages)
+router.post("/", createNotification);
 
 module.exports = router;

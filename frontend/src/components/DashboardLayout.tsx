@@ -8,12 +8,12 @@ import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  GraduationCap, LayoutDashboard, FolderOpen, MessageSquare,
+import { GraduationCap, LayoutDashboard, FolderOpen, MessageSquare,
   Bell, Users, ClipboardCheck, BarChart3, Settings, LogOut, Award, UserCog,
   FileUp, Send, Activity, ChevronDown, ChevronRight, UserPen, Video, Clock,
   Megaphone, Wrench, Key, UserCheck, Mail,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { User } from "@/types";
 
 interface NavItem {
@@ -43,7 +43,7 @@ const getStudentNav = (): NavItem[] => [
 const getStaffNav = (user: User): NavItem[] => {
   const items: NavItem[] = [
     { label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, path: "/dashboard" },
-    { label: "Messages", icon: <MessageSquare className="w-4 h-4" />, path: "/dashboard/staff/messages" },
+    { label: "Messenger", icon: <MessageSquare className="w-4 h-4" />, path: "/dashboard/staff/messages" },
     { label: "Notifications", icon: <Bell className="w-4 h-4" />, path: "/dashboard/notifications" },
     { label: "Edit Profile", icon: <UserPen className="w-4 h-4" />, path: "/dashboard/profile" },
   ];
@@ -75,7 +75,7 @@ const getNavConfig = (user: User): NavItem[] => {
         },
         { label: "All Students", icon: <Users className="w-4 h-4" />, path: "/dashboard/coordinator/students" },
         { label: "Reports", icon: <BarChart3 className="w-4 h-4" />, path: "/dashboard/coordinator/reports" },
-        { label: "Send Message", icon: <Mail className="w-4 h-4" />, path: "/dashboard/coordinator/messages" },
+        { label: "Messenger", icon: <MessageSquare className="w-4 h-4" />, path: "/dashboard/coordinator/messages" },
         { label: "Notifications", icon: <Bell className="w-4 h-4" />, path: "/dashboard/notifications" },
         { label: "Edit Profile", icon: <UserPen className="w-4 h-4" />, path: "/dashboard/profile" },
       ];
@@ -85,7 +85,7 @@ const getNavConfig = (user: User): NavItem[] => {
         { label: "Group Analysis", icon: <Users className="w-4 h-4" />, path: "/dashboard/admin/grouping" },
         { label: "Grade System", icon: <BarChart3 className="w-4 h-4" />, path: "/dashboard/admin/grade-system" },
         { label: "Passwords", icon: <Key className="w-4 h-4" />, path: "/dashboard/admin/passwords" },
-        { label: "Send Message", icon: <Mail className="w-4 h-4" />, path: "/dashboard/admin/messages" },
+        { label: "Messenger", icon: <MessageSquare className="w-4 h-4" />, path: "/dashboard/admin/messages" },
         { label: "Settings", icon: <Settings className="w-4 h-4" />, path: "/dashboard/admin/settings" },
         { label: "Notifications", icon: <Bell className="w-4 h-4" />, path: "/dashboard/notifications" },
         { label: "Edit Profile", icon: <UserPen className="w-4 h-4" />, path: "/dashboard/profile" },
@@ -197,8 +197,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     : user.role;
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border shrink-0">
+    <div className="h-screen flex bg-background overflow-hidden relative">
+      <aside className="w-64 bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border shrink-0 shadow-sm relative z-20">
         <div className="p-5 border-b border-sidebar-border">
           <Link to="/dashboard" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
@@ -210,25 +210,28 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         <NavItems items={navItems} currentPath={location.pathname} />
 
-        <div className="p-4 border-t border-sidebar-border">
+        <div className="p-4 border-t border-sidebar-border mt-auto">
           <div className="flex items-center gap-3 mb-3">
-            <Avatar className="w-9 h-9">
-              <AvatarFallback className="bg-sidebar-accent text-sidebar-foreground text-xs">{initials}</AvatarFallback>
+            <Avatar className="w-9 h-9 border border-sidebar-border/50 shadow-sm">
+              <AvatarFallback className="bg-sidebar-accent text-sidebar-foreground text-xs font-bold">{initials}</AvatarFallback>
             </Avatar>
             <div className="overflow-hidden">
-              <p className="text-sm font-medium text-sidebar-foreground truncate">{user.name}</p>
-              <p className="text-xs text-sidebar-foreground/60 capitalize">{roleLabel}</p>
+              <p className="text-sm font-bold text-sidebar-foreground truncate leading-tight">{user.name}</p>
+              <p className="text-[10px] text-sidebar-foreground/60 uppercase font-black tracking-widest mt-0.5">{roleLabel}</p>
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50" onClick={handleLogout}>
+          <Button variant="ghost" size="sm" className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50 h-9 rounded-lg" onClick={handleLogout}>
             <LogOut className="w-4 h-4 mr-2" />
             Sign Out
           </Button>
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
-        <div className="p-6 max-w-6xl mx-auto animate-fade-in">
+      <main className="flex-1 min-w-0 overflow-hidden relative h-full bg-background z-10">
+        <div className={cn(
+          "animate-fade-in h-full",
+          location.pathname.includes("/messages") ? "p-0" : "p-6 lg:p-8 overflow-y-auto"
+        )}>
           {children}
         </div>
       </main>

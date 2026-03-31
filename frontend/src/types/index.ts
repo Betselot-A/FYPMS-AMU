@@ -77,7 +77,11 @@ export interface Feedback {
 
 export interface Notification {
   id: string;
-  userId: string;
+  userId: {
+    id: string;
+    name?: string;
+    role?: string;
+  } | string;
   senderId?: {
     id: string;
     name: string;

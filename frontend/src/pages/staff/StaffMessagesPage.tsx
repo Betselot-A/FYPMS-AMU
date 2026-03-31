@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { MessageSquare, Send, Loader2 } from "lucide-react";
+import { MessageSquare, Send, Loader2, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Project, User as UserType, Notification } from "@/types";
 
@@ -22,6 +22,7 @@ const StaffMessagesPage = () => {
   const [isLoadingStudents, setIsLoadingStudents] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [adminUser, setAdminUser] = useState<UserType | null>(null);
 
   // Fetch projects and students
   const fetchData = useCallback(async () => {
@@ -55,6 +56,17 @@ const StaffMessagesPage = () => {
     }
   }, [user]);
 
+  // Fetch admin user
+  const fetchAdmin = useCallback(async () => {
+    try {
+      const res = await userService.getAll({ limit: 1000 });
+      const admin = res.data.users.find(u => u.role === "admin");
+      if (admin) setAdminUser(admin);
+    } catch (error) {
+      console.error("Error fetching admin:", error);
+    }
+  }, []);
+
   // Fetch messages history
   const fetchMessages = useCallback(async () => {
     if (!user) return;
@@ -71,10 +83,11 @@ const StaffMessagesPage = () => {
 
   useEffect(() => {
     fetchData();
+    fetchAdmin();
     fetchMessages();
-  }, [fetchData, fetchMessages]);
+  }, [fetchData, fetchAdmin, fetchMessages]);
 
-  const selectedStudent = students.find(s => s.id === selectedStudentId);
+  const selectedStudent = students.find(s => s.id === selectedStudentId) || (selectedStudentId === adminUser?.id ? adminUser : null);
 
   // Filter notifications to only show conversation between this staff and the selected student
   const messages = selectedStudentId
@@ -125,34 +138,55 @@ const StaffMessagesPage = () => {
                 <Loader2 className="w-6 h-6 animate-spin" />
                 <p className="text-xs">Loading students...</p>
               </div>
-            ) : students.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8 px-4">No students assigned to your projects.</p>
+            ) : students.length === 0 && !adminUser ? (
+              <p className="text-sm text-muted-foreground text-center py-8 px-4">No students or support assigned.</p>
             ) : (
-              students.map((student) => {
-                const isActive = selectedStudentId === student.id;
-                const initials = student.name.split(" ").map((n) => n[0]).join("").toUpperCase();
-                return (
+              <div className="space-y-1">
+                {adminUser && (
                   <button
-                    key={student.id}
-                    onClick={() => setSelectedStudentId(student.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                      isActive
-                        ? "bg-primary/10 text-primary font-medium"
-                        : "hover:bg-muted/50 text-foreground"
+                    onClick={() => setSelectedStudentId(adminUser.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors border border-primary/20 bg-primary/5 mb-2 ${
+                      selectedStudentId === adminUser.id
+                        ? "bg-primary/20 text-primary font-medium"
+                        : "hover:bg-primary/10 text-foreground"
                     }`}
                   >
-                    <Avatar className="w-8 h-8 border border-border">
-                      <AvatarFallback className="text-[10px] bg-background text-primary font-bold">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                      <HelpCircle className="w-4 h-4 text-primary" />
+                    </div>
                     <div className="overflow-hidden">
-                      <p className="text-sm truncate">{student.name}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{student.department}</p>
+                      <p className="text-sm font-semibold truncate leading-tight tracking-tight">System Support</p>
+                      <p className="text-[10px] text-primary/70 truncate uppercase font-bold tracking-widest">Admin</p>
                     </div>
                   </button>
-                );
-              })
+                )}
+                
+                {students.map((student) => {
+                  const isActive = selectedStudentId === student.id;
+                  const initials = student.name.split(" ").map((n) => n[0]).join("").toUpperCase();
+                  return (
+                    <button
+                      key={student.id}
+                      onClick={() => setSelectedStudentId(student.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
+                        isActive
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "hover:bg-muted/50 text-foreground"
+                      }`}
+                    >
+                      <Avatar className="w-8 h-8 border border-border">
+                        <AvatarFallback className="text-[10px] bg-background text-primary font-bold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="overflow-hidden">
+                        <p className="text-sm truncate">{student.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate">{student.department}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
@@ -169,8 +203,12 @@ const StaffMessagesPage = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div>
-                    <CardTitle className="text-sm">{selectedStudent.name}</CardTitle>
-                    <p className="text-[10px] text-muted-foreground">Active Conversation</p>
+                    <CardTitle className="text-sm">
+                      {selectedStudent.id === adminUser?.id ? "System Support" : selectedStudent.name}
+                    </CardTitle>
+                    <p className="text-[10px] text-muted-foreground">
+                      {selectedStudent.id === adminUser?.id ? "Report bugs or data issues" : "Active Conversation"}
+                    </p>
                   </div>
                 </>
               ) : (

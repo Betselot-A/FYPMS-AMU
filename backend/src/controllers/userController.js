@@ -3,6 +3,7 @@
 // ============================================================
 
 const User = require("../models/User");
+const Project = require("../models/Project");
 const fs = require("fs");
 const csv = require("csv-parser");
 const XLSX = require("xlsx");
@@ -21,18 +22,55 @@ const generateTempPassword = () => {
  */
 const getUsers = async (req, res, next) => {
   try {
-    const { role, department, search, page = 1, limit = 20 } = req.query;
+    const { role, department, search, page = 1, limit = 1000 } = req.query;
     const filter = {};
+    if (req.user.role === "admin") {
+      // Admins see everyone, but allow filtering by query
+      if (role) filter.role = role;
+      if (department) filter.department = department;
+    } else if (req.user.role === "coordinator") {
+      // Coordinators see their own department + all system admins
+      filter.$or = [
+        { department: req.user.department },
+        { role: "admin" }
+      ];
+      if (role) filter.role = role;
+    } else if (req.user.role === "staff") {
+      // Staff (Advisor/Examiner) Discovery Logic
+      // 1. Find all their linked projects
+      const myProjects = await Project.find({
+        $or: [{ advisorId: req.user.id }, { examinerId: req.user.id }]
+      });
 
-    if (role) filter.role = role;
-    
-    // Departmental Isolation: Coordinators can only see their own department
-    if (req.user.role === "coordinator") {
-      filter.department = req.user.department;
-      // Filter students and staff only (optional, but usually coordinators manage these)
-      filter.role = { $in: ["student", "staff"] };
-    } else if (department) {
-      filter.department = department;
+      const linkedUserIds = new Set();
+      myProjects.forEach(p => {
+        p.groupMembers.forEach(id => linkedUserIds.add(id.toString()));
+        if (p.advisorId) linkedUserIds.add(p.advisorId.toString());
+        if (p.examinerId) linkedUserIds.add(p.examinerId.toString());
+      });
+
+      // 2. Discover linked users, system admins, and their coordinator
+      filter.$or = [
+        { _id: { $in: Array.from(linkedUserIds) } },
+        { role: "admin" },
+        { role: "coordinator", department: req.user.department }
+      ];
+    } else if (req.user.role === "student") {
+      // Student Discovery Logic
+      // 1. Find their project
+      const myProject = await Project.findOne({ groupMembers: req.user.id });
+      const linkedUserIds = [];
+      if (myProject) {
+        if (myProject.advisorId) linkedUserIds.push(myProject.advisorId);
+        if (myProject.examinerId) linkedUserIds.push(myProject.examinerId);
+      }
+
+      // 2. See Advisor, Examiner, Admins, and Coordinator
+      filter.$or = [
+        { _id: { $in: linkedUserIds } },
+        { role: "admin" },
+        { role: "coordinator", department: req.user.department }
+      ];
     }
 
     if (search) {

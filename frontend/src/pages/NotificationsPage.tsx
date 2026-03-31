@@ -4,13 +4,15 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { notificationService } from "@/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bell, Calendar, Info, AlertTriangle, CheckCircle, Loader2, MailOpen, User } from "lucide-react";
+import { Bell, Calendar, Info, AlertTriangle, CheckCircle, Loader2, MailOpen, User, Reply, Send } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import type { Notification } from "@/types";
 
 const typeConfig: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
@@ -22,6 +24,7 @@ const typeConfig: Record<string, { icon: React.ReactNode; color: string; bg: str
 
 const NotificationsPage = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isMarkingAll, setIsMarkingAll] = useState(false);
@@ -138,51 +141,104 @@ const NotificationsPage = () => {
                   hour: "2-digit",
                   minute: "2-digit",
                 });
-                // sender info (populated from backend)
-                const sender = n.senderId;
-                const senderName = typeof sender === 'object' ? sender.name : "System";
+                const sId = typeof n.senderId === 'object' ? n.senderId.id : n.senderId;
+                const isOwnMessage = sId === user.id;
+                
+                const senderName = typeof n.senderId === 'object' ? n.senderId.name : "System";
+                const recipientName = typeof n.userId === 'object' ? n.userId.name : "User";
+                const canReply = !isOwnMessage && typeof n.senderId === 'object' && n.senderId.id;
 
                 return (
-                  <div
-                    key={n.id}
-                    className={`flex items-start gap-4 px-5 py-4 hover:bg-muted/20 transition-colors cursor-pointer ${!n.read ? "bg-primary/3" : ""}`}
-                    onClick={() => !n.read && handleMarkAsRead(n.id)}
-                  >
-                    {/* Type Icon */}
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${cfg.bg}`}>
-                      <span className={cfg.color}>{cfg.icon}</span>
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      {n.subject && (
-                        <p className="text-sm font-semibold text-foreground">{n.subject}</p>
-                      )}
-                      <p className={`text-sm ${!n.subject ? "font-medium text-foreground" : "text-muted-foreground mt-0.5"}`}>
-                        {n.message}
-                      </p>
-                      <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] capitalize gap-1 ${cfg.color} border-current/20 ${cfg.bg}`}
-                        >
-                          {cfg.icon}
-                          {n.type}
-                        </Badge>
-                        <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                          <User className="w-2.5 h-2.5" /> From: {senderName}
-                        </span>
-                        <span className="text-[11px] text-muted-foreground">{date}</span>
+                  <div key={n.id} className={cn("group transition-all", !n.read ? "bg-primary/3" : "", isOwnMessage && "bg-muted/5")}>
+                    <div
+                      className="flex items-start gap-4 px-5 py-4 hover:bg-muted/10 cursor-pointer"
+                      onClick={() => !n.read && handleMarkAsRead(n.id)}
+                    >
+                      <div className={cn(
+                        "w-9 h-9 rounded-full flex items-center justify-center shrink-0 mt-1",
+                        isOwnMessage ? "bg-muted text-muted-foreground ring-1 ring-border" : cfg.bg
+                      )}>
+                        {isOwnMessage ? (
+                          <Send className="w-3.5 h-3.5 rotate-[-45deg]" />
+                        ) : (
+                          <span className={cfg.color}>{cfg.icon}</span>
+                        )}
                       </div>
-                    </div>
 
-                    {/* Unread indicator */}
-                    <div className="shrink-0 pt-1.5">
-                      {!n.read ? (
-                        <span className="block w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-                      ) : (
-                        <CheckCircle className="w-4 h-4 text-success/60" />
-                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          {n.subject && (
+                            <p className="text-sm font-bold text-foreground truncate">{n.subject}</p>
+                          )}
+                          {isOwnMessage && (
+                            <Badge variant="outline" className="text-[9px] h-4 py-0 uppercase tracking-tighter opacity-70">
+                              Outbound
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        <p className={cn(
+                          "text-sm leading-relaxed",
+                          !n.subject ? "font-medium text-foreground" : "text-muted-foreground"
+                        )}>
+                          {n.message}
+                        </p>
+                        
+                        <div className="flex items-center gap-3 mt-2 flex-wrap">
+                          <Badge
+                            variant="outline"
+                            className={cn(
+                              "text-[10px] capitalize gap-1 border-current/20",
+                              isOwnMessage ? "bg-muted text-muted-foreground" : `${cfg.color} ${cfg.bg}`
+                            )}
+                          >
+                            {isOwnMessage ? <Send className="w-2.5 h-2.5" /> : cfg.icon}
+                            {isOwnMessage ? "Sent" : n.type}
+                          </Badge>
+                          <span className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                            <User className="w-2.5 h-2.5" />
+                            {isOwnMessage ? (
+                              <span className="font-medium text-primary/80">To: {recipientName}</span>
+                            ) : (
+                              <span className="font-medium">From: {senderName}</span>
+                            )}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground opacity-60">• {date}</span>
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 flex items-center gap-2 pt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {canReply && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-xs font-semibold text-primary hover:text-primary hover:bg-primary/10 gap-1.5 px-3"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const targetId = sId;
+                              const role = user?.role;
+                              if (role === "admin") navigate(`/dashboard/admin/messages?user=${targetId}`);
+                              else if (role === "coordinator") navigate(`/dashboard/coordinator/messages?user=${targetId}`);
+                              else if (role === "student") navigate(`/dashboard/messages?user=${targetId}`);
+                              else if (role === "staff") navigate(`/dashboard/staff/messages?user=${targetId}`);
+                            }}
+                          >
+                            <Reply className="w-3.5 h-3.5" />
+                            Reply in Messenger
+                          </Button>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 rounded-full hover:bg-muted"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMarkAsRead(n.id);
+                          }}
+                        >
+                          <CheckCircle className="w-4 h-4 text-muted-foreground/40 group-hover:text-success/60" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 );
