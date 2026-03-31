@@ -92,9 +92,11 @@ const markAllAsRead = async (req, res, next) => {
  *   - userIds: array of target user IDs
  *   - If neither provided: broadcast to all non-admin users
  */
+// Admin/Coordinator/Student/Staff — send a notification
+// Body: { userId?, userIds?, subject?, message, type?, attachmentUrl?, attachmentName? }
 const createNotification = async (req, res, next) => {
   try {
-    const { userId, userIds, subject, message, type } = req.body;
+    const { userId, userIds, subject, message, type, attachmentUrl, attachmentName } = req.body;
 
     if (!message || message.trim() === "") {
       return res.status(400).json({ error: "VALIDATION", message: "Message is required" });
@@ -131,10 +133,46 @@ const createNotification = async (req, res, next) => {
       subject: subject || "",
       message: message.trim(),
       type: type || "info",
+      attachmentUrl: attachmentUrl || null,
+      attachmentName: attachmentName || null,
     }));
 
     const created = await Notification.insertMany(notifications);
     res.status(201).json({ sent: created.length, notifications: created });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * PUT /api/notifications/read-from/:userId
+ * Mark all notifications from a specific user as read
+ */
+const markFromUserRead = async (req, res, next) => {
+  try {
+    await Notification.updateMany(
+      { userId: req.user._id, senderId: req.params.userId, read: false },
+      { read: true }
+    );
+    res.json({ message: "Messages marked as read" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * POST /api/notifications/upload
+ * Upload an attachment for messaging
+ */
+const uploadAttachment = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "NO_FILE", message: "No file uploaded" });
+    }
+    const attachmentUrl = `/uploads/${req.file.filename}`;
+    const attachmentName = req.file.originalname;
+
+    res.status(200).json({ attachmentUrl, attachmentName });
   } catch (error) {
     next(error);
   }
@@ -146,4 +184,6 @@ module.exports = {
   markAsRead,
   markAllAsRead,
   createNotification,
+  markFromUserRead,
+  uploadAttachment,
 };

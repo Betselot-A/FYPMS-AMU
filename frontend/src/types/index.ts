@@ -90,6 +90,8 @@ export interface Notification {
   subject?: string;
   message: string;
   type: "info" | "warning" | "success" | "deadline";
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
   read: boolean;
   date: string;
   createdAt?: string;

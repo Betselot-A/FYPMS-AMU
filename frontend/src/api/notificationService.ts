@@ -12,6 +12,8 @@ export interface CreateNotificationRequest {
   subject?: string;
   message: string;
   type?: "info" | "warning" | "success" | "deadline";
+  attachmentUrl?: string | null;
+  attachmentName?: string | null;
 }
 
 export interface SentNotification {
@@ -39,11 +41,27 @@ const notificationService = {
   markAsRead: (id: string) =>
     apiClient.put(`/notifications/${id}/read`),
 
+  // PUT /api/notifications/read-from/:userId
+  markFromUserRead: (userId: string) =>
+    apiClient.put(`/notifications/read-from/${userId}`),
+
   // PUT /api/notifications/read-all
   markAllAsRead: () =>
     apiClient.put("/notifications/read-all"),
 
+  // POST /api/notifications/upload
+  uploadAttachment: (file: File) => {
+    const formData = new FormData();
+    formData.append("attachment", file);
+    return apiClient.post<{ attachmentUrl: string; attachmentName: string }>(
+      "/notifications/upload",
+      formData,
+      { headers: { "Content-Type": "multipart/form-data" } }
+    );
+  },
+
   // POST /api/notifications (admin/coordinator)
+
   create: (data: CreateNotificationRequest) =>
     apiClient.post<{ sent: number }>("/notifications", data),
 };

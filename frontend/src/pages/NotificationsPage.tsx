@@ -141,12 +141,12 @@ const NotificationsPage = () => {
                   hour: "2-digit",
                   minute: "2-digit",
                 });
-                const sId = typeof n.senderId === 'object' ? n.senderId.id : n.senderId;
+                const sId = typeof n.senderId === 'object' && n.senderId ? n.senderId.id : n.senderId;
                 const isOwnMessage = sId === user.id;
                 
-                const senderName = typeof n.senderId === 'object' ? n.senderId.name : "System";
-                const recipientName = typeof n.userId === 'object' ? n.userId.name : "User";
-                const canReply = !isOwnMessage && typeof n.senderId === 'object' && n.senderId.id;
+                const senderName = typeof n.senderId === 'object' && n.senderId ? n.senderId.name : "System";
+                const recipientName = typeof n.userId === 'object' && n.userId ? n.userId.name : "System / All";
+                const canReply = !isOwnMessage && typeof n.senderId === 'object' && n.senderId?.id;
 
                 return (
                   <div key={n.id} className={cn("group transition-all", !n.read ? "bg-primary/3" : "", isOwnMessage && "bg-muted/5")}>

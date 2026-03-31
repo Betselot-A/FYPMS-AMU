@@ -27,7 +27,7 @@ const statusColors: Record<string, string> = {
 const advisorFeatures = [
   { label: "Submissions", icon: ClipboardCheck, path: "submissions", description: "Review uploaded files, provide marks and feedback" },
   { label: "Deadlines", icon: Clock, path: "deadlines", description: "Monitor evaluation deadlines and milestones" },
-  { label: "Communicate", icon: MessageSquare, path: "communicate", description: "Chat with students in this project" },
+  { label: "Communicate", icon: MessageSquare, path: "/dashboard/staff/messages", description: "Chat with students assigned to this project" },
 ];
 
 const examinerFeatures = [
@@ -124,7 +124,7 @@ const StaffProjectDetailPage = () => {
       </h2>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {features.map((feature) => (
-          <Link key={feature.path} to={`${basePath}/${feature.path}?role=${role}`}>
+          <Link key={feature.path} to={feature.path.startsWith("/") ? feature.path : `${basePath}/${feature.path}?role=${role}`}>
             <Card className="shadow-card hover:shadow-md transition-shadow cursor-pointer border-border hover:border-primary/30">
               <CardContent className="p-5 flex items-start gap-4">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">

@@ -18,7 +18,8 @@ import { MultiUserSelect } from "@/components/MultiUserSelect";
 import { 
   Send, Search, Loader2, MessageSquare, User, Clock, 
   ChevronRight, Video, Mic, MailPlus, AlertTriangle, 
-  Info, CheckCircle, Calendar, Megaphone, X, History 
+  Info, CheckCircle, Calendar, Megaphone, X, History,
+  Paperclip, FileText, Download 
 } from "lucide-react";
 import { toast } from "sonner";
 import { notificationService, userService } from "@/api";
@@ -50,7 +51,9 @@ const AdminMessenger = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(searchParams.get("user"));
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [attachment, setAttachment] = useState<File | null>(null);
   const [isSendingChat, setIsSendingChat] = useState(false);
+  const [chatSearchQuery, setChatSearchQuery] = useState("");
 
   // Compose State (Broadcast / Targeted)
   const [isSendingCompose, setIsSendingCompose] = useState(false);
@@ -82,6 +85,11 @@ const AdminMessenger = () => {
 
   useEffect(() => {
     fetchData();
+    // Real-Time Polling: fetch data every 10 seconds
+    const intervalId = setInterval(() => {
+      fetchData();
+    }, 10000);
+    return () => clearInterval(intervalId);
   }, [fetchData]);
 
   // 2. Handle Search Params
@@ -98,14 +106,17 @@ const AdminMessenger = () => {
   // 3. Computed Chat Data
   const activeChatMessages = useMemo(() => {
     if (!selectedUserId || !currentUser) return [];
-    return notifications.filter(n => {
-      const sId = typeof n.senderId === 'object' ? (n.senderId as any).id : n.senderId;
-      const uId = typeof n.userId === 'object' ? (n.userId as any).id : n.userId;
+    const thread = notifications.filter(n => {
+      const sId = typeof n.senderId === 'object' && n.senderId ? (n.senderId as any).id : n.senderId;
+      const uId = typeof n.userId === 'object' && n.userId ? (n.userId as any).id : n.userId;
       const myId = currentUser.id.toString();
       const targetId = selectedUserId.toString();
       return (uId === myId && sId === targetId) || (sId === myId && uId === targetId);
     }).sort((a, b) => new Date(a.date || a.createdAt || 0).getTime() - new Date(b.date || b.createdAt || 0).getTime());
-  }, [notifications, selectedUserId, currentUser]);
+
+    if (!chatSearchQuery.trim()) return thread;
+    return thread.filter(msg => msg.message.toLowerCase().includes(chatSearchQuery.toLowerCase()));
+  }, [notifications, selectedUserId, currentUser, chatSearchQuery]);
 
   const selectedUser = useMemo(() => 
     allUsers.find(u => u.id === selectedUserId), 
@@ -121,19 +132,32 @@ const AdminMessenger = () => {
   // 4. Handlers
   const handleChatSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !selectedUserId || !currentUser) return;
+    if ((!newMessage.trim() && !attachment) || !selectedUserId || !currentUser) return;
 
     setIsSendingChat(true);
     try {
+      let attachmentUrl = null;
+      let attachmentName = null;
+
+      if (attachment) {
+        const uploadRes = await notificationService.uploadAttachment(attachment);
+        attachmentUrl = uploadRes.data.attachmentUrl;
+        attachmentName = uploadRes.data.attachmentName;
+      }
+
       await notificationService.create({
         userId: selectedUserId,
         subject: `Message from ${currentUser.name}`,
-        message: newMessage.trim(),
-        type: "info"
+        message: newMessage.trim() || `Sent an attachment: ${attachmentName}`,
+        type: "info",
+        attachmentUrl,
+        attachmentName,
       });
+
       setNewMessage("");
-      const res = await notificationService.getAll();
-      setNotifications(res.data);
+      setAttachment(null);
+      await fetchData();
+
       setTimeout(() => {
         const area = document.getElementById("admin-chat-scroll-area");
         if (area) area.scrollTop = area.scrollHeight;
@@ -170,10 +194,16 @@ const AdminMessenger = () => {
     }
   };
 
-  const handleSelectUser = (id: string) => {
+  const handleSelectUser = async (id: string) => {
     setSelectedUserId(id);
     setViewMode("chat");
     setSearchParams({ user: id });
+
+    // Mark as read immediately
+    try {
+      await notificationService.markFromUserRead(id);
+      fetchData(); // Silently refresh read statuses
+    } catch { /* ignore */ }
   };
 
   const startCompose = () => {
@@ -240,6 +270,14 @@ const AdminMessenger = () => {
                 {filteredUsers.map((u) => {
                   const isActive = !viewMode.includes("compose") && selectedUserId === u.id;
                   const initials = u.name.split(" ").map(n => n[0]).join("").toUpperCase();
+                  
+                  // Calculate unread badge
+                  const unreadCount = notifications.filter(n => {
+                    const sId = typeof n.senderId === 'object' && n.senderId ? (n.senderId as any).id : n.senderId;
+                    const uId = typeof n.userId === 'object' && n.userId ? (n.userId as any).id : n.userId;
+                    return sId === u.id && uId === currentUser.id && !n.read;
+                  }).length;
+
                   return (
                     <button
                       key={u.id}
@@ -251,11 +289,18 @@ const AdminMessenger = () => {
                           : "hover:bg-muted/40 text-foreground"
                       )}
                     >
-                      <Avatar className={cn("w-10 h-10 ring-2", isActive ? "ring-white/20" : "ring-primary/5")}>
-                        <AvatarFallback className={cn("text-xs font-bold", isActive ? "bg-white/10" : "bg-primary/5 text-primary")}>
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar className={cn("w-10 h-10 ring-2", isActive ? "ring-white/20" : "ring-primary/5")}>
+                          <AvatarFallback className={cn("text-xs font-bold", isActive ? "bg-white/10" : "bg-primary/5 text-primary")}>
+                            {initials}
+                          </AvatarFallback>
+                        </Avatar>
+                        {!isActive && unreadCount > 0 && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full border-2 border-background flex items-center justify-center">
+                            <span className="text-[10px] font-bold text-white leading-none">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0 pr-2">
                         <p className={cn("text-sm font-bold truncate", isActive ? "text-white" : "text-foreground")}>
                           {u.name}
@@ -264,7 +309,11 @@ const AdminMessenger = () => {
                           {u.role}
                         </p>
                       </div>
-                      <ChevronRight className={cn("w-4 h-4 opacity-0 group-hover:opacity-40 transition-opacity", isActive && "hidden")} />
+                      {isActive ? (
+                        <div className="w-2 h-2 rounded-full bg-white ml-auto" />
+                      ) : (
+                         <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-40 transition-opacity ml-auto" />
+                      )}
                     </button>
                   );
                 })}
@@ -449,6 +498,19 @@ const AdminMessenger = () => {
                     </div>
                   </CardHeader>
 
+                  {/* Search Bar - In Chat */}
+                  <div className="px-8 py-3 bg-muted/5 border-b border-border flex items-center justify-between z-10 relative">
+                    <div className="relative w-full max-w-sm">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search conversation history..."
+                        value={chatSearchQuery}
+                        onChange={(e) => setChatSearchQuery(e.target.value)}
+                        className="pl-9 h-9 bg-background/50 text-sm border-none shadow-none focus-visible:ring-primary/20 rounded-full"
+                      />
+                    </div>
+                  </div>
+
                   {/* Message Area */}
                   <CardContent id="admin-chat-scroll-area" className="flex-1 overflow-y-auto p-10 space-y-8 bg-muted/2 custom-scrollbar">
                     {activeChatMessages.length === 0 ? (
@@ -460,7 +522,7 @@ const AdminMessenger = () => {
                     ) : (
                       <div className="flex flex-col gap-6">
                         {activeChatMessages.map((msg) => {
-                          const sId = typeof msg.senderId === 'object' ? (msg.senderId as any).id : msg.senderId;
+                          const sId = typeof msg.senderId === 'object' && msg.senderId ? (msg.senderId as any).id : msg.senderId;
                           const isOwn = sId === currentUser.id;
                           return (
                             <div key={msg.id} className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
@@ -471,6 +533,21 @@ const AdminMessenger = () => {
                                   : "bg-background border border-border text-foreground rounded-tl-none"
                               )}>
                                 <p className="leading-relaxed text-[15px] whitespace-pre-wrap">{msg.message}</p>
+                                
+                                {msg.attachmentUrl && (
+                                  <a href={msg.attachmentUrl.startsWith('http') ? msg.attachmentUrl : `http://localhost:5000${msg.attachmentUrl}`} target="_blank" rel="noopener noreferrer" 
+                                     className={cn("mt-4 flex items-center gap-3 p-3.5 rounded-2xl transition hover:brightness-110", isOwn ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
+                                    <div className="w-10 h-10 rounded-xl bg-background/10 border border-background/20 flex items-center justify-center shrink-0">
+                                      <FileText className="w-5 h-5" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-bold truncate pr-4">{msg.attachmentName || "Attachment"}</p>
+                                      <p className="text-[10px] uppercase font-black opacity-70 mt-0.5">Click to view/download</p>
+                                    </div>
+                                    <Download className="w-5 h-5 ml-1 opacity-80" />
+                                  </a>
+                                )}
+
                                 <div className={cn("flex items-center gap-2 mt-3", isOwn ? "justify-end" : "justify-start")}>
                                    <Clock className="w-2.5 h-2.5 opacity-40" />
                                    <p className="text-[10px] font-black opacity-40 uppercase tracking-tighter">
@@ -486,20 +563,37 @@ const AdminMessenger = () => {
                   </CardContent>
 
                   {/* Chat Input */}
-                  <div className="p-8 bg-background border-t border-border shrink-0">
+                  <div className="p-8 bg-background border-t border-border shrink-0 relative z-20">
                     <form onSubmit={handleChatSend} className="flex gap-4 max-w-5xl mx-auto items-center">
-                      <div className="flex-1 relative">
+                      <div className="flex flex-1 items-center gap-3 relative">
+                        {attachment && (
+                          <div className="absolute -top-16 left-0 right-0 p-3 bg-muted/90 backdrop-blur-md rounded-xl flex items-center gap-4 text-sm animate-in fade-in slide-in-from-bottom-2 border border-border shadow-lg">
+                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                              <Paperclip className="w-4 h-4" />
+                            </div>
+                            <span className="flex-1 truncate font-bold text-foreground">{attachment.name}</span>
+                            <button type="button" onClick={() => setAttachment(null)} className="p-2 hover:bg-black/10 hover:text-destructive dark:hover:bg-white/10 rounded-full transition text-muted-foreground border border-border bg-background">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                        
+                        <input type="file" id="chat-attachment" className="hidden" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
+                        <Button type="button" variant="outline" size="icon" className={cn("h-16 w-16 rounded-2xl border-none shadow-inner shrink-0 transition-colors", attachment ? "bg-primary/20 text-primary" : "bg-muted/40 hover:bg-primary/10 hover:text-primary")} onClick={() => document.getElementById("chat-attachment")?.click()}>
+                          <Paperclip className="w-6 h-6" />
+                        </Button>
+                        
                         <Input
                           placeholder={`Message ${selectedUser?.name}...`}
                           value={newMessage}
                           onChange={(e) => setNewMessage(e.target.value)}
                           disabled={isSendingChat}
-                          className="h-16 bg-muted/40 border-none shadow-inner focus-visible:ring-primary/40 rounded-2xl text-[16px] px-8 placeholder:opacity-50"
+                          className="h-16 bg-muted/40 border-none shadow-inner focus-visible:ring-primary/40 rounded-2xl text-[16px] px-6 placeholder:opacity-50 flex-1"
                         />
                       </div>
                       <Button 
                         type="submit" 
-                        disabled={isSendingChat || !newMessage.trim()}
+                        disabled={isSendingChat || (!newMessage.trim() && !attachment)}
                         className="h-16 w-16 rounded-2xl gradient-primary shadow-2xl shadow-primary/20 transition-all hover:scale-110 active:scale-95 shrink-0"
                       >
                         {isSendingChat ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}

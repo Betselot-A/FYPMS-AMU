@@ -24,20 +24,18 @@ const getUsers = async (req, res, next) => {
   try {
     const { role, department, search, page = 1, limit = 1000 } = req.query;
     const filter = {};
+    let visibilityOr = [];
+
     if (req.user.role === "admin") {
-      // Admins see everyone, but allow filtering by query
-      if (role) filter.role = role;
-      if (department) filter.department = department;
+      // Admins see everyone
     } else if (req.user.role === "coordinator") {
       // Coordinators see their own department + all system admins
-      filter.$or = [
+      visibilityOr = [
         { department: req.user.department },
         { role: "admin" }
       ];
-      if (role) filter.role = role;
     } else if (req.user.role === "staff") {
       // Staff (Advisor/Examiner) Discovery Logic
-      // 1. Find all their linked projects
       const myProjects = await Project.find({
         $or: [{ advisorId: req.user.id }, { examinerId: req.user.id }]
       });
@@ -49,15 +47,14 @@ const getUsers = async (req, res, next) => {
         if (p.examinerId) linkedUserIds.add(p.examinerId.toString());
       });
 
-      // 2. Discover linked users, system admins, and their coordinator
-      filter.$or = [
+      // Discover linked users, system admins, and their coordinator
+      visibilityOr = [
         { _id: { $in: Array.from(linkedUserIds) } },
         { role: "admin" },
         { role: "coordinator", department: req.user.department }
       ];
     } else if (req.user.role === "student") {
       // Student Discovery Logic
-      // 1. Find their project
       const myProject = await Project.findOne({ groupMembers: req.user.id });
       const linkedUserIds = [];
       if (myProject) {
@@ -65,19 +62,36 @@ const getUsers = async (req, res, next) => {
         if (myProject.examinerId) linkedUserIds.push(myProject.examinerId);
       }
 
-      // 2. See Advisor, Examiner, Admins, and Coordinator
-      filter.$or = [
+      // See Advisor, Examiner, Admins, and Coordinator
+      visibilityOr = [
         { _id: { $in: linkedUserIds } },
         { role: "admin" },
         { role: "coordinator", department: req.user.department }
       ];
     }
 
+    if (visibilityOr.length > 0) {
+      filter.$and = filter.$and || [];
+      filter.$and.push({ $or: visibilityOr });
+    }
+
+    // Apply explicit role and department filters
+    if (role) {
+      filter.role = role;
+    }
+    if (department && req.user.role === "admin") {
+      filter.department = department;
+    }
+
+    // Apply search search across name and email
     if (search) {
-      filter.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-      ];
+      filter.$and = filter.$and || [];
+      filter.$and.push({
+        $or: [
+          { name: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+        ],
+      });
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);

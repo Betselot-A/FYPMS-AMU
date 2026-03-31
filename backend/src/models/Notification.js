@@ -24,6 +24,14 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    attachmentUrl: {
+      type: String,
+      default: null,
+    },
+    attachmentName: {
+      type: String,
+      default: null,
+    },
     type: {
       type: String,
       enum: ["info", "warning", "success", "deadline"],

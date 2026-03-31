@@ -25,7 +25,7 @@ import EditProfilePage from "./pages/student/EditProfilePage";
 import StaffProjectDetailPage from "./pages/staff/StaffProjectDetailPage";
 import ProjectSubmissionsPage from "./pages/staff/ProjectSubmissionsPage";
 import ProjectDeadlinesPage from "./pages/staff/ProjectDeadlinesPage";
-import ProjectCommunicatePage from "./pages/staff/ProjectCommunicatePage";
+
 import ProjectDetailsPage from "./pages/staff/ProjectDetailsPage";
 import ProjectEvaluatePage from "./pages/staff/ProjectEvaluatePage";
 import ProjectGradesPage from "./pages/staff/ProjectGradesPage";
@@ -80,7 +80,7 @@ const App = () => (
             <Route path="/dashboard/staff/project/:projectId" element={<DashboardPage><StaffProjectDetailPage /></DashboardPage>} />
             <Route path="/dashboard/staff/project/:projectId/submissions" element={<DashboardPage><ProjectSubmissionsPage /></DashboardPage>} />
             <Route path="/dashboard/staff/project/:projectId/deadlines" element={<DashboardPage><ProjectDeadlinesPage /></DashboardPage>} />
-            <Route path="/dashboard/staff/project/:projectId/communicate" element={<DashboardPage><ProjectCommunicatePage /></DashboardPage>} />
+
             <Route path="/dashboard/staff/project/:projectId/details" element={<DashboardPage><ProjectDetailsPage /></DashboardPage>} />
             <Route path="/dashboard/staff/project/:projectId/evaluate" element={<DashboardPage><ProjectEvaluatePage /></DashboardPage>} />
             <Route path="/dashboard/staff/project/:projectId/grades" element={<DashboardPage><ProjectGradesPage /></DashboardPage>} />
