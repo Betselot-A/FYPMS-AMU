@@ -53,13 +53,21 @@ const projectService = {
   delete: (id: string) =>
     apiClient.delete(`/projects/${id}`),
 
-  // POST /api/projects/:id/proposals — student submits a proposal
-  submitProposal: (projectId: string, title: string, description: string) =>
-    apiClient.post<Project>(`/projects/${projectId}/proposals`, { title, description }),
+  // POST /api/projects/:id/proposals — student submits a proposal (FormData for file upload)
+  submitProposal: (projectId: string, formData: FormData) =>
+    apiClient.post<Project>(`/projects/${projectId}/proposals`, formData),
 
-  // PUT /api/projects/:id/proposals/:index/approve — coordinator approves
-  approveProposal: (projectId: string, index: number) =>
-    apiClient.put<Project>(`/projects/${projectId}/proposals/${index}/approve`, {}),
+  // PUT /api/projects/:id/proposals/review — coordinator reviews
+  reviewProposal: (
+    projectId: string,
+    data: {
+      status: "approved" | "rejected";
+      feedback?: string;
+      selectedTitleIndex?: number;
+      advisorId?: string;
+      examinerId?: string;
+    }
+  ) => apiClient.put<Project>(`/projects/${projectId}/proposals/review`, data),
 
   // PUT /api/projects/:id/assign-staff — coordinator assigns advisor/examiner
   assignStaff: (projectId: string, advisorId: string, examinerId?: string) =>

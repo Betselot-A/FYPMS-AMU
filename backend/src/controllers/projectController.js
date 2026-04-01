@@ -248,43 +248,69 @@ const updateMilestone = async (req, res, next) => {
 
 /**
  * POST /api/projects/:id/proposals
- * Student — submit a project title proposal (max 3 per group)
+ * Student — submit a project title proposal (exactly 3 titles + document)
  */
 const submitProposal = async (req, res, next) => {
   try {
-    // Enforce global settings before accepting any proposal
-    const systemSettings = await Settings.findOne();
-    if (systemSettings) {
-      if (systemSettings.allowProposals === false) {
-        return res.status(403).json({
-          error: "PROPOSALS_DISABLED",
-          message: "Proposal submissions are currently disabled by the system administrator.",
-        });
-      }
-
-      if (systemSettings.registrationDeadline) {
-        const deadline = new Date(systemSettings.registrationDeadline);
-        if (new Date() > deadline) {
-          return res.status(403).json({
-            error: "DEADLINE_PASSED",
-            message: `The proposal submission deadline has passed (${deadline.toDateString()}).`,
-          });
-        }
-      }
-    }
-
     const project = await Project.findById(req.params.id);
     if (!project) return res.status(404).json({ message: "Project not found" });
+
+    // Enforce global settings
+    const systemSettings = await Settings.findOne();
+    if (systemSettings && (systemSettings.allowProposals === false)) {
+      return res.status(403).json({ message: "Proposal submissions are currently disabled." });
+    }
 
     if (project.proposalStatus === "approved") {
       return res.status(400).json({ message: "A proposal has already been approved for this group" });
     }
-    if (project.proposals.length >= 3) {
-      return res.status(400).json({ message: "Maximum of 3 proposals already submitted" });
+
+    // titles and descriptions should be sent as arrays or JSON strings depending on form-data
+    let { titles, descriptions } = req.body;
+    
+    const normalize = (val) => {
+      if (typeof val === "string") {
+        try {
+          if (val.trim().startsWith("[") || val.trim().startsWith("\"")) {
+            return JSON.parse(val);
+          }
+          return [val];
+        } catch (e) {
+          return [val];
+        }
+      }
+      return val;
+    };
+
+    titles = normalize(titles);
+    descriptions = normalize(descriptions);
+
+    if (!titles || !Array.isArray(titles) || titles.length !== 3) {
+      return res.status(400).json({ message: "You must provide exactly 3 project title options." });
+    }
+    if (!descriptions || !Array.isArray(descriptions) || descriptions.length !== 3) {
+      return res.status(400).json({ message: "You must provide exactly 3 project description options." });
     }
 
-    const { title, description } = req.body;
-    project.proposals.push({ title, description, submittedBy: req.user._id });
+    const documentUrl = req.file ? `/uploads/proposals/${req.file.filename}` : null;
+    
+    // Versioning logic: if there is a previous proposal, increment version
+    let nextVersion = 1;
+    if (project.proposals.length > 0) {
+      nextVersion = project.proposals[project.proposals.length - 1].version + 1;
+    }
+
+    const newProposal = {
+      titles,
+      descriptions,
+      documentUrl,
+      submittedBy: req.user._id,
+      status: "pending",
+      version: nextVersion
+    };
+
+    project.proposals.push(newProposal);
+    project.proposalStatus = "pending";
     await project.save();
 
     res.status(201).json(project);
@@ -294,34 +320,61 @@ const submitProposal = async (req, res, next) => {
 };
 
 /**
- * PUT /api/projects/:id/proposals/:index/approve
- * Coordinator — approve one of the submitted proposals
+ * PUT /api/projects/:id/proposals/review
+ * Coordinator — Approve or Reject a proposal
  */
-const approveProposal = async (req, res, next) => {
+const reviewProposal = async (req, res, next) => {
   try {
+    const { status, feedback, selectedTitleIndex, advisorId, examinerId } = req.body;
     const project = await Project.findById(req.params.id);
+    
     if (!project) return res.status(404).json({ message: "Project not found" });
+    if (project.proposals.length === 0) return res.status(400).json({ message: "No proposal to review" });
 
-    const index = parseInt(req.params.index);
-    if (index < 0 || index >= project.proposals.length) {
-      return res.status(400).json({ message: "Invalid proposal index" });
+    const currentProposal = project.proposals[project.proposals.length - 1];
+
+    if (status === "approved") {
+      if (selectedTitleIndex === undefined || selectedTitleIndex < 0 || selectedTitleIndex > 2) {
+        return res.status(400).json({ message: "Please select one of the 3 titles to approve." });
+      }
+
+      currentProposal.status = "approved";
+      project.proposalStatus = "approved";
+      project.finalTitle = currentProposal.titles[selectedTitleIndex];
+      project.description = currentProposal.descriptions[selectedTitleIndex];
+      project.approvedProposalIndex = selectedTitleIndex;
+      
+      // Auto-assign staff if provided
+      if (advisorId) project.advisorId = advisorId;
+      if (examinerId) project.examinerId = examinerId;
+      if (advisorId || examinerId) project.status = "in-progress";
+
+      // Notify group
+      const notifications = project.groupMembers.map((memberId) => ({
+        userId: memberId,
+        message: `Your proposal has been APPROVED! Final Title: "${project.finalTitle}"`,
+        type: "success",
+      }));
+      await Notification.insertMany(notifications);
+      
+    } else if (status === "rejected") {
+      if (!feedback) return res.status(400).json({ message: "Feedback is required for rejection." });
+      
+      currentProposal.status = "rejected";
+      currentProposal.feedback = feedback;
+      project.proposalStatus = "rejected";
+
+      // Notify group
+      const notifications = project.groupMembers.map((memberId) => ({
+        userId: memberId,
+        message: `Your proposal was rejected. Feedback: "${feedback}"`,
+        type: "warning",
+      }));
+      await Notification.insertMany(notifications);
     }
 
-    const approved = project.proposals[index];
-    project.title = approved.title;
-    project.description = approved.description;
-    project.proposalStatus = "approved";
-    project.approvedProposalIndex = index;
     await project.save();
-
-    // Notify all group members
-    const notifications = project.groupMembers.map((memberId) => ({
-      userId: memberId,
-      message: `Your proposal "${approved.title}" has been approved by the coordinator!`,
-      type: "success",
-    }));
-    await Notification.insertMany(notifications);
-
+    
     const populated = await Project.findById(project._id)
       .populate("groupMembers", "name email")
       .populate("advisorId", "name email")
@@ -379,7 +432,7 @@ module.exports = {
   deleteProject,
   updateMilestone,
   submitProposal,
-  approveProposal,
+  reviewProposal,
   assignStaff,
   bulkCreateProjects,
 };

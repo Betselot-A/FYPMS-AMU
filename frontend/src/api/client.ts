@@ -5,7 +5,7 @@
 
 import axios from "axios";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5001/api";
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -18,9 +18,11 @@ apiClient.interceptors.request.use((config) => {
   const token = sessionStorage.getItem("auth_token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    // console.log(`[Auth] Sending token from sessionStorage (${config.url})`);
-  } else {
-    // console.warn(`[Auth] No token found in sessionStorage (${config.url})`);
+  }
+  // For file uploads (FormData), remove the explicit Content-Type so that
+  // the browser can generate the correct multipart/form-data boundary.
+  if (config.data instanceof FormData) {
+    delete config.headers["Content-Type"];
   }
   return config;
 });

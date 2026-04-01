@@ -12,12 +12,13 @@ const {
   deleteProject,
   updateMilestone,
   submitProposal,
-  approveProposal,
+  reviewProposal,
   assignStaff,
   bulkCreateProjects,
 } = require("../controllers/projectController");
 const { protect } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
+const { uploadProposal } = require("../middleware/uploadMiddleware");
 
 // All routes require authentication
 router.use(protect);
@@ -32,11 +33,16 @@ router.post("/bulk", authorize("coordinator", "admin"), bulkCreateProjects);
 router.put("/:id", authorize("coordinator", "admin"), updateProject);
 router.delete("/:id", authorize("coordinator", "admin"), deleteProject);
 
-// Student: submit a proposal (max 3)
-router.post("/:id/proposals", authorize("student"), submitProposal);
+// Student: submit a proposal (exactly 3 titles + file)
+router.post(
+  "/:id/proposals",
+  authorize("student"),
+  uploadProposal.single("document"),
+  submitProposal
+);
 
-// Coordinator: approve a proposal
-router.put("/:id/proposals/:index/approve", authorize("coordinator", "admin"), approveProposal);
+// Coordinator: review a proposal (approve/reject)
+router.put("/:id/proposals/review", authorize("coordinator", "admin"), reviewProposal);
 
 // Coordinator: assign staff (advisor + examiner)
 router.put("/:id/assign-staff", authorize("coordinator", "admin"), assignStaff);

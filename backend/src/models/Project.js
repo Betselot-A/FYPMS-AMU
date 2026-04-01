@@ -16,8 +16,30 @@ const milestoneSchema = new mongoose.Schema({
 });
 
 const proposalSchema = new mongoose.Schema({
-  title: { type: String, required: true, trim: true },
-  description: { type: String, default: "" },
+  titles: {
+    type: [String],
+    validate: [
+      (val) => val.length === 3,
+      "A proposal must contain exactly 3 project title options.",
+    ],
+    required: true,
+  },
+  descriptions: {
+    type: [String],
+    validate: [
+      (val) => val.length === 3,
+      "A proposal must contain exactly 3 project description options.",
+    ],
+    required: true,
+  },
+  documentUrl: { type: String }, // Path to PDF/DOCX
+  status: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending",
+  },
+  feedback: { type: String, default: "" }, // For coordinator rejection
+  version: { type: Number, default: 1 },
   submittedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   submittedAt: { type: Date, default: Date.now },
 });
@@ -27,6 +49,12 @@ const projectSchema = new mongoose.Schema(
     // Set after coordinator approves a proposal
     department: {
       type: String,
+      default: "",
+    },
+    // finalTitle is set by the coordinator upon approving one of the titles
+    finalTitle: {
+      type: String,
+      trim: true,
       default: "",
     },
     title: {
@@ -45,17 +73,17 @@ const projectSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    // Up to 3 proposals submitted by the student group
-    proposals: {
-      type: [proposalSchema],
-      validate: [(val) => val.length <= 3, "A group can submit at most 3 proposals"],
-      default: [],
-    },
+    // Store proposal history (latest is always proposals[proposals.length-1])
+    proposals: [proposalSchema],
     // Proposal approval workflow
+    // "not-submitted" = group exists but no proposal yet
+    // "pending"       = proposal submitted, awaiting coordinator review
+    // "approved"      = coordinator picked a title
+    // "rejected"      = coordinator rejected, student must resubmit
     proposalStatus: {
       type: String,
-      enum: ["pending", "approved"],
-      default: "pending",
+      enum: ["not-submitted", "pending", "approved", "rejected"],
+      default: "not-submitted",
     },
     approvedProposalIndex: {
       type: Number,

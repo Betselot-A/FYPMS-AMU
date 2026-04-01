@@ -25,8 +25,13 @@ export interface User {
 
 export interface Proposal {
   id: string;
-  title: string;
-  description: string;
+  titles: string[];
+  descriptions: string[];
+  description?: string; // legacy support if any
+  documentUrl?: string; // path to PDF/DOCX
+  status: "pending" | "approved" | "rejected";
+  feedback?: string; // feedback for rejection
+  version: number;
   submittedBy: string;
   submittedAt: string;
 }
@@ -34,17 +39,18 @@ export interface Proposal {
 export interface Project {
   id: string;
   title: string;
+  finalTitle?: string; // The specific title approved by coordinator
   description: string;
   department: string;
-  groupMembers: string[]; // user IDs
-  advisorId: string;
-  examinerId?: string;
+  groupMembers: string[] | User[]; // can be IDs or populated objects
+  advisorId?: string | User;
+  examinerId?: string | User;
   status: "pending" | "in-progress" | "under-review" | "completed";
   deadline: string;
   createdAt: string;
   milestones: Milestone[];
   proposals: Proposal[];
-  proposalStatus: "pending" | "approved";
+  proposalStatus: "not-submitted" | "pending" | "approved" | "rejected";
   approvedProposalIndex?: number;
 }
 

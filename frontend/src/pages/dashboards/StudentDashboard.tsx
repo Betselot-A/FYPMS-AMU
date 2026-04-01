@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { projectService, notificationService } from "@/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { FolderOpen, Upload, Bell, CheckCircle, Clock, Plus, Send, Users } from "lucide-react";
+import { FolderOpen, Bell, CheckCircle, Clock, Plus, Send, Users, XCircle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 
 const statusColors: Record<string, string> = {
@@ -23,12 +20,10 @@ const statusColors: Record<string, string> = {
 
 const StudentDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [projects, setProjects] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isProposalDialogOpen, setIsProposalDialogOpen] = useState(false);
-  const [proposalData, setProposalData] = useState({ title: "", description: "" });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,29 +43,6 @@ const StudentDashboard = () => {
       console.error("Failed to fetch student data:", error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleSubmitProposal = async (projectId: string) => {
-    if (!proposalData.title) return;
-    try {
-      setIsSubmitting(true);
-      await projectService.submitProposal(projectId, proposalData.title, proposalData.description);
-      toast({
-        title: "Success",
-        description: "Project proposal submitted successfully.",
-      });
-      setIsProposalDialogOpen(false);
-      setProposalData({ title: "", description: "" });
-      fetchData();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.response?.data?.message || "Failed to submit proposal.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -150,52 +122,15 @@ const StudentDashboard = () => {
                   <CardTitle className="text-lg">Project Group: {currentProject.title}</CardTitle>
                   <CardDescription>Status: <span className="capitalize font-medium text-foreground">{currentProject.status}</span></CardDescription>
                 </div>
-                {currentProject.proposalStatus !== "approved" && currentProject.proposals?.length < 3 && (
-                  <Dialog open={isProposalDialogOpen} onOpenChange={setIsProposalDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button size="sm" className="gradient-primary text-primary-foreground gap-2">
-                        <Send className="w-3.5 h-3.5" />
-                        Submit Proposal
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Submit Project Proposal</DialogTitle>
-                        <DialogDescription>
-                          Share your project idea with the coordinator. You can submit up to 3 proposals.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="title">Project Title</Label>
-                          <Input 
-                            id="title" 
-                            placeholder="e.g. AI-driven Task Manager" 
-                            value={proposalData.title}
-                            onChange={(e) => setProposalData({...proposalData, title: e.target.value})}
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="desc">Short Description</Label>
-                          <Textarea 
-                            id="desc" 
-                            placeholder="Explain the goal and scope..." 
-                            value={proposalData.description}
-                            onChange={(e) => setProposalData({...proposalData, description: e.target.value})}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button variant="ghost" onClick={() => setIsProposalDialogOpen(false)}>Cancel</Button>
-                        <Button 
-                          onClick={() => handleSubmitProposal(currentProject.id)}
-                          disabled={!proposalData.title || isSubmitting}
-                        >
-                          {isSubmitting ? "Submitting..." : "Submit Proposal"}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                {currentProject.proposalStatus !== "approved" && (
+                  <Button
+                    size="sm"
+                    className="gradient-primary text-primary-foreground gap-2"
+                    onClick={() => navigate("/dashboard/project/submit")}
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    {currentProject.proposalStatus === "rejected" ? "Revise Proposal" : "Submit Proposal"}
+                  </Button>
                 )}
               </CardHeader>
               <CardContent>
@@ -209,15 +144,29 @@ const StudentDashboard = () => {
                     <div className="grid gap-3">
                       {currentProject.proposals?.map((proposal: any, idx: number) => (
                         <div key={idx} className={`p-4 rounded-xl border ${
-                          currentProject.approvedProposalIndex === idx ? 'bg-success/5 border-success/30' : 'bg-muted/30 border-border/50'
+                          proposal.status === 'approved' ? 'bg-success/5 border-success/30' 
+                          : proposal.status === 'rejected' ? 'bg-destructive/5 border-destructive/20'
+                          : 'bg-muted/30 border-border/50'
                         }`}>
                           <div className="flex items-center justify-between mb-1">
-                            <h4 className="text-sm font-bold">{proposal.title}</h4>
-                            {currentProject.approvedProposalIndex === idx && (
-                              <Badge className="bg-success text-success-foreground text-[10px] uppercase">Approved</Badge>
-                            )}
+                            <div className="flex items-center gap-2">
+                              <span className="flex items-center justify-center w-5 h-5 rounded-full bg-background border text-[10px] font-bold">v{proposal.version}</span>
+                              <h4 className="text-sm font-bold">
+                                {Array.isArray(proposal.titles) ? proposal.titles[0] : proposal.title}
+                                {Array.isArray(proposal.titles) && proposal.titles.length > 1 && (
+                                  <span className="text-xs font-normal text-muted-foreground ml-1">(+{proposal.titles.length - 1} more)</span>
+                                )}
+                              </h4>
+                            </div>
+                            <Badge className={`text-[10px] uppercase ${
+                              proposal.status === 'approved' ? 'bg-success text-success-foreground' 
+                              : proposal.status === 'rejected' ? 'bg-destructive/10 text-destructive border-destructive/20'
+                              : 'bg-warning/10 text-warning border-warning/20'
+                            }`}>{proposal.status}</Badge>
                           </div>
-                          <p className="text-xs text-muted-foreground line-clamp-1">{proposal.description}</p>
+                          {proposal.status === 'rejected' && proposal.feedback && (
+                            <p className="text-xs text-destructive mt-2 bg-destructive/5 p-2 rounded border border-destructive/10 italic">Feedback: "{proposal.feedback}"</p>
+                          )}
                         </div>
                       ))}
                       {(!currentProject.proposals || currentProject.proposals.length === 0) && (

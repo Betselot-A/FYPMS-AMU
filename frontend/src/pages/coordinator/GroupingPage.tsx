@@ -10,11 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, Users, ChevronDown, ChevronRight, RefreshCw, Plus, ThumbsUp, Shuffle, Save, Loader2, Play } from "lucide-react";
+import { CheckCircle2, Users, ChevronDown, ChevronRight, RefreshCw, Plus, ThumbsUp, Shuffle, Save, Loader2, Play, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import userService from "@/api/userService";
 import projectService from "@/api/projectService";
 import { User, Project } from "@/types";
+import ProposalReviewModal from "@/components/modals/ProposalReviewModal";
 
 const MAX_GROUP_SIZE = 4;
 
@@ -55,6 +56,11 @@ const GroupingPage = () => {
   // Auto Grouping State
   const [autoGroups, setAutoGroups] = useState<{ department: string; members: User[] }[]>([]);
   const [isSavingAuto, setIsSavingAuto] = useState(false);
+
+  // Proposal Review Modal State
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewingProject, setReviewingProject] = useState<Project | null>(null);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   // Computed data
   const assignedStudentIds = useMemo(() => new Set(projects.flatMap((p) => p.groupMembers as string[])), [projects]);
@@ -114,18 +120,28 @@ const GroupingPage = () => {
     }
   };
 
-  const handleApproveProposal = async (projectId: string, index: number, proposalTitle: string) => {
-    setIsApproving(`${projectId}-${index}`);
+  const handleOpenReview = (project: Project) => {
+    setReviewingProject(project);
+    setIsReviewModalOpen(true);
+  };
+
+  const handleReviewSuccess = (updatedProject: Project) => {
+    setProjects((prev) => prev.map((p) => (p.id === updatedProject.id ? updatedProject : p)));
+  };
+
+  const handleDeleteProject = async (e: React.MouseEvent, projectId: string) => {
+    e.stopPropagation(); // Don't toggle accordion
+    if (!window.confirm("Are you sure you want to delete this group? \n\nThis will unassign all group members and they will appear in the 'Ungrouped Students' list again.")) return;
+
+    setIsDeleting(projectId);
     try {
-      const res = await projectService.approveProposal(projectId, index);
-      setProjects((prev) => prev.map((p) => (p.id === projectId ? res.data : p)));
-      toast.success(`"${proposalTitle}" approved!`, {
-        description: "The group has been notified. You can now assign staff.",
-      });
+      await projectService.delete(projectId);
+      setProjects((prev) => prev.filter((p) => p.id !== projectId));
+      toast.success("Group deleted successfully.");
     } catch (error: any) {
-      toast.error("Failed to approve proposal", { description: error.response?.data?.message });
+      toast.error("Failed to delete group", { description: error.response?.data?.message });
     } finally {
-      setIsApproving(null);
+      setIsDeleting(null);
     }
   };
 
@@ -283,13 +299,27 @@ const GroupingPage = () => {
                             </CardDescription>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                         <div className="flex items-center gap-2">
                           {project.proposalStatus === "approved" && (
                             <Badge className="bg-success/10 text-success border-success/20 text-xs shadow-sm">
                               <CheckCircle2 className="w-3 h-3 mr-1" /> Approved
                             </Badge>
                           )}
                           <Badge variant="outline" className="capitalize text-xs">{project.status}</Badge>
+                          
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            className="w-8 h-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+                            disabled={isDeleting === project.id}
+                            onClick={(e) => handleDeleteProject(e, project.id)}
+                          >
+                            {isDeleting === project.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                          </Button>
                         </div>
                       </div>
                     </CardHeader>
@@ -340,33 +370,39 @@ const GroupingPage = () => {
                                     className={`p-3 rounded-lg border ${
                                       isApproved
                                         ? "bg-success/5 border-success/30 ring-1 ring-success/20"
+                                        : proposal.status === "rejected"
+                                        ? "bg-destructive/5 border-destructive/20"
                                         : "bg-muted/20 border-border"
                                     }`}
                                   >
                                     <div className="flex items-start justify-between gap-3">
                                       <div>
                                         <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                                          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-background border text-[10px] shrink-0">{idx + 1}</span>
-                                          {proposal.title}
+                                          <span className="flex items-center justify-center w-5 h-5 rounded-full bg-background border text-[10px] shrink-0 font-bold">v{proposal.version}</span>
+                                          {isApproved ? project.finalTitle : proposal.titles[0]} {proposal.titles.length > 1 && `(+${proposal.titles.length - 1} more)`}
                                         </p>
-                                        {proposal.description && (
-                                          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed bg-background/50 p-2 rounded border border-border/50">{proposal.description}</p>
+                                        {isApproved ? (
+                                          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed bg-background/50 p-2 rounded border border-border/50 line-clamp-2 italic">
+                                            "{project.description}"
+                                          </p>
+                                        ) : proposal.descriptions?.[0] && (
+                                          <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed bg-background/50 p-2 rounded border border-border/50 line-clamp-2 italic">
+                                            "{proposal.descriptions[0]}..."
+                                          </p>
                                         )}
                                       </div>
                                       {isApproved ? (
                                         <Badge className="bg-success/10 text-success border-success/20 shrink-0">
                                           <CheckCircle2 className="w-3 h-3 mr-1" /> Approved
                                         </Badge>
-                                      ) : project.proposalStatus !== "approved" ? (
+                                      ) : project.proposalStatus === "pending" || project.proposalStatus === "rejected" ? (
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          className="shrink-0 text-xs"
-                                          disabled={isApproving === `${project.id}-${idx}`}
-                                          onClick={() => handleApproveProposal(project.id, idx, proposal.title)}
+                                          className={`shrink-0 text-xs ${project.proposalStatus === "rejected" ? 'border-destructive/20 text-destructive' : ''}`}
+                                          onClick={() => handleOpenReview(project)}
                                         >
-                                          <ThumbsUp className="w-3 h-3 mr-1" />
-                                          {isApproving === `${project.id}-${idx}` ? "Approving..." : "Approve"}
+                                          {project.proposalStatus === "rejected" ? "Follow Up (Rejected)" : "Review Submission"}
                                         </Button>
                                       ) : null}
                                     </div>
@@ -532,6 +568,13 @@ const GroupingPage = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      <ProposalReviewModal 
+        isOpen={isReviewModalOpen}
+        onClose={() => setIsReviewModalOpen(false)}
+        project={reviewingProject}
+        onSuccess={handleReviewSuccess}
+      />
     </div>
   );
 };

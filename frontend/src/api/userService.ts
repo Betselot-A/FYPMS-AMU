@@ -58,9 +58,7 @@ const userService = {
       createdCount: number;
       createdUsers: { name: string; email: string; role: string; tempPassword: string }[];
       errors: string[];
-    }>("/users/bulk-upload", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    }>("/users/bulk-upload", formData);
   },
 
   bulkDelete: (userIds: string[]) =>

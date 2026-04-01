@@ -1,62 +1,54 @@
-// ============================================================
-// ProjectHub Multer File Upload Configuration
-// ============================================================
-
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-// Ensure upload directory exists
-const uploadDir = path.join(__dirname, "..", "..", process.env.UPLOAD_DIR || "uploads");
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Ensure upload directories exist
+const proposalDir = path.join(__dirname, "../../uploads/proposals");
+const generalDir = path.join(__dirname, "../../uploads");
 
-// Storage configuration
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
-    cb(null, uploadDir);
+[proposalDir, generalDir].forEach(dir => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+});
+
+// Specialized storage for proposals
+const proposalStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, proposalDir);
   },
-  filename: (_req, file, cb) => {
-    // Generate unique filename: timestamp-originalname
-    const uniqueName = `${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`;
-    cb(null, uniqueName);
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "proposal-" + uniqueSuffix + path.extname(file.originalname));
   },
 });
 
-// File filter — allow common document and image types
-const fileFilter = (_req, file, cb) => {
-  const allowed = [
-    "application/pdf",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    "application/zip",
-    "application/x-rar-compressed",
-    "image/jpeg",
-    "image/png",
-    "image/gif",
-    "text/plain",
-    "text/csv",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  ];
-
-  if (allowed.includes(file.mimetype) || file.originalname.endsWith(".csv")) {
+const proposalFileFilter = (req, file, cb) => {
+  const allowedTypes = [".pdf", ".docx", ".doc"];
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedTypes.includes(ext)) {
     cb(null, true);
   } else {
-    cb(new Error(`File type '${file.mimetype}' is not allowed`), false);
+    cb(new Error("Only .pdf, .doc and .docx files are allowed"), false);
   }
 };
 
-const upload = multer({
-  storage,
-  fileFilter,
+const uploadProposal = multer({
+  storage: proposalStorage,
+  fileFilter: proposalFileFilter,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10 MB per file
-    files: 5, // max 5 files per request
+    fileSize: 10 * 1024 * 1024, // 10MB limit
   },
 });
 
+// Generic upload instance for common usage (users, general submissions)
+const upload = multer({
+  dest: generalDir,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit default
+  },
+});
+
+// Export both: 'upload' for backward compatibility and 'uploadProposal' for specific needs
 module.exports = upload;
+module.exports.uploadProposal = uploadProposal;
