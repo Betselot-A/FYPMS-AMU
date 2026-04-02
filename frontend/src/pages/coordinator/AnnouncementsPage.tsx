@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { User } from "@/types";
 import { notificationService, userService } from "@/api";
@@ -47,10 +47,12 @@ const AnnouncementsPage = () => {
     fetchData();
   }, [fetchData]);
 
+  const hasPreselected = useRef(false);
+
   // Handle URL pre-selection
   useEffect(() => {
     const userId = searchParams.get("userId");
-    if (userId && allUsers.length > 0) {
+    if (userId && allUsers.length > 0 && !hasPreselected.current) {
        const userExists = allUsers.some(u => u.id === userId);
        if (userExists) {
           setComposeForm(f => ({
@@ -58,6 +60,7 @@ const AnnouncementsPage = () => {
              target: "specific",
              userIds: [userId]
           }));
+          hasPreselected.current = true;
        }
     }
   }, [searchParams, allUsers]);

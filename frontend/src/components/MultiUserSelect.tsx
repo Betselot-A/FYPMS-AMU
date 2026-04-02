@@ -102,11 +102,13 @@ export const MultiUserSelect: React.FC<MultiUserSelectProps> = ({
                     )}
                     onClick={() => toggleUser(u.id)}
                   >
-                    <Checkbox
-                      checked={isSelected}
-                      onCheckedChange={() => toggleUser(u.id)}
-                      className="rounded border-border group-hover/item:border-primary/40 data-[state=checked]:border-primary"
-                    />
+                    <div onClick={(e) => e.stopPropagation()} className="flex items-center">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={() => toggleUser(u.id)}
+                        className="rounded border-border group-hover/item:border-primary/40 data-[state=checked]:border-primary"
+                      />
+                    </div>
                     <Avatar className="w-8 h-8 border border-border/50 shadow-sm shrink-0">
                       <AvatarFallback className={cn(
                         "text-[10px] font-bold",
