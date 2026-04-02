@@ -47,7 +47,9 @@ const UploadFilesPage = () => {
         setFiles(fileRes.data);
       }
     } catch (error) {
-      toast.error("Failed to sync project documents.");
+      toast.error("Sync Error", { 
+        description: "Failed to connect to the project's document repository." 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -64,10 +66,14 @@ const UploadFilesPage = () => {
     try {
       setIsUploading(true);
       await fileService.uploadFile(project.id, selected);
-      toast.success("Document added to project repository.");
+      toast.success("Document Added", { 
+        description: "Your file has been successfully uploaded to the project vault." 
+      });
       fetchData(); // Refresh list
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Storage upload failed.");
+      toast.error("Upload Failed", { 
+        description: error.response?.data?.message || "Internal storage error during transmission." 
+      });
     } finally {
       setIsUploading(false);
       e.target.value = "";
@@ -78,9 +84,13 @@ const UploadFilesPage = () => {
     try {
       await fileService.deleteFile(id);
       setFiles(prev => prev.filter(f => f.id !== id));
-      toast.success("Document removed from repository.");
+      toast.success("File Removed", { 
+        description: "The document has been securely deleted from the project vault." 
+      });
     } catch (error) {
-      toast.error("Failed to remove document.");
+      toast.error("Delete Failed", { 
+        description: "Could not remove the document from the server repository." 
+      });
     }
   };
 
@@ -126,57 +136,57 @@ const UploadFilesPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto pb-20">
-      <div className="mb-10 space-y-2">
-        <Badge variant="outline" className="border-primary/20 text-primary uppercase text-[10px] font-black tracking-widest px-2 py-0.5">
-           PROJECT VAULT
+      <div className="mb-8 space-y-1">
+        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 uppercase text-[10px] font-bold tracking-widest px-2 py-0.5">
+           Project Vault
         </Badge>
-        <h1 className="text-4xl font-display font-black text-foreground">Document Repository</h1>
-        <p className="text-sm text-muted-foreground">Secure collective storage for project: <span className="text-foreground font-bold">{project.title}</span></p>
+        <h1 className="text-2xl font-display font-bold text-foreground">Document Repository</h1>
+        <p className="text-sm text-muted-foreground mt-1">Secure collective storage for project: <span className="text-foreground font-semibold">{project.title}</span></p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-        <Card className="md:col-span-3 shadow-xl shadow-primary/5 border-none bg-muted/30 hover:bg-muted/40 transition-all group relative overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card className="md:col-span-3 shadow-card border-border/50 bg-muted/20 hover:bg-muted/30 transition-all group relative overflow-hidden">
           <CardContent className="p-0">
             <Label htmlFor="file-upload" className="flex flex-col items-center justify-center p-12 cursor-pointer h-full min-h-[160px]">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
                 {isUploading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <CloudUpload className="w-6 h-6" />}
               </div>
-              <span className="text-sm font-black text-foreground uppercase tracking-widest">
+              <span className="text-sm font-semibold text-foreground tracking-tight">
                 {isUploading ? "Uploading to secure vault..." : "Upload Research Document"}
               </span>
-              <span className="text-[10px] text-muted-foreground font-medium mt-1">PDF, DOCX, ZIP OR IMAGES (MAX 10MB)</span>
+              <span className="text-[11px] text-muted-foreground mt-1.5">PDF, DOCX, ZIP or Images (Max 10MB)</span>
             </Label>
             <Input id="file-upload" type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
           </CardContent>
         </Card>
 
         <div className="space-y-4">
-           <Card className="shadow-card border-none bg-background p-6 flex flex-col justify-center items-center text-center">
-              <p className="text-3xl font-black text-primary">{files.length}</p>
-              <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">TOTAL DOCUMENTS</p>
+           <Card className="shadow-card border-border/50 bg-background p-6 flex flex-col justify-center items-center text-center">
+              <p className="text-3xl font-bold text-primary">{files.length}</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-1.5">Total Documents</p>
            </Card>
-           <Card className="shadow-card border-none bg-background p-6 flex flex-col justify-center items-center text-center">
-              <p className="text-sm font-black text-foreground">
+           <Card className="shadow-card border-border/50 bg-background p-6 flex flex-col justify-center items-center text-center">
+              <p className="text-sm font-bold text-foreground">
                  {(files.reduce((s, f) => s + f.fileSize, 0) / (1024 * 1024)).toFixed(1)} MB
               </p>
-              <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">VAULT UTILIZATION</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-1.5">Vault Utilization</p>
            </Card>
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-           <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1 flex items-center gap-2">
-              <RefreshCw className="w-3 h-3" />
-              COLLECTIVE ASSETS
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+           <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+              <RefreshCw className="w-3.5 h-3.5" />
+              Collective Assets
            </h3>
-           <div className="relative w-48">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+           <div className="relative w-56">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
               <Input 
                 placeholder="Search vault..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-[10px] font-bold uppercase tracking-widest rounded-lg border-none bg-muted/50"
+                className="pl-9 h-9 text-xs bg-muted/40 border-border/50 focus:bg-background transition-all"
               />
            </div>
         </div>
@@ -191,18 +201,19 @@ const UploadFilesPage = () => {
           
           {filteredFiles.map((file) => (
             <Card key={file.id} className="shadow-card border-none hover:ring-2 hover:ring-primary/20 transition-all group overflow-hidden">
-               <CardContent className="p-4">
+                <CardContent className="p-4">
                   <div className="flex items-center justify-between gap-4">
                      <div className="flex items-center gap-4 flex-1 min-w-0">
                         <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
                            {getFileIcon(file.fileType)}
                         </div>
                         <div className="min-w-0">
-                           <p className="text-sm font-bold text-foreground truncate">{file.originalName}</p>
-                           <div className="flex items-center gap-3">
-                              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{formatFileSize(file.fileSize)}</span>
-                              <span className="text-[10px] text-muted-foreground italic">By {file.uploadedBy.name}</span>
-                              <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-black uppercase text-muted-foreground/60 border-muted-foreground/20">
+                           <p className="text-sm font-semibold text-foreground truncate">{file.originalName}</p>
+                           <div className="flex items-center gap-2.5 mt-0.5">
+                              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{formatFileSize(file.fileSize)}</span>
+                              <span className="text-[10px] text-muted-foreground/60">•</span>
+                              <span className="text-[10px] text-muted-foreground">Uploaded by {file.uploadedBy.name}</span>
+                              <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold uppercase text-muted-foreground/60 border-muted-foreground/20">
                                  {file.fileType}
                               </Badge>
                            </div>
@@ -238,11 +249,11 @@ const UploadFilesPage = () => {
       </div>
       
       <div className="mt-12 p-6 bg-primary/5 rounded-3xl border border-primary/10 flex items-start gap-4">
-         <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm">
+         <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm border border-primary/10">
             <CheckCircle2 className="w-5 h-5 text-primary" />
          </div>
          <div>
-            <h4 className="text-sm font-black text-foreground uppercase tracking-widest">Secure Storage Protocol</h4>
+            <h4 className="text-sm font-bold text-foreground uppercase tracking-wider">Secure Storage Protocol</h4>
             <p className="text-xs text-muted-foreground font-medium mt-1 leading-relaxed">
                All documents uploaded here are encrypted and accessible only to your project team members, designated advisor, and the department coordinator.
             </p>

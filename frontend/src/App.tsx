@@ -39,7 +39,6 @@ import ProjectSetupPage from "./pages/coordinator/ProjectSetupPage";
 import CriteriaSetupPage from "./pages/coordinator/CriteriaSetupPage";
 import ProjectManagementPage from "./pages/coordinator/ProjectManagementPage";
 import CoordinatorEvaluationPage from "./pages/coordinator/CoordinatorEvaluationPage";
-import AdvisorMarkPage from "./pages/coordinator/AdvisorMarkPage";
 import AllStudentsPage from "./pages/coordinator/AllStudentsPage";
 import EvaluationReportPage from "./pages/coordinator/EvaluationReportPage";
 
@@ -95,7 +94,6 @@ const App = () => (
             <Route path="/dashboard/coordinator/criteria-setup" element={<DashboardPage><CriteriaSetupPage /></DashboardPage>} />
             <Route path="/dashboard/coordinator/project-management" element={<DashboardPage><ProjectManagementPage /></DashboardPage>} />
             <Route path="/dashboard/coordinator/evaluation" element={<DashboardPage><CoordinatorEvaluationPage /></DashboardPage>} />
-            <Route path="/dashboard/coordinator/advisor-mark" element={<DashboardPage><AdvisorMarkPage /></DashboardPage>} />
             <Route path="/dashboard/coordinator/students" element={<DashboardPage><AllStudentsPage /></DashboardPage>} />
             <Route path="/dashboard/coordinator/reports" element={<DashboardPage><EvaluationReportPage /></DashboardPage>} />
             <Route path="/dashboard/coordinator/messages" element={<DashboardPage><AdminMessenger /></DashboardPage>} />

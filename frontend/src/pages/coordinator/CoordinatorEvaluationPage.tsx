@@ -49,7 +49,9 @@ const CoordinatorEvaluationPage = () => {
       const coordPhase = critRes.data.phases.find(p => p.name.includes('Coordinator'));
       setPhaseConfig(coordPhase || null);
     } catch (error) {
-      toast.error("Failed to load evaluation data.");
+      toast.error("Evaluation Error", { 
+        description: "Failed to load project scoring data from the server." 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -106,10 +108,14 @@ const CoordinatorEvaluationPage = () => {
       });
 
       await Promise.all(promises);
-      toast.success(`Evaluations submitted for "${project.title}"`);
+      toast.success("Scores Recorded", { 
+        description: `Academic marks for "${project.title}" have been successfully finalized.` 
+      });
       setSelectedProject(null);
     } catch (error) {
-      toast.error("Failed to submit evaluations.");
+      toast.error("Submission Failed", { 
+        description: "Could not persist evaluation marks. Please check required fields." 
+      });
     } finally {
       setIsSubmitting(null);
     }
@@ -129,16 +135,16 @@ const CoordinatorEvaluationPage = () => {
     <div className="max-w-5xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-3xl font-display font-bold flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                <Award className="w-5 h-5 text-primary-foreground" />
+          <h1 className="text-2xl font-display font-bold flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-sm">
+                <Award className="w-5 h-5" />
              </div>
              Coordinator Evaluation
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {phaseConfig 
-              ? `Evaluate students based on "${phaseConfig.name}" (Max ${phaseConfig.criteria.reduce((s,c) => s+c.maxMark, 0)} marks)`
-              : "No coordinator phase configured in Standards Setup."}
+             {phaseConfig 
+               ? `Evaluate students based on "${phaseConfig.name}" (Max ${phaseConfig.criteria.reduce((s,c) => s+c.maxMark, 0)} marks)`
+               : "No coordinator phase configured in Standards Setup."}
           </p>
         </div>
         
@@ -148,16 +154,16 @@ const CoordinatorEvaluationPage = () => {
             placeholder="Search projects..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 h-11 rounded-xl bg-muted/30 border-none focus-visible:bg-background transition-all"
+            className="pl-10 h-10 rounded-lg bg-muted/20 border-border/50 focus-visible:bg-background transition-all"
            />
         </div>
       </div>
 
       {!phaseConfig && (
-        <Card className="border-warning/30 bg-warning/5">
-           <CardContent className="p-6 flex items-center gap-4 text-warning">
-              <AlertCircle className="w-6 h-6" />
-              <p className="text-sm font-bold">
+        <Card className="border-warning/30 bg-warning/5 rounded-xl">
+           <CardContent className="p-5 flex items-center gap-4 text-warning">
+              <AlertCircle className="w-5 h-5" />
+              <p className="text-sm font-semibold">
                  Warning: No "Coordinator Evaluation" phase active. Please configure it in Criteria Setup first.
               </p>
            </CardContent>
@@ -194,7 +200,7 @@ const CoordinatorEvaluationPage = () => {
                       </CardDescription>
                     </div>
                   </div>
-                  <Badge variant="outline" className="h-7 px-3 font-bold uppercase tracking-widest text-[10px]">
+                  <Badge variant="outline" className="h-7 px-3 font-semibold uppercase tracking-wider text-[10px]">
                     {project.status}
                   </Badge>
                 </div>
@@ -227,8 +233,8 @@ const CoordinatorEvaluationPage = () => {
                             </div>
                             <div className="flex items-center gap-4">
                                <div className="px-3 py-1 bg-background rounded-full border border-border shadow-sm">
-                                  <span className="text-xs font-black text-primary">{total}</span>
-                                  <span className="text-[10px] font-bold text-muted-foreground ml-1">/ {maxTotal}</span>
+                                  <span className="text-xs font-bold text-primary">{total}</span>
+                                  <span className="text-[10px] font-semibold text-muted-foreground ml-1">/ {maxTotal}</span>
                                </div>
                                <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-all", isMemberExpanded && "rotate-180")} />
                             </div>
@@ -240,11 +246,11 @@ const CoordinatorEvaluationPage = () => {
                                 {phaseConfig.criteria.map((c, i) => (
                                   <div key={(c as any)._id || c.id} className="flex flex-col md:flex-row md:items-center gap-3 justify-between p-3 bg-background rounded-xl border border-border/40">
                                     <div className="space-y-1 flex-1">
-                                      <p className="text-sm font-bold text-foreground">
+                                      <p className="text-sm font-semibold text-foreground">
                                         {i + 1}. {c.label}
                                       </p>
-                                      <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">
-                                        MAX CAPACITY: {c.maxMark} POINTS
+                                      <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                                        Max Capacity: {c.maxMark} Points
                                       </p>
                                     </div>
                                     <Input
@@ -254,14 +260,14 @@ const CoordinatorEvaluationPage = () => {
                                       placeholder="0"
                                       value={scores[memberId]?.[(c as any)._id || c.id] || ""}
                                       onChange={(e) => handleScoreChange(memberId, (c as any)._id || c.id, e.target.value, c.maxMark)}
-                                      className="w-full md:w-24 h-10 text-center font-display font-black text-lg bg-muted/20 border-none"
+                                      className="w-full md:w-24 h-10 text-center font-display font-bold text-lg bg-muted/20 border-none"
                                     />
                                   </div>
                                 ))}
                               </div>
                               
                               <div className="space-y-2">
-                                <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Performance Feedback</Label>
+                                <Label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground ml-1">Performance Feedback</Label>
                                 <Textarea
                                   placeholder="Provide qualitative feedback for this student..."
                                   value={comments[memberId] || ""}
@@ -280,7 +286,7 @@ const CoordinatorEvaluationPage = () => {
                     <Button 
                       onClick={() => handleSubmit(project.id)} 
                       disabled={!!isSubmitting || !phaseConfig}
-                      className="gradient-primary text-primary-foreground h-11 px-8 shadow-lg shadow-primary/10 rounded-xl"
+                      className="gradient-primary text-primary-foreground h-11 px-8 shadow-lg shadow-primary/10 rounded-lg"
                     >
                       {isSubmitting === project.id ? (
                         <>

@@ -37,7 +37,9 @@ const PasswordManagementPage = () => {
       setDefaultPassword(settingsRes.data.defaultPassword);
       setUsers(usersRes.data.users);
     } catch (error) {
-      toast.error("Failed to load security settings");
+      toast.error("Roster Sync Error", { 
+        description: "Failed to connect to the central user directory." 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -45,15 +47,15 @@ const PasswordManagementPage = () => {
 
   const handleSaveDefault = async () => {
     if (!defaultPassword.trim()) {
-      toast.error("Default password cannot be empty.");
+      toast.error("Validation Error", { description: "Default password cannot be empty." });
       return;
     }
     try {
       setIsSavingDefault(true);
       await settingsService.update({ defaultPassword });
-      toast.success("System default password updated successfully.");
+      toast.success("Settings Saved", { description: "System default password updated successfully." });
     } catch (error) {
-      toast.error("Failed to update default password");
+      toast.error("Update Failed", { description: "Failed to update default password" });
     } finally {
       setIsSavingDefault(false);
     }

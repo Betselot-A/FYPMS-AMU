@@ -62,7 +62,9 @@ const GradeSystemPage = () => {
       }));
       setBands(loaded);
     } catch (error) {
-      toast.error("Failed to load grading system standards.");
+      toast.error("Standard Sync Error", { 
+        description: "Failed to load academic bands and GPA configurations." 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -77,9 +79,13 @@ const GradeSystemPage = () => {
       setIsSaving(true);
       // Persist only bands from Admin side to avoid overwriting coordinator's phases
       await gradeService.updateConfig({ bands });
-      toast.success("Academic grading standards updated successfully!");
+      toast.success("Bands Updated", { 
+        description: "Academic performance tiers have been successfully synchronized." 
+      });
     } catch (error) {
-      toast.error("Failed to save standards.");
+      toast.error("Commit Failed", { 
+        description: "Could not persist grade boundary changes to the database." 
+      });
     } finally {
       setIsSaving(false);
     }

@@ -39,7 +39,9 @@ const AnnouncementsPage = () => {
       const usersRes = await userService.getAll({ limit: 1000 });
       setAllUsers(usersRes.data.users);
     } catch {
-      toast.error("Could not load users data");
+      toast.error("Roster Sync Error", { 
+        description: "Failed to connect to the central user directory." 
+      });
     }
   }, []);
 
@@ -80,10 +82,14 @@ const AnnouncementsPage = () => {
         : { userIds: composeForm.userIds, subject: composeForm.subject, message: composeForm.message, type: composeForm.type };
 
       await notificationService.create(payload);
-      toast.success("Broadcast delivered successfully");
+      toast.success("Broadcast Published", { 
+        description: "Official announcement delivered successfully to recipients." 
+      });
       setComposeForm(prev => ({ ...prev, subject: "", message: "", userIds: [] }));
     } catch (err: any) {
-      toast.error("Failed to deliver broadcast");
+      toast.error("Broadcast Failed", { 
+        description: "Communication server rejected the multi-cast delivery." 
+      });
     } finally {
       setIsSendingCompose(false);
     }

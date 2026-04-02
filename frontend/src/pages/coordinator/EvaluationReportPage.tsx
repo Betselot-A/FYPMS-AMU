@@ -93,7 +93,9 @@ const EvaluationReportPage = () => {
       });
       setAllEvaluations(evalMap);
     } catch {
-      toast.error("Failed to load report data.");
+      toast.error("Report System Error", { 
+        description: "Failed to compile students' academic records." 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -201,10 +203,14 @@ const EvaluationReportPage = () => {
     try {
       setIsReleasing(projectId);
       await projectService.releaseResults(projectId);
-      toast.success("Results released to students successfully.");
+      toast.success("Results Released", { 
+        description: "Evaluations have been officially published to student dashboards." 
+      });
       fetchData();
     } catch {
-      toast.error("Failed to release results.");
+      toast.error("Release Failed", { 
+        description: "Server could not finalize results publication." 
+      });
     } finally {
       setIsReleasing(null);
     }
@@ -245,7 +251,9 @@ const EvaluationReportPage = () => {
     link.href = URL.createObjectURL(blob);
     link.setAttribute("download", `coordinator_report_${Date.now()}.csv`);
     link.click();
-    toast.success("Report exported successfully.");
+    toast.success("Export Complete", { 
+      description: "Academic report CSV has been downloaded to your device." 
+    });
   };
 
   const getInitials = (name: string) =>
@@ -282,8 +290,8 @@ const EvaluationReportPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20">
-              <FileSpreadsheet className="w-4 h-4 text-primary-foreground" />
+            <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-sm">
+              <FileSpreadsheet className="w-5 h-5" />
             </div>
             Academic Report
           </h1>
@@ -296,17 +304,17 @@ const EvaluationReportPage = () => {
             variant="outline"
             size="sm"
             onClick={fetchData}
-            className="h-9 gap-2"
+            className="h-10 font-semibold px-4 rounded-lg"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
+            <RefreshCw className="w-4 h-4 mr-1.5" />
             Refresh
           </Button>
           <Button
             size="sm"
             onClick={handleExportCSV}
-            className="h-9 gap-2 gradient-primary text-primary-foreground shadow-sm shadow-primary/20"
+            className="h-10 font-semibold px-5 rounded-lg gradient-primary text-primary-foreground shadow-sm shadow-primary/10"
           >
-            <Download className="w-3.5 h-3.5" />
+            <Download className="w-4 h-4 mr-1.5" />
             Export CSV
           </Button>
         </div>
@@ -321,7 +329,7 @@ const EvaluationReportPage = () => {
               <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
                 <Users className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 Total
               </span>
             </div>
@@ -341,7 +349,7 @@ const EvaluationReportPage = () => {
               <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center">
                 <BarChart3 className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 Avg Score
               </span>
             </div>
@@ -361,7 +369,7 @@ const EvaluationReportPage = () => {
               <div className="w-9 h-9 rounded-lg bg-success/10 flex items-center justify-center">
                 <CheckCircle2 className="w-4 h-4 text-success" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 Evaluated
               </span>
             </div>
@@ -384,7 +392,7 @@ const EvaluationReportPage = () => {
               <div className="w-9 h-9 rounded-lg bg-warning/10 flex items-center justify-center">
                 <Trophy className="w-4 h-4 text-warning" />
               </div>
-              <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                 Published
               </span>
             </div>
@@ -407,7 +415,7 @@ const EvaluationReportPage = () => {
         <CardHeader className="p-4 border-b bg-muted/20">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-base font-semibold">
+              <CardTitle className="text-base font-bold text-foreground">
                 Student Performance Ledger
               </CardTitle>
               <CardDescription className="text-xs mt-0.5">
@@ -432,7 +440,7 @@ const EvaluationReportPage = () => {
                 <select
                   value={deptFilter}
                   onChange={(e) => setDeptFilter(e.target.value)}
-                  className="h-9 rounded-md border border-input bg-background text-sm px-3 focus:outline-none focus:ring-1 focus:ring-primary"
+                  className="h-9 rounded-lg border border-border bg-background text-xs font-medium px-3 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
                 >
                   <option value="all">All Departments</option>
                   {departments.map((d) => (
@@ -447,7 +455,7 @@ const EvaluationReportPage = () => {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="h-9 rounded-md border border-input bg-background text-sm px-3 focus:outline-none focus:ring-1 focus:ring-primary"
+                className="h-9 rounded-lg border border-border bg-background text-xs font-medium px-3 focus:outline-none focus:ring-1 focus:ring-primary shadow-sm"
               >
                 <option value="all">All Statuses</option>
                 <option value="published">Published</option>
@@ -462,7 +470,7 @@ const EvaluationReportPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b bg-muted/10 text-muted-foreground text-xs font-semibold uppercase tracking-wide">
+                <tr className="border-b bg-muted/10 text-muted-foreground text-[10px] font-bold uppercase tracking-widest leading-none">
                   <th className="text-left py-3 px-6">Student</th>
                   <th className="text-left py-3 px-4">Department</th>
                   <th className="text-left py-3 px-4">Project Title</th>
@@ -475,9 +483,9 @@ const EvaluationReportPage = () => {
                       </span>
                     </th>
                   ))}
-                  <th className="text-center py-3 px-4">Grade</th>
-                  <th className="text-center py-3 px-4">Score</th>
-                  <th className="text-right py-3 px-6">Release</th>
+                  <th className="text-center py-4 px-4">Grade</th>
+                  <th className="text-center py-4 px-4">Score</th>
+                  <th className="text-right py-4 px-6">Release</th>
                 </tr>
               </thead>
 
@@ -576,9 +584,9 @@ const EvaluationReportPage = () => {
                         <span className="font-bold text-primary text-sm">
                           {row.finalScore}%
                         </span>
-                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden border border-border/50">
                           <div
-                            className="h-full gradient-primary rounded-full"
+                            className="h-full bg-primary rounded-full transition-all"
                             style={{ width: `${row.finalScore}%` }}
                           />
                         </div>

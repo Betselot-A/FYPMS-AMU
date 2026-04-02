@@ -37,7 +37,9 @@ const CriteriaSetupPage = () => {
       const res = await gradeService.getConfig();
       setPhases(res.data.phases || []);
     } catch (error) {
-      toast.error("Failed to load evaluation standards.");
+      toast.error("Data Load Error", { 
+        description: "Failed to sync evaluation standards from the server." 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -56,7 +58,7 @@ const CriteriaSetupPage = () => {
   const handleSave = async () => {
     if (!isWeightValid) {
       toast.error("Invalid Configuration", { 
-        description: `Total active weight must be exactly 100%. Current: ${totalWeight}%`,
+        description: `Total weight summation must be exactly 100%. Currently at ${totalWeight}%.`
       });
       return;
     }
@@ -65,9 +67,13 @@ const CriteriaSetupPage = () => {
       setIsSaving(true);
       // Persist only phases from Coordinator side to avoid overwriting admin's bands
       await gradeService.updateConfig({ phases });
-      toast.success("Academic criteria updated successfully!");
+      toast.success("Standards Published", { 
+        description: "Academic criteria and weightages updated successfully." 
+      });
     } catch (error) {
-      toast.error("Failed to save changes.");
+      toast.error("Update Failed", { 
+        description: "Could not persist criteria changes. Please check weights." 
+      });
     } finally {
       setIsSaving(false);
     }
@@ -135,13 +141,13 @@ const CriteriaSetupPage = () => {
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-20">
       {/* Premium Header */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sticky top-0 z-10 bg-background/80 backdrop-blur-md py-4 border-b">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 sticky top-0 z-10 bg-background/80 backdrop-blur-md py-4 border-b border-border/40">
         <div>
-          <h1 className="text-3xl font-display font-bold flex items-center gap-3">
-             <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20">
-                <Settings2 className="w-5 h-5 text-primary-foreground" />
+          <h1 className="text-2xl font-display font-bold flex items-center gap-3">
+             <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shadow-sm">
+                <Settings2 className="w-5 h-5" />
              </div>
-             Evolution Standards
+             Evaluation Standards
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Coordinator: Define evaluation phases and weightage distribution.
@@ -149,8 +155,8 @@ const CriteriaSetupPage = () => {
         </div>
         
         <div className="flex items-center gap-3">
-           <Button variant="outline" onClick={addPhase} className="h-11 border-2 font-bold px-6 rounded-xl hover:bg-primary/5 transition-all">
-              <Plus className="w-4 h-4 mr-2" /> Add Phase
+           <Button variant="outline" onClick={addPhase} className="h-10 font-semibold px-5 rounded-lg hover:bg-primary/5 transition-all">
+              <Plus className="w-4 h-4 mr-1.5" /> Add Phase
            </Button>
            <Button 
             disabled={isSaving || !isWeightValid} 
@@ -178,20 +184,20 @@ const CriteriaSetupPage = () => {
         isWeightValid ? "border-success/30 bg-success/5" : "border-warning/30 bg-warning/5"
       )}>
         <CardContent className="p-6">
-           <div className="flex flex-col md:flex-row items-center justify-between gap-8">
-              <div className="space-y-2 flex-1 w-full">
-                <div className="flex items-center justify-between mb-2">
-                   <p className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                      <Activity className="w-4 h-4" />
-                      Academic Weight Pipeline
-                   </p>
-                   <span className={cn(
-                     "text-2xl font-display font-black",
-                     isWeightValid ? "text-success" : "text-warning"
-                   )}>
-                      {totalWeight}% / 100%
-                   </span>
-                </div>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+               <div className="space-y-2 flex-1 w-full">
+                 <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                       <Activity className="w-4 h-4" />
+                       Academic Weight Pipeline
+                    </p>
+                    <span className={cn(
+                      "text-2xl font-display font-bold",
+                      isWeightValid ? "text-success" : "text-warning"
+                    )}>
+                       {totalWeight}% / 100%
+                    </span>
+                 </div>
                 <Progress 
                   value={totalWeight} 
                   className={cn(
@@ -207,14 +213,14 @@ const CriteriaSetupPage = () => {
                  ) : (
                    <AlertCircle className="w-6 h-6 text-warning animate-pulse" />
                  )}
-                 <div>
-                    <p className="text-xs font-black uppercase tracking-tighter">
-                       {isWeightValid ? "Distribution Balanced" : "Balance Required"}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight max-w-[140px]">
-                       {isWeightValid ? "Standards are balanced and ready for evaluation." : `Adjustment of ${100 - totalWeight}% is needed to proceed.`}
-                    </p>
-                 </div>
+                  <div>
+                     <p className="text-[10px] font-bold uppercase tracking-tight">
+                        {isWeightValid ? "Distribution Balanced" : "Balance Required"}
+                     </p>
+                     <p className="text-[10px] text-muted-foreground mt-0.5 leading-tight max-w-sm">
+                        {isWeightValid ? "Standards are balanced and ready for evaluation." : `Adjustment of ${100 - totalWeight}% is needed to proceed.`}
+                     </p>
+                  </div>
               </div>
            </div>
         </CardContent>
@@ -238,42 +244,42 @@ const CriteriaSetupPage = () => {
               "shadow-card border-none transition-all duration-300 relative group",
               !phase.active && "opacity-60 grayscale-[0.5]"
             )}>
-              <CardHeader className="pb-4 border-b border-border/50">
+              <CardHeader className="pb-4 border-b border-border/40">
                 <div className="flex items-center justify-between flex-wrap gap-6">
                   <div className="flex items-center gap-6 flex-1">
-                    <div className="w-12 h-12 rounded-2xl bg-muted/50 flex items-center justify-center font-display font-black text-lg text-muted-foreground border">
+                    <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center font-display font-bold text-lg text-muted-foreground border border-border/50">
                        {idx + 1}
                     </div>
                     <div className="space-y-1.5 flex-1 max-w-sm">
-                       <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest ml-1">Phase Identity</label>
+                       <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest ml-1">Phase Identity</label>
                        <Input 
                         value={phase.name} 
                         onChange={(e) => updatePhase(phase.id, { name: e.target.value })}
-                        className="h-10 font-bold bg-muted/40 border-none px-4 transition-all focus-visible:bg-background"
+                        className="h-10 font-semibold bg-muted/20 border-border/50 px-4 transition-all focus-visible:bg-background"
                        />
                     </div>
                     
                     <div className="space-y-1.5">
-                       <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest ml-1">Grade Weight (%)</label>
+                       <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest ml-1">Grade Weight (%)</label>
                        <div className="flex items-center gap-3">
                           <Input 
                             type="number"
                             value={phase.weight}
                             onChange={(e) => updatePhase(phase.id, { weight: Math.min(100, Math.max(0, parseInt(e.target.value) || 0)) })}
-                            className="w-24 h-10 text-center font-display font-black text-xl bg-muted/40 border-none"
+                            className="w-24 h-10 text-center font-display font-bold text-xl bg-muted/20 border-border/50"
                           />
                        </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-4">
-                     <div className="flex flex-col items-end gap-1.5 mr-4">
-                        <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Active Status</label>
+                      <div className="flex flex-col items-end gap-1.5 mr-4">
+                        <label className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Active Status</label>
                         <Switch 
                           checked={phase.active} 
                           onCheckedChange={(checked) => updatePhase(phase.id, { active: checked })} 
                         />
-                     </div>
+                      </div>
                      <Button 
                       variant="ghost" 
                       size="icon" 
@@ -287,39 +293,39 @@ const CriteriaSetupPage = () => {
               </CardHeader>
               
               <CardContent className="pt-8 space-y-6">
-                 <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-black uppercase text-foreground/70 tracking-widest flex items-center gap-2">
+                  <div className="flex items-center justify-between px-1">
+                    <h3 className="text-xs font-bold uppercase text-foreground/70 tracking-widest flex items-center gap-2">
                        <Layers className="w-4 h-4" />
                        Performance Metrics
                     </h3>
-                    <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary font-black py-1 px-4 text-[11px] tracking-tight">
-                       AGGREGATE CAPACITY: {phaseTotalMax} MARKS
+                    <Badge variant="outline" className="bg-primary/5 border-primary/20 text-primary font-bold py-1 px-4 text-[10px] tracking-tight">
+                       Aggregate Capacity: {phaseTotalMax} Marks
                     </Badge>
-                 </div>
+                  </div>
                  
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {(phase.criteria || []).map((c, cIdx) => (
                       <div 
                         key={c.id || (c as any)._id} 
-                        className="group flex items-center gap-4 p-4 bg-muted/20 border-2 border-transparent hover:border-primary/20 hover:bg-background hover:shadow-md transition-all rounded-2xl"
+                        className="group flex items-center gap-4 p-4 bg-muted/30 border border-border/50 hover:border-primary/20 hover:bg-background hover:shadow-sm transition-all rounded-xl"
                       >
-                         <GripVertical className="w-4 h-4 text-muted-foreground/20 cursor-grab shrink-0" />
-                         <span className="text-xs font-black text-muted-foreground/40 w-6">{cIdx + 1}</span>
+                         <GripVertical className="w-4 h-4 text-muted-foreground/30 cursor-grab shrink-0" />
+                         <span className="text-xs font-semibold text-muted-foreground/40 w-6">{cIdx + 1}</span>
                          <Input 
                             value={c.label}
                             onChange={(e) => updateCriterion(phase.id, (c.id || (c as any)._id), { label: e.target.value })}
                             className="flex-1 h-9 bg-transparent border-none shadow-none focus-visible:ring-0 font-bold"
                             placeholder="Performance Criterion"
                          />
-                         <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/50 rounded-xl border border-border/40 shrink-0">
-                            <span className="text-[10px] font-black text-muted-foreground uppercase">Max</span>
-                            <Input 
-                              type="number"
-                              value={c.maxMark}
-                              onChange={(e) => updateCriterion(phase.id, (c.id || (c as any)._id), { maxMark: parseInt(e.target.value) || 0 })}
-                              className="w-10 h-7 bg-transparent border-none text-right font-black p-0 focus-visible:ring-0"
-                            />
-                         </div>
+                          <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted/60 rounded-lg border border-border/50 shrink-0">
+                             <span className="text-[10px] font-bold text-muted-foreground uppercase">Max</span>
+                             <Input 
+                               type="number"
+                               value={c.maxMark}
+                               onChange={(e) => updateCriterion(phase.id, (c.id || (c as any)._id), { maxMark: parseInt(e.target.value) || 0 })}
+                               className="w-10 h-7 bg-transparent border-none text-right font-bold p-0 focus-visible:ring-0"
+                             />
+                          </div>
                          <Button 
                           variant="ghost" 
                           size="icon" 
@@ -330,15 +336,14 @@ const CriteriaSetupPage = () => {
                          </Button>
                       </div>
                     ))}
-                    
-                    <Button 
-                      variant="ghost" 
-                      onClick={() => addCriterion(phase.id)}
-                      className="h-full min-h-[60px] border-2 border-dashed border-muted-foreground/20 hover:border-primary hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all rounded-2xl flex flex-col items-center justify-center gap-1"
-                    >
-                       <Plus className="w-4 h-4" />
-                       <span className="text-[10px] font-heavy uppercase tracking-widest">Append Metric</span>
-                    </Button>
+                                        <Button 
+                       variant="ghost" 
+                       onClick={() => addCriterion(phase.id)}
+                       className="h-full min-h-[60px] border-2 border-dashed border-border/60 hover:border-primary hover:bg-primary/5 text-muted-foreground hover:text-primary transition-all rounded-xl flex flex-col items-center justify-center gap-1"
+                     >
+                        <Plus className="w-4 h-4" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Append Metric</span>
+                     </Button>
                  </div>
               </CardContent>
             </Card>
@@ -346,14 +351,15 @@ const CriteriaSetupPage = () => {
         })}
       </div>
 
-      {/* Floating Status Indicator */}
       {!isWeightValid && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 animate-in slide-in-from-bottom-10 duration-500">
-           <div className="bg-warning text-warning-foreground px-8 py-4 rounded-full shadow-2xl flex items-center gap-4 border-2 border-warning/20 backdrop-blur-xl">
-              <ShieldCheck className="w-5 h-5 animate-pulse" />
-              <span className="text-sm font-black uppercase tracking-tight">
-                 Pipeline Imbalance ({totalWeight}% / 100%). Adjust to proceed.
-              </span>
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 duration-500">
+           <div className="bg-background/95 backdrop-blur-md border border-warning/30 text-warning px-6 py-3.5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.15)] flex items-center gap-3.5 ring-1 ring-warning/10">
+               <div className="w-8 h-8 rounded-full bg-warning/10 flex items-center justify-center shrink-0">
+                  <AlertCircle className="w-4 h-4 animate-pulse" />
+               </div>
+               <span className="text-xs font-bold uppercase tracking-wider">
+                  Pipeline Imbalance: <span className="font-display font-black ml-1 opacity-80">{totalWeight}%</span> <span className="mx-1 text-muted-foreground/50">/</span> 100%
+               </span>
            </div>
         </div>
       )}

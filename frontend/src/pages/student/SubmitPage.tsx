@@ -4,6 +4,7 @@
 // ============================================================
 
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import projectService from "@/api/projectService";
 import { Project, Proposal } from "@/types";
 
 const SubmitPage = () => {
+  const navigate = useNavigate();
   const [myProject, setMyProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -117,14 +119,14 @@ const SubmitPage = () => {
         formData.append("document", file);
       }
 
-      const res = await projectService.submitProposal(myProject.id, formData);
-      setMyProject(res.data);
-      toast.success("Proposal submitted successfully!", {
-        description: "The coordinator will review and provide feedback shortly.",
+      await projectService.submitProposal(myProject.id, formData);
+      toast.success("Proposal Submitted", { 
+        description: "Your academic project ideas have been delivered to the coordinator." 
       });
-    } catch (error: any) {
-      toast.error("Failed to submit proposal", {
-        description: error.response?.data?.message || "An error occurred",
+      navigate("/dashboard/student/status");
+    } catch (err: any) {
+      toast.error("Submission Failed", { 
+        description: err.response?.data?.message || "Internal server error during proposal transmission." 
       });
     } finally {
       setIsSubmitting(false);

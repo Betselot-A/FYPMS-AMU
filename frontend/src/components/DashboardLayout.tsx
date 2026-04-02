@@ -65,14 +65,7 @@ const getNavConfig = (user: User): NavItem[] => {
         { label: "Project Setup", icon: <FolderOpen className="w-4 h-4" />, path: "/dashboard/coordinator/project-setup" },
         { label: "Criteria Setup", icon: <Settings className="w-4 h-4" />, path: "/dashboard/coordinator/criteria-setup" },
         { label: "Project Mgmt", icon: <Wrench className="w-4 h-4" />, path: "/dashboard/coordinator/project-management" },
-        {
-          label: "Evaluation",
-          icon: <Award className="w-4 h-4" />,
-          children: [
-            { label: "Coordinator Mark", icon: <ClipboardCheck className="w-4 h-4" />, path: "/dashboard/coordinator/evaluation" },
-            { label: "Advisor Mark", icon: <UserCheck className="w-4 h-4" />, path: "/dashboard/coordinator/advisor-mark" },
-          ],
-        },
+        { label: "Evaluation", icon: <ClipboardCheck className="w-4 h-4" />, path: "/dashboard/coordinator/evaluation" },
         { label: "All Students", icon: <Users className="w-4 h-4" />, path: "/dashboard/coordinator/students" },
         { label: "Reports", icon: <BarChart3 className="w-4 h-4" />, path: "/dashboard/coordinator/reports" },
         { label: "Messenger", icon: <MessageSquare className="w-4 h-4" />, path: "/dashboard/coordinator/messages" },

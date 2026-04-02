@@ -62,11 +62,16 @@ const ProjectSetupPage = () => {
     }
     setIsSaving(projectId);
     try {
-      const res = await projectService.assignStaff(projectId, form.advisorId, form.examinerId || undefined);
+      const examinerId = form.examinerId === "none" ? undefined : form.examinerId;
+      const res = await projectService.assignStaff(projectId, form.advisorId, examinerId);
       setApprovedProjects((prev) => prev.map((p) => (p.id === projectId ? res.data : p)));
-      toast.success("Staff assigned! The project is now In Progress.");
+      toast.success("Staff Assigned", { 
+        description: "Advisor and Examiner have been linked to the project squad." 
+      });
     } catch (error: any) {
-      toast.error("Failed to assign staff", { description: error.response?.data?.message });
+      toast.error("Assignment Failed", { 
+        description: "Could not persist staff assignments. Please check permissions." 
+      });
     } finally {
       setIsSaving(null);
     }
@@ -115,26 +120,26 @@ const ProjectSetupPage = () => {
                       </div>
                       <div className="flex items-center gap-2 mt-1.5 px-3 py-1 bg-background rounded-md border border-border/50 max-w-fit">
                         <Award className="w-3.5 h-3.5 text-accent" />
-                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                           Topic: <span className="text-foreground normal-case font-medium">{project.finalTitle || "Selection Pending"}</span>
                         </span>
                       </div>
                     </div>
                     <Badge className={cn(
-                      "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm",
+                      "px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm",
                       project.status === "in-progress" 
-                        ? "bg-success/10 text-success border-success/20 ring-4 ring-success/5" 
-                        : "bg-warning/10 text-warning border-warning/20 ring-4 ring-warning/5"
+                        ? "bg-success/10 text-success border-success/20" 
+                        : "bg-warning/10 text-warning border-warning/20"
                     )}>
-                      {project.status === "in-progress" ? <CheckCircle2 className="w-3 h-3 mr-1.5" /> : <Clock className="w-3 h-3 mr-1.5" />}
-                      {project.status.replace('-', ' ')}
+                       {project.status === "in-progress" ? <CheckCircle2 className="w-3 h-3 mr-1.5" /> : <Clock className="w-3 h-3 mr-1.5" />}
+                       {project.status.replace('-', ' ')}
                     </Badge>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-6">
                   {/* Team Members List */}
                   <div className="space-y-2.5">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2">
                        <UserCheck className="w-3.5 h-3.5" />
                        Assigned Squad Members
                     </p>
@@ -192,7 +197,7 @@ const ProjectSetupPage = () => {
                             <SelectValue placeholder="Select examiner..." />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">— None —</SelectItem>
+                            <SelectItem value="none">— None —</SelectItem>
                             {staffList.map((s) => (
                               <SelectItem key={s.id} value={s.id}>{s.name} ({s.department})</SelectItem>
                             ))}

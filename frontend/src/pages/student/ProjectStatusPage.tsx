@@ -89,12 +89,12 @@ const ProjectStatusPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto pb-20">
-      <div className="mb-10 space-y-2">
-        <Badge variant="outline" className="border-primary/20 text-primary uppercase text-[10px] font-black tracking-widest px-2 py-0.5">
-           REAL-TIME TRACKING
+      <div className="mb-8 space-y-1">
+        <Badge variant="outline" className="bg-primary/5 text-primary uppercase text-[10px] font-bold tracking-widest px-2 py-0.5">
+           Real-Time Tracking
         </Badge>
-        <h1 className="text-4xl font-display font-black text-foreground">Project Roadmap</h1>
-        <p className="text-sm text-muted-foreground">Monitoring integrity and milestone completion for: <span className="text-foreground font-bold">{project.title}</span></p>
+        <h1 className="text-2xl font-display font-bold text-foreground">Project Roadmap</h1>
+        <p className="text-sm text-muted-foreground mt-1">Monitoring integrity and milestone completion for: <span className="text-foreground font-semibold">{project.title}</span></p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -104,17 +104,17 @@ const ProjectStatusPage = () => {
             </div>
             <CardContent className="p-8 relative z-10 flex flex-col justify-between h-full min-h-[200px]">
                <div>
-                  <p className="text-xs font-black uppercase tracking-[0.2em] opacity-80 mb-2">OPERATIONAL STATUS</p>
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80 mb-2">Operational Status</p>
                   <div className="flex items-center gap-3">
-                     <h2 className="text-3xl font-black capitalize">{project.status}</h2>
-                     <Badge className="bg-white/20 text-white backdrop-blur-md border-none uppercase text-[10px] font-black px-3">
+                     <h2 className="text-3xl font-bold capitalize">{project.status}</h2>
+                     <Badge className="bg-white/20 text-white backdrop-blur-md border-none uppercase text-[10px] font-bold px-3">
                         Phase 1 Active
                      </Badge>
                   </div>
                </div>
                
                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest">
+                  <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest">
                      <span>Journey Completion</span>
                      <span>{progress}%</span>
                   </div>
@@ -134,17 +134,17 @@ const ProjectStatusPage = () => {
                   <MilestoneIcon className="w-8 h-8 text-primary" />
                </div>
                <div>
-                  <p className="text-2xl font-black text-foreground">
+                  <p className="text-2xl font-bold text-foreground">
                      {project.milestones.filter(m => m.status === 'approved').length} <span className="text-muted-foreground font-medium">/ {project.milestones.length}</span>
                   </p>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">Milestones Finalized</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1.5">Milestones Finalized</p>
                </div>
             </CardContent>
          </Card>
       </div>
 
       <div className="space-y-6">
-        <h3 className="text-xs font-black text-muted-foreground uppercase tracking-widest ml-1">Journey Timeline</h3>
+        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Journey Timeline</h3>
         <div className="relative space-y-4">
           <div className="absolute left-[27px] top-4 bottom-4 w-0.5 bg-muted/60" />
           
@@ -174,9 +174,9 @@ const ProjectStatusPage = () => {
                   <CardContent className="p-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="space-y-1">
-                         <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2">
                             <h4 className="font-bold text-foreground">{milestone.title}</h4>
-                            <Badge variant="outline" className={cn("text-[9px] font-black uppercase h-5 transition-colors", statusColors[milestone.status])}>
+                            <Badge variant="outline" className={cn("text-[9px] font-bold uppercase h-5 transition-colors", statusColors[milestone.status])}>
                                {milestone.status}
                             </Badge>
                          </div>
@@ -184,7 +184,7 @@ const ProjectStatusPage = () => {
                       </div>
                       <div className="flex items-center gap-6 sm:text-right shrink-0">
                          <div className="space-y-1">
-                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">DEADLINE</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Deadline</p>
                             <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                                <Calendar className="w-3.5 h-3.5 text-primary" />
                                {milestone.dueDate}

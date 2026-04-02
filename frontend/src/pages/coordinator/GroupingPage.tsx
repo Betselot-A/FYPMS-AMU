@@ -81,7 +81,9 @@ const GroupingPage = () => {
       const currentUngrouped = usersRes.data.users.filter((s) => !currentAssigned.has(s.id));
       setAutoGroups(calculateAutoGroups(currentUngrouped, maxGroupSize));
     } catch {
-      toast.error("Failed to load data.");
+      toast.error("Sync Error", { 
+        description: "Failed to load student roster and project data." 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -109,17 +111,14 @@ const GroupingPage = () => {
         title: groupName.trim() || undefined
       });
       setProjects((prev) => [res.data, ...prev]);
+      toast.success("Group Created", { 
+        description: `"${groupName || "New Squad"}" is now active and ready for proposals.` 
+      });
       setIsDialogOpen(false);
-      setSelectedStudents([]);
-      setGroupName("");
-
-      const updatedAssigned = new Set([...assignedStudentIds, ...selectedStudents]);
-      const updatedUngrouped = students.filter(s => !updatedAssigned.has(s.id));
-      setAutoGroups(calculateAutoGroups(updatedUngrouped, maxGroupSize));
-
-      toast.success("Group created! Students can now submit their project proposals.");
     } catch (error: any) {
-      toast.error("Failed to create group", { description: error.response?.data?.message });
+      toast.error("Creation Failed", { 
+        description: error.response?.data?.message || "Could not persist group formation." 
+      });
     } finally {
       setIsCreating(false);
     }
@@ -142,9 +141,13 @@ const GroupingPage = () => {
     try {
       await projectService.delete(projectId);
       setProjects((prev) => prev.filter((p) => p.id !== projectId));
-      toast.success("Group deleted successfully.");
+      toast.success("Group Deleted", { 
+        description: "Squad has been disbanded and students returned to ungrouped list." 
+      });
     } catch (error: any) {
-      toast.error("Failed to delete group", { description: error.response?.data?.message });
+      toast.error("Decline Failed", { 
+        description: error.response?.data?.message || "Could not delete the project record." 
+      });
     } finally {
       setIsDeleting(null);
     }
@@ -152,7 +155,9 @@ const GroupingPage = () => {
 
   const handleRegenerateAutoGroups = () => {
     setAutoGroups(calculateAutoGroups(ungroupedStudents, maxGroupSize));
-    toast.success(`Groups mathematically regenerated into squads of max ${maxGroupSize}.`);
+    toast.success("Engine Re-rolled", { 
+      description: `Roster mathematically divided into squads of max ${maxGroupSize}.` 
+    });
   };
 
   const handleSaveAutoGroups = async () => {
@@ -165,12 +170,15 @@ const GroupingPage = () => {
       }));
 
       const res = await projectService.bulkCreate(groupData);
-      toast.success(`${autoGroups.length} groups have been saved to the database.`);
+      toast.success("Batch Complete", { 
+        description: `${autoGroups.length} auto-generated squads have been committed to DB.` 
+      });
 
       setProjects((prev) => [...res.data.projects, ...prev]);
-      setAutoGroups([]);
     } catch (error) {
-      toast.error("Failed to save automatic groups");
+      toast.error("Batch Failed", { 
+        description: "Could not save automatically generated squads." 
+      });
     } finally {
       setIsSavingAuto(false);
     }

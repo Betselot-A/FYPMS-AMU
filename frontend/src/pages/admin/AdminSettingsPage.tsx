@@ -39,7 +39,9 @@ const AdminSettingsPage = () => {
       const response = await settingsService.get();
       setSettings(response.data);
     } catch (error) {
-      toast.error("Failed to load system settings");
+      toast.error("Config Sync Error", { 
+        description: "Failed to load system settings from the secure server." 
+      });
     } finally {
       setIsLoading(false);
     }
@@ -50,11 +52,13 @@ const AdminSettingsPage = () => {
     try {
       setIsSaving(true);
       await settingsService.update(settings);
-      toast.success("Settings saved successfully", {
-        description: "All system configurations have been updated.",
+      toast.success("Settings Saved", {
+        description: "All system configurations have been updated successfully.",
       });
     } catch (error) {
-      toast.error("Failed to save changes");
+      toast.error("Update Failed", { 
+        description: "Could not persist system configuration changes to the database." 
+      });
     } finally {
       setIsSaving(false);
     }
