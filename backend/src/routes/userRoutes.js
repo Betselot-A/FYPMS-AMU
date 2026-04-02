@@ -34,9 +34,9 @@ router.delete("/bulk", authorize("admin"), bulkDeleteUsers);
 // Authenticated users can view a single user
 router.get("/:id", getUserById);
 
-// Admin-only update & delete
+// Admin-only update; Admin or Coordinator can delete
 router.put("/:id", authorize("admin"), updateUser);
-router.delete("/:id", authorize("admin"), deleteUser);
+router.delete("/:id", authorize("admin", "coordinator"), deleteUser);
 router.post("/:id/reset-password", authorize("admin"), resetUserPassword);
 
 module.exports = router;

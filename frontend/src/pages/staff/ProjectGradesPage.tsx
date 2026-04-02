@@ -1,115 +1,232 @@
-// ============================================================
-// Project Grades Page (Examiner context)
-// Per-member evaluation criteria for presentation grading
-// ============================================================
-
 import { useParams, useSearchParams, Link } from "react-router-dom";
-import { useState } from "react";
-import { mockProjects, mockUsers } from "@/data/mockData";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Send, User } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
-
-const evaluationCriteria = [
-  { key: "pace", label: "Pace of presentation (Pace and Protocol)", max: 3 },
-  { key: "confidence", label: "Confidence and manner (Polite and well-mannered attitude and behavior)", max: 3 },
-  { key: "clarity", label: "Clarity of presentation and eye contact with audience", max: 3 },
-  { key: "bodyLanguage", label: "Use of body language like facial and gesture", max: 3 },
-  { key: "generalKnowledge", label: "General knowledge of the project", max: 2 },
-  { key: "answeringQuestions", label: "Ability of answering questions", max: 3 },
-  { key: "languageUse", label: "Language use (is fluent and correct)", max: 3 },
-];
-
-const maxTotal = evaluationCriteria.reduce((sum, c) => sum + c.max, 0);
+import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { 
+  ArrowLeft, 
+  Send, 
+  User, 
+  Target, 
+  Award, 
+  CheckCircle2, 
+  Loader2,
+  Calculator,
+  ShieldCheck,
+  Zap,
+  ChevronRight
+} from "lucide-react";
+import { toast } from "sonner";
+import { projectService, evaluationService, gradeService } from "@/api";
+import { Project } from "@/api/projectService";
+import { EvaluationPhase, Criterion } from "@/api/gradeService";
+import { cn } from "@/lib/utils";
 
 const ProjectGradesPage = () => {
   const { projectId } = useParams();
   const [searchParams] = useSearchParams();
   const role = searchParams.get("role") || "examiner";
-  const project = mockProjects.find((p) => p.id === projectId);
-  // scores[memberId][criteriaKey] = string value
-  const [scores, setScores] = useState<Record<string, Record<string, string>>>({});
-  const [expandedMember, setExpandedMember] = useState<string | null>(null);
+  
+  const [project, setProject] = useState<Project | null>(null);
+  const [phase, setPhase] = useState<EvaluationPhase | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // scores[studentId][criterionId] = number
+  const [scores, setScores] = useState<Record<string, Record<string, number>>>({});
+  const [comments, setComments] = useState<Record<string, string>>({});
+  const [expandedStudent, setExpandedStudent] = useState<string | null>(null);
 
-  if (!project) return <p className="text-muted-foreground">Project not found.</p>;
+  const fetchData = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      setIsLoading(true);
+      const [projRes, configRes] = await Promise.all([
+        projectService.getById(projectId),
+        gradeService.getConfig()
+      ]);
+      
+      setProject(projRes.data);
+      
+      // Determine relevant phase based on role
+      const searchName = role === 'advisor' ? 'Advisor' : 'Examiner';
+      const targetPhase = configRes.data.phases.find(p => p.name.includes(searchName)) || configRes.data.phases[0];
+      setPhase(targetPhase);
+      
+    } catch (error) {
+      toast.error("Could not synchronize evaluation criteria.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [projectId, role]);
 
-  const members = project.groupMembers.map((id) => mockUsers.find((u) => u.id === id)).filter(Boolean);
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
-  const getMemberTotal = (memberId: string) => {
-    const memberScores = scores[memberId] || {};
-    return Object.values(memberScores).reduce((sum, v) => sum + (parseInt(v) || 0), 0);
-  };
-
-  const handleScoreChange = (memberId: string, criteriaKey: string, value: string) => {
+  const handleScoreChange = (studentId: string, criterionId: string, value: string, max: number) => {
+    const num = parseInt(value) || 0;
+    if (num > max) {
+       toast.warning(`Maximum mark for this criterion is ${max}`);
+       return;
+    }
     setScores((prev) => ({
       ...prev,
-      [memberId]: {
-        ...(prev[memberId] || {}),
-        [criteriaKey]: value,
+      [studentId]: {
+        ...(prev[studentId] || {}),
+        [criterionId]: num,
       },
     }));
   };
 
-  const handleSubmit = () => {
-    const summary = members
-      .map((m) => `${m!.name}: ${getMemberTotal(m!.id)}/${maxTotal}`)
-      .join(", ");
-    toast({ title: "Grades Submitted", description: summary });
+  const calculateStudentTotal = (studentId: string) => {
+    if (!phase) return 0;
+    const studentScores = scores[studentId] || {};
+    return phase.criteria.reduce((sum, c) => sum + (studentScores[c.id] || 0), 0);
   };
 
+  const handleSubmitAll = async () => {
+    if (!project || !phase) return;
+    
+    setIsSubmitting(true);
+    try {
+      const submissionPromises = project.groupMembers.map(m => {
+        const studentId = typeof m === 'object' ? (m as any).id : m;
+        const studentScores = scores[studentId] || {};
+        
+        return evaluationService.submitEvaluation({
+          projectId: project.id,
+          studentId: studentId,
+          phaseId: phase.id,
+          marks: phase.criteria.map(c => ({
+            criterionId: c.id,
+            mark: studentScores[c.id] || 0
+          })),
+          comments: comments[studentId] || ""
+        });
+      });
+
+      await Promise.all(submissionPromises);
+      toast.success("Squad evaluation committed successfully.");
+    } catch (error) {
+       toast.error("Failed to commit final grades.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-40 w-full" />
+        <div className="space-y-4">
+           {[1, 2].map(i => <Skeleton key={i} className="h-24 w-full" />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (!project || !phase) return <div className="p-20 text-center text-muted-foreground">Evaluation structure missing.</div>;
+
+  const maxPhaseScore = phase.criteria.reduce((sum, c) => sum + c.maxMark, 0);
+
   return (
-    <div>
-      <Link
-        to={`/dashboard/staff/project/${projectId}?role=${role}`}
-        className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
-      >
-        <ArrowLeft className="w-4 h-4" /> Back to Project
+    <div className="max-w-4xl mx-auto pb-20">
+      <Link to={`/dashboard/staff/project/${projectId}?role=${role}`} className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary mb-6 transition-all group">
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        BACK TO PROJECT OVERVIEW
       </Link>
-      <h1 className="text-xl font-display font-bold text-foreground mb-1">Submit Grades</h1>
-      <p className="text-sm text-muted-foreground mb-6">{project.title}</p>
+
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
+        <div>
+           <Badge variant="outline" className="text-primary border-primary/20 uppercase text-[10px] font-black tracking-widest px-2 py-0.5 mb-2">
+              Formal Assessment Phase: {phase.name}
+           </Badge>
+           <h1 className="text-3xl font-display font-black text-foreground">Scorecard Entry</h1>
+           <p className="text-sm text-muted-foreground mt-1">Submit technical evaluation marks for each student in the squad.</p>
+        </div>
+        
+        <div className="flex items-center gap-3">
+           <div className="text-right">
+              <p className="text-2xl font-black text-foregroundLeading-none">/ {maxPhaseScore}</p>
+              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">MAX PHASE POINTS</p>
+           </div>
+        </div>
+      </div>
 
       <div className="space-y-4">
-        {members.map((m) => {
-          const isExpanded = expandedMember === m!.id;
-          const total = getMemberTotal(m!.id);
+        {project.groupMembers.map((m, idx) => {
+          const studentId = typeof m === 'object' ? (m as any).id : m;
+          const studentName = typeof m === 'object' ? (m as any).name : `CANDIDATE ${idx + 1}`;
+          const isExpanded = expandedStudent === studentId;
+          const total = calculateStudentTotal(studentId);
 
           return (
-            <Card key={m!.id} className="shadow-card">
+            <Card key={studentId} className={cn(
+              "shadow-card border-none transition-all duration-300",
+              isExpanded ? "ring-2 ring-primary/20" : "hover:bg-muted/30"
+            )}>
               <CardHeader
-                className="pb-3 cursor-pointer"
-                onClick={() => setExpandedMember(isExpanded ? null : m!.id)}
+                className="p-6 cursor-pointer flex flex-row items-center justify-between"
+                onClick={() => setExpandedStudent(isExpanded ? null : studentId)}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    <CardTitle className="text-base">{m!.name}</CardTitle>
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                     <User className="w-6 h-6" />
                   </div>
-                  <span className="text-sm font-semibold text-primary">{total}/{maxTotal}</span>
+                  <div>
+                    <CardTitle className="text-lg font-black text-foreground">{studentName}</CardTitle>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">CANDIDATE SCORECARD</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-6">
+                   <div className="text-right">
+                      <p className="text-2xl font-black text-primary leading-none">{total}</p>
+                      <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">TOTAL MARK</p>
+                   </div>
+                   <ChevronRight className={cn("w-5 h-5 text-muted-foreground transition-transform", isExpanded && "rotate-90")} />
                 </div>
               </CardHeader>
 
               {isExpanded && (
-                <CardContent className="space-y-3 pt-0">
-                  {evaluationCriteria.map((c) => (
-                    <div key={c.key} className="flex items-start gap-4">
-                      <Label className="flex-1 text-sm text-foreground pt-2">{c.label} (/{c.max})</Label>
-                      <Input
-                        type="number"
-                        min={0}
-                        max={c.max}
-                        placeholder="0"
-                        value={scores[m!.id]?.[c.key] || ""}
-                        onChange={(e) => handleScoreChange(m!.id, c.key, e.target.value)}
-                        className="w-20"
-                      />
-                    </div>
-                  ))}
-                  <div className="border-t border-border pt-3 flex items-center justify-between">
-                    <span className="font-semibold text-foreground">Total</span>
-                    <span className="text-lg font-bold text-primary">{total}/{maxTotal}</span>
+                <CardContent className="px-6 pb-8 pt-0 space-y-6 animate-in fade-in slide-in-from-top-2">
+                  <div className="h-px bg-border/40 w-full mb-6" />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6">
+                    {phase.criteria.map((c) => (
+                      <div key={c.id} className="space-y-3">
+                        <div className="flex justify-between items-center">
+                           <Label className="text-xs font-bold text-foreground uppercase tracking-tight">{c.label}</Label>
+                           <span className="text-[10px] font-black text-muted-foreground">MAX: {c.maxMark}</span>
+                        </div>
+                        <div className="relative">
+                           <Input
+                             type="number"
+                             min={0}
+                             max={c.maxMark}
+                             placeholder="0"
+                             value={scores[studentId]?.[c.id] ?? ""}
+                             onChange={(e) => handleScoreChange(studentId, c.id, e.target.value, c.maxMark)}
+                             className="h-12 border-none bg-muted/50 rounded-xl pl-12 font-bold text-lg focus-visible:ring-primary/20"
+                           />
+                           <Calculator className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4">
+                     <Label className="text-xs font-bold text-foreground uppercase tracking-tight block mb-3">INTERNAL EVALUATOR COMMENTS</Label>
+                     <textarea 
+                        className="w-full min-h-[100px] border-none bg-muted/50 rounded-2xl p-4 text-sm font-medium resize-none focus:ring-1 focus:ring-primary/20 outline-none"
+                        placeholder="Add critical observation regarding student performance..."
+                        value={comments[studentId] || ""}
+                        onChange={(e) => setComments(prev => ({ ...prev, [studentId]: e.target.value }))}
+                     />
                   </div>
                 </CardContent>
               )}
@@ -118,9 +235,23 @@ const ProjectGradesPage = () => {
         })}
       </div>
 
-      <Button onClick={handleSubmit} className="mt-6">
-        <Send className="w-4 h-4 mr-1.5" /> Submit Final Grades
-      </Button>
+      <div className="mt-12">
+        <Button 
+          disabled={isSubmitting || project.groupMembers.length === 0}
+          onClick={handleSubmitAll} 
+          className="w-full h-16 rounded-2xl gradient-primary text-primary-foreground font-black text-lg uppercase tracking-widest shadow-2xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-3"
+        >
+          {isSubmitting ? (
+             <><Loader2 className="w-6 h-6 animate-spin" /> COMMITTING GRADES...</>
+          ) : (
+             <><Award className="w-6 h-6" /> COMMIT FINAL EVALUATION</>
+          )}
+        </Button>
+        <p className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-tighter mt-4 flex items-center justify-center gap-2">
+           <ShieldCheck className="w-3.5 h-3.5 text-success" /> 
+           This action will finalize the phase marks and trigger graduation ledger updates.
+        </p>
+      </div>
     </div>
   );
 };

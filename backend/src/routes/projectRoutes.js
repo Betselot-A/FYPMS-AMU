@@ -15,6 +15,7 @@ const {
   reviewProposal,
   assignStaff,
   bulkCreateProjects,
+  releaseResults,
 } = require("../controllers/projectController");
 const { protect } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
@@ -27,10 +28,11 @@ router.use(protect);
 router.get("/", getProjects);
 router.get("/:id", getProjectById);
 
-// Coordinator-only: create, update, delete
+// Coordinator-only: create, bulk create, and delete
+// Student/Coordinator/Admin: update (ownership check in controller for student)
 router.post("/", authorize("coordinator", "admin"), createProject);
 router.post("/bulk", authorize("coordinator", "admin"), bulkCreateProjects);
-router.put("/:id", authorize("coordinator", "admin"), updateProject);
+router.put("/:id", authorize("coordinator", "admin", "student"), updateProject);
 router.delete("/:id", authorize("coordinator", "admin"), deleteProject);
 
 // Student: submit a proposal (exactly 3 titles + file)
@@ -46,6 +48,9 @@ router.put("/:id/proposals/review", authorize("coordinator", "admin"), reviewPro
 
 // Coordinator: assign staff (advisor + examiner)
 router.put("/:id/assign-staff", authorize("coordinator", "admin"), assignStaff);
+
+// Coordinator: officially release results
+router.put("/:id/release-results", authorize("coordinator", "admin"), releaseResults);
 
 // Advisor/Coordinator: update milestones
 router.put(

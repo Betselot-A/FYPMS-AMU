@@ -21,6 +21,8 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const evaluationRoutes = require("./routes/evaluationRoutes");
 const gradeRoutes = require("./routes/gradeRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
+const fileRoutes = require("./routes/fileRoutes");
+const messageRoutes = require("./routes/messageRoutes");
 
 const app = express();
 
@@ -43,6 +45,8 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/evaluations", evaluationRoutes);
 app.use("/api/grade-config", gradeRoutes);
 app.use("/api/settings", settingsRoutes);
+app.use("/api/files", fileRoutes);
+app.use("/api/messages", messageRoutes);
 
 // Health check
 app.get("/api/health", (_req, res) => {

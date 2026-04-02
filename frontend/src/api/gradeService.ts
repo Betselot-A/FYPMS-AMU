@@ -1,5 +1,6 @@
 // ============================================================
 // Grade Configuration API service
+// Aligned with backend GradeConfig model
 // ============================================================
 
 import apiClient from "./client";
@@ -13,19 +14,27 @@ export interface GradeBand {
 }
 
 export interface Criterion {
+  id?: string;
+  _id?: string;
+  label: string;
+  maxMark: number;
+}
+
+export interface EvaluationPhase {
   id: string;
   name: string;
   weight: number;
-  phase: "advisor" | "examiner" | "coordinator" | "general";
+  active: boolean;
+  criteria: Criterion[];
 }
 
 export interface GradeConfig {
   id: string;
   bands: GradeBand[];
-  criteria: Criterion[];
+  phases: EvaluationPhase[];
 }
 
-const gradeService = {
+export const gradeService = {
   // GET /api/grade-config
   getConfig: () => apiClient.get<GradeConfig>("/grade-config"),
 

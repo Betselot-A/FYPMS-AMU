@@ -52,6 +52,7 @@ export interface Project {
   proposals: Proposal[];
   proposalStatus: "not-submitted" | "pending" | "approved" | "rejected";
   approvedProposalIndex?: number;
+  resultsReleased?: boolean;
 }
 
 export interface Milestone {

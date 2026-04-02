@@ -5,9 +5,13 @@ import { projectService, notificationService } from "@/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { FolderOpen, Bell, CheckCircle, Clock, Plus, Send, Users, XCircle, FileText } from "lucide-react";
+import { 
+  FolderOpen, Bell, CheckCircle, Clock, Plus, Send, Users, 
+  XCircle, FileText, Edit2, Check, X, Loader2 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Input } from "@/components/ui/input";
 
 const statusColors: Record<string, string> = {
   "pending": "bg-warning/10 text-warning border-warning/20",
@@ -25,6 +29,11 @@ const StudentDashboard = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Editing State
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState("");
+  const [isSavingName, setIsSavingName] = useState(false);
 
   useEffect(() => {
     if (user) fetchData();
@@ -43,6 +52,30 @@ const StudentDashboard = () => {
       console.error("Failed to fetch student data:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleStartEdit = (currentName: string) => {
+    setEditedName(currentName);
+    setIsEditingName(true);
+  };
+
+  const handleSaveName = async (projectId: string) => {
+    if (!editedName.trim()) {
+      toast({ title: "Error", description: "Group name cannot be empty", variant: "destructive" });
+      return;
+    }
+
+    setIsSavingName(true);
+    try {
+      await projectService.update(projectId, { title: editedName.trim() });
+      toast({ title: "Success", description: "Group name updated successfully" });
+      setIsEditingName(false);
+      fetchData(); // Refresh to see the new title
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to update group name", variant: "destructive" });
+    } finally {
+      setIsSavingName(false);
     }
   };
 
@@ -118,11 +151,51 @@ const StudentDashboard = () => {
           {currentProject ? (
             <Card className="shadow-card">
               <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="text-lg">Project Group: {currentProject.title}</CardTitle>
+                <div className="flex-1">
+                  {isEditingName ? (
+                    <div className="flex items-center gap-2 max-w-md">
+                      <Input 
+                        value={editedName}
+                        onChange={(e) => setEditedName(e.target.value)}
+                        className="h-9 font-bold text-lg"
+                        placeholder="Enter new group name..."
+                        autoFocus
+                      />
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-9 w-9 text-success hover:bg-success/10"
+                        onClick={() => handleSaveName(currentProject.id)}
+                        disabled={isSavingName}
+                      >
+                        {isSavingName ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        className="h-9 w-9 text-destructive hover:bg-destructive/10"
+                        onClick={() => setIsEditingName(false)}
+                        disabled={isSavingName}
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group/title">
+                      <CardTitle className="text-lg">Project Group: {currentProject.title}</CardTitle>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 opacity-0 group-hover/title:opacity-100 transition-opacity"
+                        onClick={() => handleStartEdit(currentProject.title)}
+                      >
+                        <Edit2 className="w-3 h-3 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  )}
                   <CardDescription>Status: <span className="capitalize font-medium text-foreground">{currentProject.status}</span></CardDescription>
                 </div>
-                {currentProject.proposalStatus !== "approved" && (
+                {!isEditingName && currentProject.proposalStatus !== "approved" && (
                   <Button
                     size="sm"
                     className="gradient-primary text-primary-foreground gap-2"

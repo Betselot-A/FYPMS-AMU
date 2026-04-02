@@ -31,6 +31,12 @@ const fileSchema = new mongoose.Schema(
             ref: "User",
             required: true,
         },
+        // Linked project for group access control
+        projectId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Project",
+            required: [true, "Project link is mandatory for research documents"],
+        },
     },
     {
         timestamps: true,

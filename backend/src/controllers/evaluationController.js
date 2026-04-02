@@ -8,11 +8,15 @@ const Notification = require("../models/Notification");
 
 /**
  * POST /api/evaluations
- * Staff — submit evaluation marks for a project
+ * Staff — submit evaluation marks for a student in a project
  */
 const submitEvaluation = async (req, res, next) => {
   try {
-    const { projectId, phaseId, marks, comments } = req.body;
+    const { projectId, studentId, phaseId, marks, comments } = req.body;
+
+    if (!studentId) {
+       return res.status(400).json({ message: "Student ID is required for marking." });
+    }
 
     // Verify project exists
     const project = await Project.findById(projectId);
@@ -26,22 +30,28 @@ const submitEvaluation = async (req, res, next) => {
     // Calculate total mark
     const totalMark = marks.reduce((sum, m) => sum + (m.mark || 0), 0);
 
-    const grade = await Grade.create({
-      projectId,
-      evaluatorId: req.user._id,
-      phaseId: phaseId || "general",
-      marks,
-      totalMark,
-      comments: comments || "",
-    });
+    // Upsert logic: Update if exists, else create
+    const grade = await Grade.findOneAndUpdate(
+      { 
+        projectId, 
+        studentId, 
+        phaseId: phaseId || "general", 
+        evaluatorId: req.user._id 
+      },
+      {
+        marks,
+        totalMark,
+        comments: comments || "",
+      },
+      { new: true, upsert: true }
+    );
 
-    // Notify project members
-    const notifications = project.groupMembers.map((memberId) => ({
-      userId: memberId,
-      message: `Your project "${project.title}" has been evaluated`,
+    // Notify student
+    await Notification.create({
+      userId: studentId,
+      message: `You have received a new evaluation in "${project.title}" (${phaseId || "General"})`,
       type: "success",
-    }));
-    await Notification.insertMany(notifications);
+    });
 
     res.status(201).json(grade);
   } catch (error) {
@@ -51,12 +61,13 @@ const submitEvaluation = async (req, res, next) => {
 
 /**
  * GET /api/evaluations/:projectId
- * Get all evaluations for a project
+ * Get all evaluations for a project (populated with student & evaluator)
  */
 const getEvaluationsByProject = async (req, res, next) => {
   try {
     const grades = await Grade.find({ projectId: req.params.projectId })
       .populate("evaluatorId", "name email")
+      .populate("studentId", "name email")
       .sort({ createdAt: -1 });
 
     res.json(grades);
@@ -67,31 +78,17 @@ const getEvaluationsByProject = async (req, res, next) => {
 
 /**
  * GET /api/evaluations/results/:projectId
- * Get aggregated results for a project
+ * Get aggregated results (Legacy helper, frontend now handles complex aggregation)
  */
 const getProjectResults = async (req, res, next) => {
   try {
     const grades = await Grade.find({ projectId: req.params.projectId })
-      .populate("evaluatorId", "name email");
-
-    const totalPercentage =
-      grades.length > 0
-        ? grades.reduce((sum, g) => sum + g.totalMark, 0) / grades.length
-        : 0;
-
-    // Simple grade calculation
-    let finalGrade = "F";
-    if (totalPercentage >= 90) finalGrade = "A+";
-    else if (totalPercentage >= 80) finalGrade = "A";
-    else if (totalPercentage >= 70) finalGrade = "B+";
-    else if (totalPercentage >= 60) finalGrade = "B";
-    else if (totalPercentage >= 50) finalGrade = "C";
-    else if (totalPercentage >= 40) finalGrade = "D";
+      .populate("evaluatorId", "name email")
+      .populate("studentId", "name email");
 
     res.json({
       phases: grades,
-      totalPercentage: Math.round(totalPercentage * 100) / 100,
-      finalGrade,
+      message: "Aggregation should be handled by frontend based on config weights."
     });
   } catch (error) {
     next(error);

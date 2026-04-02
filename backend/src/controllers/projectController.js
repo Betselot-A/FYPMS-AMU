@@ -159,6 +159,28 @@ const updateProject = async (req, res, next) => {
       });
     }
 
+    const { role, _id: userId } = req.user;
+
+    // Student specific restrictions
+    if (role === "student") {
+      const isMember = project.groupMembers.some(id => id.toString() === userId.toString());
+      if (!isMember) {
+        return res.status(403).json({
+          error: "FORBIDDEN",
+          message: "You are not a member of this project group",
+        });
+      }
+
+      // Students can only update the project title (Group Name)
+      const updates = Object.keys(req.body);
+      if (updates.length > 1 || (updates.length === 1 && updates[0] !== "title")) {
+        return res.status(403).json({
+          error: "FORBIDDEN",
+          message: "Students are only allowed to update the group name",
+        });
+      }
+    }
+
     const allowedFields = [
       "title",
       "description",
@@ -424,6 +446,33 @@ const assignStaff = async (req, res, next) => {
   }
 };
 
+/**
+ * PUT /api/projects/:id/release-results
+ * Coordinator — officially release grades to students
+ */
+const releaseResults = async (req, res, next) => {
+  try {
+    const project = await Project.findById(req.params.id);
+    if (!project) return res.status(404).json({ message: "Project not found" });
+
+    project.resultsReleased = true;
+    project.status = "completed"; // Mark as completed when results are released
+    await project.save();
+
+    // Notify group members
+    const notifications = project.groupMembers.map((memberId) => ({
+      userId: memberId,
+      message: `Final results for "${project.title}" have been released! You can now view your graduation grade.`,
+      type: "success",
+    }));
+    await Notification.insertMany(notifications);
+
+    res.json({ message: "Results released successfully", project });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getProjects,
   getProjectById,
@@ -435,4 +484,5 @@ module.exports = {
   reviewProposal,
   assignStaff,
   bulkCreateProjects,
+  releaseResults,
 };

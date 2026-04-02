@@ -12,6 +12,7 @@ export interface EvaluationMark {
 
 export interface SubmitEvaluationRequest {
   projectId: string;
+  studentId: string;
   phaseId: string;
   marks: EvaluationMark[];
   comments?: string;
@@ -20,7 +21,8 @@ export interface SubmitEvaluationRequest {
 export interface EvaluationResult {
   id: string;
   projectId: string;
-  evaluatorId: string;
+  studentId: string | { id: string; name: string };
+  evaluatorId: string | { id: string; name: string; email: string };
   phaseId: string;
   marks: EvaluationMark[];
   comments?: string;

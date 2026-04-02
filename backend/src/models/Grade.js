@@ -11,6 +11,12 @@ const gradeSchema = new mongoose.Schema(
       ref: "Project",
       required: true,
     },
+    // The individual student being evaluated
+    studentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
     evaluatorId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -40,6 +46,9 @@ const gradeSchema = new mongoose.Schema(
     timestamps: true, // submittedAt = createdAt
   }
 );
+
+// Ensure a single evaluation record per student per phase by a specific evaluator
+gradeSchema.index({ projectId: 1, studentId: 1, phaseId: 1, evaluatorId: 1 }, { unique: true });
 
 gradeSchema.set("toJSON", {
   transform: (_doc, ret) => {

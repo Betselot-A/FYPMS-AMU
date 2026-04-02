@@ -10,8 +10,9 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CheckCircle2, Users, ChevronDown, ChevronRight, RefreshCw, Plus, ThumbsUp, Shuffle, Save, Loader2, Play, Trash2 } from "lucide-react";
+import { CheckCircle2, Users, ChevronDown, ChevronRight, RefreshCw, Plus, ThumbsUp, Shuffle, Save, Loader2, Play, Trash2, Tag } from "lucide-react";
 import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
 import userService from "@/api/userService";
 import projectService from "@/api/projectService";
 import { User, Project } from "@/types";
@@ -51,6 +52,7 @@ const GroupingPage = () => {
   const [selectedStudents, setSelectedStudents] = useState<string[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [groupName, setGroupName] = useState("");
   const [isApproving, setIsApproving] = useState<string | null>(null);
 
   // Auto Grouping State
@@ -103,10 +105,14 @@ const GroupingPage = () => {
     }
     setIsCreating(true);
     try {
-      const res = await projectService.createGroup({ groupMembers: selectedStudents });
+      const res = await projectService.createGroup({
+        groupMembers: selectedStudents,
+        title: groupName.trim() || undefined
+      });
       setProjects((prev) => [res.data, ...prev]);
       setIsDialogOpen(false);
       setSelectedStudents([]);
+      setGroupName("");
 
       const updatedAssigned = new Set([...assignedStudentIds, ...selectedStudents]);
       const updatedUngrouped = students.filter(s => !updatedAssigned.has(s.id));
@@ -202,11 +208,11 @@ const GroupingPage = () => {
         {/* Tab 1: Manual Grouping and Proposals */}
         <TabsContent value="manual" className="space-y-4 outline-none animate-fade-in">
           <div className="flex justify-between items-center bg-muted/20 p-4 border border-border rounded-xl">
-             <div>
-                <h3 className="font-semibold text-sm">Active Groups</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">Review current groups and natively approve submitted project proposals.</p>
-             </div>
-             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <div>
+              <h3 className="font-semibold text-sm">Active Groups</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Review current groups and natively approve submitted project proposals.</p>
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
                 <Button size="sm" className="gradient-primary text-primary-foreground shadow-sm">
                   <Plus className="w-4 h-4 mr-1.5" /> Create Group Manually
@@ -216,40 +222,57 @@ const GroupingPage = () => {
                 <DialogHeader>
                   <DialogTitle>Create Student Group</DialogTitle>
                   <DialogDescription>
-                    Select students to form a project group. Only ungrouped students are shown.
+                    Provide a name for the group and select the members.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="py-3 max-h-72 overflow-y-auto space-y-2">
-                  {ungroupedStudents.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      All students have already been assigned to groups.
-                    </p>
-                  ) : (
-                    ungroupedStudents.map((s) => {
-                      const initials = s.name.split(" ").map((n) => n[0]).join("");
-                      const selected = selectedStudents.includes(s.id);
-                      return (
-                        <button
-                          key={s.id}
-                          onClick={() => handleToggleStudent(s.id)}
-                          className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${
-                            selected
-                              ? "bg-primary/10 border-primary"
-                              : "bg-muted/30 border-border hover:bg-muted/50"
-                          }`}
-                        >
-                          <Avatar className="w-8 h-8">
-                            <AvatarFallback className="text-xs">{initials}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="text-sm font-medium text-foreground">{s.name}</p>
-                            <p className="text-xs text-muted-foreground">{s.email} · {s.department}</p>
-                          </div>
-                          {selected && <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />}
-                        </button>
-                      );
-                    })
-                  )}
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                      <Tag className="w-3 h-3" /> Group Identity / Name
+                    </label>
+                    <Input
+                      placeholder="e.g. Alpha Squad, AI Research Group..."
+                      value={groupName}
+                      onChange={(e) => setGroupName(e.target.value)}
+                      className="bg-muted/30 border-border focus-visible:ring-primary/20"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">
+                      Select Members (Max 4)
+                    </label>
+                    <div className="max-h-60 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                      {ungroupedStudents.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                          All students have already been assigned to groups.
+                        </p>
+                      ) : (
+                        ungroupedStudents.map((s) => {
+                          const initials = s.name.split(" ").map((n) => n[0]).join("");
+                          const selected = selectedStudents.includes(s.id);
+                          return (
+                            <button
+                              key={s.id}
+                              onClick={() => handleToggleStudent(s.id)}
+                              className={`w-full flex items-center gap-3 p-3 rounded-lg border text-left transition-colors ${selected
+                                  ? "bg-primary/10 border-primary shadow-sm"
+                                  : "bg-muted/10 border-border/50 hover:bg-muted/30"
+                                }`}
+                            >
+                              <Avatar className="w-8 h-8 ring-1 ring-border">
+                                <AvatarFallback className="text-[10px] font-bold">{initials}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-foreground truncate">{s.name}</p>
+                                <p className="text-[10px] text-muted-foreground truncate opacity-70 uppercase font-black tracking-tighter">{s.department}</p>
+                              </div>
+                              {selected && <CheckCircle2 className="w-4 h-4 text-primary ml-auto" />}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <DialogFooter>
                   <p className="text-xs text-muted-foreground mr-auto mt-2">
@@ -260,11 +283,11 @@ const GroupingPage = () => {
                   </Button>
                 </DialogFooter>
               </DialogContent>
-             </Dialog>
-           </div>
-           
-           {/* Rendering Existing Groups */}
-           {isLoading ? (
+            </Dialog>
+          </div>
+
+          {/* Rendering Existing Groups */}
+          {isLoading ? (
             <div className="py-8 text-center text-muted-foreground text-sm flex items-center justify-center gap-2">
               <Loader2 className="w-4 h-4 animate-spin" /> Loading groups...
             </div>
@@ -299,14 +322,14 @@ const GroupingPage = () => {
                             </CardDescription>
                           </div>
                         </div>
-                         <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2">
                           {project.proposalStatus === "approved" && (
                             <Badge className="bg-success/10 text-success border-success/20 text-xs shadow-sm">
                               <CheckCircle2 className="w-3 h-3 mr-1" /> Approved
                             </Badge>
                           )}
                           <Badge variant="outline" className="capitalize text-xs">{project.status}</Badge>
-                          
+
                           <Button
                             size="icon"
                             variant="ghost"
@@ -351,7 +374,7 @@ const GroupingPage = () => {
                         {/* Proposals */}
                         <div>
                           <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
-                            Project Proposals 
+                            Project Proposals
                             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">({project.proposals?.length || 0}/3)</Badge>
                           </p>
                           {!project.proposals || project.proposals.length === 0 ? (
@@ -367,13 +390,12 @@ const GroupingPage = () => {
                                 return (
                                   <div
                                     key={proposal.id || idx}
-                                    className={`p-3 rounded-lg border ${
-                                      isApproved
+                                    className={`p-3 rounded-lg border ${isApproved
                                         ? "bg-success/5 border-success/30 ring-1 ring-success/20"
                                         : proposal.status === "rejected"
-                                        ? "bg-destructive/5 border-destructive/20"
-                                        : "bg-muted/20 border-border"
-                                    }`}
+                                          ? "bg-destructive/5 border-destructive/20"
+                                          : "bg-muted/20 border-border"
+                                      }`}
                                   >
                                     <div className="flex items-start justify-between gap-3">
                                       <div>
@@ -569,7 +591,7 @@ const GroupingPage = () => {
         </TabsContent>
       </Tabs>
 
-      <ProposalReviewModal 
+      <ProposalReviewModal
         isOpen={isReviewModalOpen}
         onClose={() => setIsReviewModalOpen(false)}
         project={reviewingProject}

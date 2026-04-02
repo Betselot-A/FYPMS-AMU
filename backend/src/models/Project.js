@@ -115,6 +115,10 @@ const projectSchema = new mongoose.Schema(
       min: 0,
       max: 100,
     },
+    resultsReleased: {
+      type: Boolean,
+      default: false,
+    },
     milestones: [milestoneSchema],
   },
   {

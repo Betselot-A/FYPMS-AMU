@@ -5,8 +5,10 @@
 
 import apiClient from "./client";
 import { Project, Milestone } from "@/types";
+export type { Project, Milestone };
 
 export interface CreateGroupRequest {
+  title?: string;
   groupMembers: string[];
 }
 
@@ -26,6 +28,7 @@ export interface UpdateProjectRequest {
   examinerId?: string;
   status?: Project["status"];
   deadline?: string;
+  groupMembers?: string[]; // Allow coordinator to update membership (e.g. remove a student)
 }
 
 const projectService = {
@@ -39,7 +42,7 @@ const projectService = {
 
   // POST /api/projects — create a group with just members (coordinator)
   createGroup: (data: CreateGroupRequest) =>
-    apiClient.post<Project>("/projects", { ...data, title: "Awaiting Proposal" }),
+    apiClient.post<Project>("/projects", { ...data, title: data.title || "Untitled Group" }),
 
   // POST /api/projects/bulk — mass create groups (admin)
   bulkCreate: (groups: { title: string; groupMembers: string[] }[]) =>
@@ -76,6 +79,10 @@ const projectService = {
   // PUT /api/projects/:projectId/milestones/:milestoneId
   updateMilestone: (projectId: string, milestoneId: string, data: Partial<Milestone>) =>
     apiClient.put<Milestone>(`/projects/${projectId}/milestones/${milestoneId}`, data),
+
+  // PUT /api/projects/:id/release-results — coordinator officially release results
+  releaseResults: (projectId: string) =>
+    apiClient.put<{ message: string; project: Project }>(`/projects/${projectId}/release-results`, {}),
 };
 
 export default projectService;

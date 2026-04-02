@@ -1,46 +1,31 @@
 // ============================================================
 // Admin/Coordinator Messenger
-// Professional Unified Messaging Suite (Chat + Broadcast)
+// Professional Unified Messaging Suite (Chat)
 // ============================================================
 
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { MultiUserSelect } from "@/components/MultiUserSelect";
 import { 
-  Send, Search, Loader2, MessageSquare, User, Clock, 
-  ChevronRight, Video, Mic, MailPlus, AlertTriangle, 
-  Info, CheckCircle, Calendar, Megaphone, X, History,
-  Paperclip, FileText, Download 
+  Send, Search, Loader2, MessageSquare, Clock, 
+  ChevronRight, Video, Mic, MailPlus, 
+  X, History, Paperclip, FileText, Download, Megaphone
 } from "lucide-react";
 import { toast } from "sonner";
 import { notificationService, userService } from "@/api";
 import { cn } from "@/lib/utils";
 import type { Notification, User as UserType } from "@/types";
 
-type NotifType = "info" | "warning" | "success" | "deadline";
-
-const typeConfig: Record<NotifType, { label: string; icon: React.ReactNode; color: string; bg: string }> = {
-  info: { label: "Info", icon: <Info className="w-3.5 h-3.5" />, color: "text-info", bg: "bg-info/10" },
-  warning: { label: "Warning", icon: <AlertTriangle className="w-3.5 h-3.5" />, color: "text-warning", bg: "bg-warning/10" },
-  success: { label: "Success", icon: <CheckCircle className="w-3.5 h-3.5" />, color: "text-success", bg: "bg-success/10" },
-  deadline: { label: "Deadline", icon: <Calendar className="w-3.5 h-3.5" />, color: "text-destructive", bg: "bg-destructive/10" },
-};
-
 const AdminMessenger = () => {
   const { user: currentUser } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  // Navigation State
-  const [viewMode, setViewMode] = useState<"chat" | "compose">(searchParams.get("mode") === "compose" ? "compose" : "chat");
+  const navigate = useNavigate();
   
   // Sidebar State
   const [allUsers, setAllUsers] = useState<UserType[]>([]);
@@ -54,16 +39,6 @@ const AdminMessenger = () => {
   const [attachment, setAttachment] = useState<File | null>(null);
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [chatSearchQuery, setChatSearchQuery] = useState("");
-
-  // Compose State (Broadcast / Targeted)
-  const [isSendingCompose, setIsSendingCompose] = useState(false);
-  const [composeForm, setComposeForm] = useState({
-    target: "specific" as "specific" | "broadcast",
-    userIds: [] as string[],
-    subject: "",
-    message: "",
-    type: "info" as NotifType,
-  });
 
   // 1. Fetch Data
   const fetchData = useCallback(async () => {
@@ -95,12 +70,9 @@ const AdminMessenger = () => {
   // 2. Handle Search Params
   useEffect(() => {
     const userId = searchParams.get("user");
-    const mode = searchParams.get("mode");
     if (userId) {
       setSelectedUserId(userId);
-      setViewMode("chat");
     }
-    if (mode === "compose") setViewMode("compose");
   }, [searchParams]);
 
   // 3. Computed Chat Data
@@ -169,34 +141,8 @@ const AdminMessenger = () => {
     }
   };
 
-  const handleComposeSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!composeForm.message.trim()) return;
-    if (composeForm.target === "specific" && composeForm.userIds.length === 0) {
-      toast.error("Please select at least one recipient");
-      return;
-    }
-
-    setIsSendingCompose(true);
-    try {
-      const payload = composeForm.target === "broadcast"
-        ? { subject: composeForm.subject, message: composeForm.message, type: composeForm.type }
-        : { userIds: composeForm.userIds, subject: composeForm.subject, message: composeForm.message, type: composeForm.type };
-
-      await notificationService.create(payload);
-      toast.success("Broadcast delivered successfully");
-      setComposeForm(prev => ({ ...prev, subject: "", message: "", userIds: [] }));
-      fetchData(); // Refresh history/notifications
-    } catch (err: any) {
-      toast.error("Failed to deliver broadcast");
-    } finally {
-      setIsSendingCompose(false);
-    }
-  };
-
   const handleSelectUser = async (id: string) => {
     setSelectedUserId(id);
-    setViewMode("chat");
     setSearchParams({ user: id });
 
     // Mark as read immediately
@@ -206,17 +152,10 @@ const AdminMessenger = () => {
     } catch { /* ignore */ }
   };
 
-  const startCompose = () => {
-    setViewMode("compose");
-    setSelectedUserId(null);
-    setSearchParams({ mode: "compose" });
-  };
-
   if (!currentUser) return null;
 
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden relative">
-      {/* Header Bar - Optional, but keeps consistency */}
       <div className="flex items-center justify-between px-8 py-4 border-b border-border bg-background/50 backdrop-blur-sm shrink-0">
         <div>
           <h1 className="text-xl font-display font-bold text-foreground flex items-center gap-2.5">
@@ -239,15 +178,12 @@ const AdminMessenger = () => {
         <div className="w-80 flex flex-col shrink-0 border-r border-border bg-sidebar/5 overflow-hidden">
           <CardHeader className="p-4 border-b border-sidebar-border/30 space-y-3">
             <Button 
-              onClick={startCompose} 
-              variant={viewMode === "compose" ? "default" : "outline"}
-              className={cn(
-                "w-full justify-start gap-3 h-11 transition-all",
-                viewMode === "compose" ? "gradient-primary shadow-lg shadow-primary/20" : "bg-background/50"
-              )}
+              onClick={() => navigate(currentUser?.role === 'admin' ? '/dashboard/admin/announcements' : '/dashboard/coordinator/announcements')} 
+              variant="outline"
+              className="w-full justify-start gap-3 h-11 transition-all bg-background/50 border-primary/20 hover:bg-primary/5 hover:text-primary"
             >
-              <MailPlus className="w-4 h-4" />
-              <span className="font-bold">New Message</span>
+              <Megaphone className="w-4 h-4" />
+              <span className="font-bold text-sm">Announcements</span>
             </Button>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -268,7 +204,7 @@ const AdminMessenger = () => {
             ) : (
               <div className="divide-y divide-sidebar-border/10">
                 {filteredUsers.map((u) => {
-                  const isActive = !viewMode.includes("compose") && selectedUserId === u.id;
+                  const isActive = selectedUserId === u.id;
                   const initials = u.name.split(" ").map(n => n[0]).join("").toUpperCase();
                   
                   // Calculate unread badge
@@ -322,286 +258,160 @@ const AdminMessenger = () => {
           </CardContent>
         </div>
 
-        {/* MAIN AREA: CHAT OR COMPOSE */}
+        {/* MAIN AREA: CHAT */}
         <div className="flex-1 flex flex-col overflow-hidden relative">
-          {viewMode === "compose" ? (
-            /* ── COMPOSE VIEW ── */
-            <div className="flex-1 flex flex-col overflow-hidden bg-background">
-              <CardHeader className="py-5 px-8 border-b border-border bg-muted/5">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center">
-                    <MailPlus className="w-6 h-6 text-primary" />
+          {!selectedUserId ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-muted/2">
+               <div className="w-32 h-32 rounded-full bg-primary/5 flex items-center justify-center mb-8 shadow-inner ring-[20px] ring-primary/1">
+                <MessageSquare className="w-12 h-12 text-primary/20" />
+              </div>
+              <h3 className="text-2xl font-black text-foreground">Select Conversation</h3>
+              <p className="text-muted-foreground mt-3 max-w-[320px] text-sm leading-relaxed">
+                Pick a contact from the left list to start a real-time professional chat session.
+              </p>
+              <Button variant="outline" className="mt-8 rounded-full h-12 px-8 border-primary/20 hover:bg-primary/5 gap-2" onClick={() => navigate(currentUser?.role === 'admin' ? '/dashboard/admin/announcements' : '/dashboard/coordinator/announcements')}>
+                <Megaphone className="w-4 h-4 text-primary" />
+                New Announcement
+              </Button>
+            </div>
+          ) : (
+            <>
+              {/* Chat Header */}
+              <CardHeader className="py-4 px-8 border-b border-border bg-muted/10 shrink-0">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-12 h-12 ring-2 ring-primary/10 shadow-sm border-2 border-background">
+                      <AvatarFallback className="bg-primary/5 text-primary font-black text-xl">
+                        {selectedUser?.name.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <CardTitle className="text-xl font-bold tracking-tight">{selectedUser?.name}</CardTitle>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="w-2.5 h-2.5 rounded-full bg-success ring-2 ring-success/20 animate-pulse" />
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-primary">
+                          {selectedUser?.role} • SESSION ACTIVE
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-xl font-bold">New Message</CardTitle>
-                    <CardDescription>Compose a targeted message or system-wide broadcast</CardDescription>
+                  <div className="flex items-center gap-3">
+                    <Button variant="ghost" size="icon" className="rounded-xl h-11 w-11 bg-muted/50 hover:bg-primary/10 hover:text-primary">
+                      <Video className="w-5 h-5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="rounded-xl h-11 w-11 bg-muted/50 hover:bg-primary/10 hover:text-primary">
+                      <Mic className="w-5 h-5" />
+                    </Button>
+                    <Separator orientation="vertical" className="h-8 mx-1" />
+                    <Button variant="ghost" size="icon" className="rounded-xl h-11 w-11 hover:bg-destructive/10 hover:text-destructive" onClick={() => setSelectedUserId(null)}>
+                       <X className="w-5 h-5" />
+                    </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                <form onSubmit={handleComposeSend} className="max-w-3xl space-y-6">
-                  {/* Select Target */}
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">RECIPIENT TYPE</label>
-                    <div className="grid grid-cols-2 gap-4">
-                       <button
-                        type="button"
-                        onClick={() => setComposeForm(f => ({ ...f, target: "specific" }))}
-                        className={cn(
-                          "flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all group",
-                          composeForm.target === "specific" ? "border-primary bg-primary/5" : "border-border hover:border-border/80"
-                        )}
-                      >
-                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-colors", composeForm.target === "specific" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}>
-                           <User className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className={cn("font-bold", composeForm.target === "specific" ? "text-primary" : "text-foreground")}>Targeted</p>
-                          <p className="text-[10px] text-muted-foreground/80 mt-0.5">Send to specific user(s)</p>
-                        </div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setComposeForm(f => ({ ...f, target: "broadcast" }))}
-                        className={cn(
-                          "flex items-center gap-4 p-5 rounded-2xl border-2 text-left transition-all group",
-                          composeForm.target === "broadcast" ? "border-warning bg-warning/5" : "border-border hover:border-border/80"
-                        )}
-                      >
-                         <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center transition-colors", composeForm.target === "broadcast" ? "bg-warning text-white" : "bg-muted text-muted-foreground")}>
-                           <Megaphone className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className={cn("font-bold", composeForm.target === "broadcast" ? "text-warning" : "text-foreground")}>Broadcast</p>
-                          <p className="text-[10px] text-muted-foreground/80 mt-0.5">Send to all members</p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
 
-                  {composeForm.target === "specific" && (
-                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2">
-                       <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">SELECT RECIPIENTS</label>
-                       <MultiUserSelect 
-                        users={allUsers}
-                        selectedUserIds={composeForm.userIds}
-                        onSelectionChange={(ids) => setComposeForm(f => ({ ...f, userIds: ids }))}
-                       />
-                    </div>
-                  )}
-
-                  <Separator />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
-                      <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">ALERT LEVEL</label>
-                      <Select value={composeForm.type} onValueChange={(v) => setComposeForm(f => ({ ...f, type: v as NotifType }))}>
-                        <SelectTrigger className="h-12 rounded-xl border-none bg-muted/40 font-medium">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(Object.keys(typeConfig) as NotifType[]).map((t) => (
-                            <SelectItem key={t} value={t}>
-                              <div className="flex items-center gap-2">
-                                <span className={typeConfig[t].color}>{typeConfig[t].icon}</span>
-                                <span className="font-semibold">{typeConfig[t].label}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-3">
-                       <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">SUBJECT</label>
-                       <Input 
-                        placeholder="Importance message topic..."
-                        value={composeForm.subject}
-                        onChange={(e) => setComposeForm(f => ({ ...f, subject: e.target.value }))}
-                        className="h-12 border-none bg-muted/40 rounded-xl"
-                       />
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <label className="text-xs font-black uppercase tracking-widest text-muted-foreground">MESSAGE CONTENT</label>
-                    <Textarea 
-                      required
-                      placeholder="Type your announcement details here..."
-                      className="min-h-[160px] border-none bg-muted/40 rounded-2xl p-6 text-base resize-none"
-                      value={composeForm.message}
-                      onChange={(e) => setComposeForm(f => ({ ...f, message: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="pt-4">
-                    <Button 
-                      type="submit" 
-                      disabled={isSendingCompose || !composeForm.message.trim() || (composeForm.target === "specific" && composeForm.userIds.length === 0)}
-                      className="w-full h-16 rounded-2xl flex items-center justify-center gap-3 text-lg font-bold gradient-primary shadow-xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95"
-                    >
-                      {isSendingCompose ? <><Loader2 className="w-5 h-5 animate-spin" /> DELIVERING...</> : <><Send className="w-5 h-5" /> SEND MESSAGE NOW</>}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </div>
-          ) : (
-            /* ── CHAT VIEW ── */
-            <>
-              {!selectedUserId ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-muted/2">
-                   <div className="w-32 h-32 rounded-full bg-primary/5 flex items-center justify-center mb-8 shadow-inner ring-[20px] ring-primary/1">
-                    <MessageSquare className="w-12 h-12 text-primary/20" />
-                  </div>
-                  <h3 className="text-2xl font-black text-foreground">Select Conversation</h3>
-                  <p className="text-muted-foreground mt-3 max-w-[320px] text-sm leading-relaxed">
-                    Pick a contact from the left list to start a real-time professional chat session.
-                  </p>
-                  <Button variant="outline" className="mt-8 rounded-full h-12 px-8 border-primary/20 hover:bg-primary/5 gap-2" onClick={startCompose}>
-                    <MailPlus className="w-4 h-4 text-primary" />
-                    New Announcement
-                  </Button>
+              {/* Search Bar - In Chat */}
+              <div className="px-8 py-3 bg-muted/5 border-b border-border flex items-center justify-between z-10 relative">
+                <div className="relative w-full max-w-sm">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search conversation history..."
+                    value={chatSearchQuery}
+                    onChange={(e) => setChatSearchQuery(e.target.value)}
+                    className="pl-9 h-9 bg-background/50 text-sm border-none shadow-none focus-visible:ring-primary/20 rounded-full"
+                  />
                 </div>
-              ) : (
-                <>
-                  {/* Chat Header */}
-                  <CardHeader className="py-4 px-8 border-b border-border bg-muted/10 shrink-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="w-12 h-12 ring-2 ring-primary/10 shadow-sm border-2 border-background">
-                          <AvatarFallback className="bg-primary/5 text-primary font-black text-xl">
-                            {selectedUser?.name.charAt(0).toUpperCase()}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <CardTitle className="text-xl font-bold tracking-tight">{selectedUser?.name}</CardTitle>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="w-2.5 h-2.5 rounded-full bg-success ring-2 ring-success/20 animate-pulse" />
-                            <span className="text-[10px] uppercase font-bold tracking-widest text-primary">
-                              {selectedUser?.role} • SESSION ACTIVE
-                            </span>
+              </div>
+
+              {/* Message Area */}
+              <CardContent id="admin-chat-scroll-area" className="flex-1 overflow-y-auto p-10 space-y-8 bg-muted/2 custom-scrollbar">
+                {activeChatMessages.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full text-center py-20 opacity-30">
+                    <MessageSquare className="w-16 h-16 mb-6 stroke-1" />
+                    <p className="text-lg font-bold">No message history</p>
+                    <p className="text-sm mt-2">Start the conversation with {selectedUser?.name} below.</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-6">
+                    {activeChatMessages.map((msg) => {
+                      const sId = typeof msg.senderId === 'object' && msg.senderId ? (msg.senderId as any).id : msg.senderId;
+                      const isOwn = sId === currentUser.id;
+                      return (
+                        <div key={msg.id} className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
+                          <div className={cn(
+                            "max-w-[75%] px-6 py-4 rounded-3xl text-sm shadow-card transition-all hover:shadow-xl relative",
+                            isOwn 
+                              ? "bg-primary text-primary-foreground rounded-tr-none" 
+                              : "bg-background border border-border text-foreground rounded-tl-none"
+                          )}>
+                            <p className="leading-relaxed text-[15px] whitespace-pre-wrap">{msg.message}</p>
+                            
+                            {msg.attachmentUrl && (
+                              <a href={msg.attachmentUrl.startsWith('http') ? msg.attachmentUrl : `http://localhost:5000${msg.attachmentUrl}`} target="_blank" rel="noopener noreferrer" 
+                                 className={cn("mt-4 flex items-center gap-3 p-3.5 rounded-2xl transition hover:brightness-110", isOwn ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
+                                <div className="w-10 h-10 rounded-xl bg-background/10 border border-background/20 flex items-center justify-center shrink-0">
+                                  <FileText className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-bold truncate pr-4">{msg.attachmentName || "Attachment"}</p>
+                                  <p className="text-[10px] uppercase font-black opacity-70 mt-0.5">Click to view/download</p>
+                                </div>
+                                <Download className="w-5 h-5 ml-1 opacity-80" />
+                              </a>
+                            )}
+
+                            <div className={cn("flex items-center gap-2 mt-3", isOwn ? "justify-end" : "justify-start")}>
+                               <Clock className="w-2.5 h-2.5 opacity-40" />
+                               <p className="text-[10px] font-black opacity-40 uppercase tracking-tighter">
+                                {new Date(msg.date || msg.createdAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                               </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Button variant="ghost" size="icon" className="rounded-xl h-11 w-11 bg-muted/50 hover:bg-primary/10 hover:text-primary">
-                          <Video className="w-5 h-5" />
-                        </Button>
-                        <Button variant="ghost" size="icon" className="rounded-xl h-11 w-11 bg-muted/50 hover:bg-primary/10 hover:text-primary">
-                          <Mic className="w-5 h-5" />
-                        </Button>
-                        <Separator orientation="vertical" className="h-8 mx-1" />
-                        <Button variant="ghost" size="icon" className="rounded-xl h-11 w-11 hover:bg-destructive/10 hover:text-destructive" onClick={() => setSelectedUserId(null)}>
-                           <X className="w-5 h-5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-
-                  {/* Search Bar - In Chat */}
-                  <div className="px-8 py-3 bg-muted/5 border-b border-border flex items-center justify-between z-10 relative">
-                    <div className="relative w-full max-w-sm">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search conversation history..."
-                        value={chatSearchQuery}
-                        onChange={(e) => setChatSearchQuery(e.target.value)}
-                        className="pl-9 h-9 bg-background/50 text-sm border-none shadow-none focus-visible:ring-primary/20 rounded-full"
-                      />
-                    </div>
+                      );
+                    })}
                   </div>
+                )}
+              </CardContent>
 
-                  {/* Message Area */}
-                  <CardContent id="admin-chat-scroll-area" className="flex-1 overflow-y-auto p-10 space-y-8 bg-muted/2 custom-scrollbar">
-                    {activeChatMessages.length === 0 ? (
-                      <div className="flex flex-col items-center justify-center h-full text-center py-20 opacity-30">
-                        <MessageSquare className="w-16 h-16 mb-6 stroke-1" />
-                        <p className="text-lg font-bold">No message history</p>
-                        <p className="text-sm mt-2">Start the conversation with {selectedUser?.name} below.</p>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col gap-6">
-                        {activeChatMessages.map((msg) => {
-                          const sId = typeof msg.senderId === 'object' && msg.senderId ? (msg.senderId as any).id : msg.senderId;
-                          const isOwn = sId === currentUser.id;
-                          return (
-                            <div key={msg.id} className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
-                              <div className={cn(
-                                "max-w-[75%] px-6 py-4 rounded-3xl text-sm shadow-card transition-all hover:shadow-xl relative",
-                                isOwn 
-                                  ? "bg-primary text-primary-foreground rounded-tr-none" 
-                                  : "bg-background border border-border text-foreground rounded-tl-none"
-                              )}>
-                                <p className="leading-relaxed text-[15px] whitespace-pre-wrap">{msg.message}</p>
-                                
-                                {msg.attachmentUrl && (
-                                  <a href={msg.attachmentUrl.startsWith('http') ? msg.attachmentUrl : `http://localhost:5000${msg.attachmentUrl}`} target="_blank" rel="noopener noreferrer" 
-                                     className={cn("mt-4 flex items-center gap-3 p-3.5 rounded-2xl transition hover:brightness-110", isOwn ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
-                                    <div className="w-10 h-10 rounded-xl bg-background/10 border border-background/20 flex items-center justify-center shrink-0">
-                                      <FileText className="w-5 h-5" />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <p className="text-sm font-bold truncate pr-4">{msg.attachmentName || "Attachment"}</p>
-                                      <p className="text-[10px] uppercase font-black opacity-70 mt-0.5">Click to view/download</p>
-                                    </div>
-                                    <Download className="w-5 h-5 ml-1 opacity-80" />
-                                  </a>
-                                )}
-
-                                <div className={cn("flex items-center gap-2 mt-3", isOwn ? "justify-end" : "justify-start")}>
-                                   <Clock className="w-2.5 h-2.5 opacity-40" />
-                                   <p className="text-[10px] font-black opacity-40 uppercase tracking-tighter">
-                                    {new Date(msg.date || msg.createdAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                   </p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+              {/* Chat Input */}
+              <div className="p-8 bg-background border-t border-border shrink-0 relative z-20">
+                <form onSubmit={handleChatSend} className="flex gap-4 max-w-5xl mx-auto items-center">
+                  <div className="flex flex-1 items-center gap-3 relative">
+                    {attachment && (
+                      <div className="absolute -top-16 left-0 right-0 p-3 bg-muted/90 backdrop-blur-md rounded-xl flex items-center gap-4 text-sm animate-in fade-in slide-in-from-bottom-2 border border-border shadow-lg">
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                          <Paperclip className="w-4 h-4" />
+                        </div>
+                        <span className="flex-1 truncate font-bold text-foreground">{attachment.name}</span>
+                        <button type="button" onClick={() => setAttachment(null)} className="p-2 hover:bg-black/10 hover:text-destructive dark:hover:bg-white/10 rounded-full transition text-muted-foreground border border-border bg-background">
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
                     )}
-                  </CardContent>
-
-                  {/* Chat Input */}
-                  <div className="p-8 bg-background border-t border-border shrink-0 relative z-20">
-                    <form onSubmit={handleChatSend} className="flex gap-4 max-w-5xl mx-auto items-center">
-                      <div className="flex flex-1 items-center gap-3 relative">
-                        {attachment && (
-                          <div className="absolute -top-16 left-0 right-0 p-3 bg-muted/90 backdrop-blur-md rounded-xl flex items-center gap-4 text-sm animate-in fade-in slide-in-from-bottom-2 border border-border shadow-lg">
-                            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                              <Paperclip className="w-4 h-4" />
-                            </div>
-                            <span className="flex-1 truncate font-bold text-foreground">{attachment.name}</span>
-                            <button type="button" onClick={() => setAttachment(null)} className="p-2 hover:bg-black/10 hover:text-destructive dark:hover:bg-white/10 rounded-full transition text-muted-foreground border border-border bg-background">
-                              <X className="w-4 h-4" />
-                            </button>
-                          </div>
-                        )}
-                        
-                        <input type="file" id="chat-attachment" className="hidden" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
-                        <Button type="button" variant="outline" size="icon" className={cn("h-16 w-16 rounded-2xl border-none shadow-inner shrink-0 transition-colors", attachment ? "bg-primary/20 text-primary" : "bg-muted/40 hover:bg-primary/10 hover:text-primary")} onClick={() => document.getElementById("chat-attachment")?.click()}>
-                          <Paperclip className="w-6 h-6" />
-                        </Button>
-                        
-                        <Input
-                          placeholder={`Message ${selectedUser?.name}...`}
-                          value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
-                          disabled={isSendingChat}
-                          className="h-16 bg-muted/40 border-none shadow-inner focus-visible:ring-primary/40 rounded-2xl text-[16px] px-6 placeholder:opacity-50 flex-1"
-                        />
-                      </div>
-                      <Button 
-                        type="submit" 
-                        disabled={isSendingChat || (!newMessage.trim() && !attachment)}
-                        className="h-16 w-16 rounded-2xl gradient-primary shadow-2xl shadow-primary/20 transition-all hover:scale-110 active:scale-95 shrink-0"
-                      >
-                        {isSendingChat ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
-                      </Button>
-                    </form>
+                    
+                    <input type="file" id="chat-attachment" className="hidden" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
+                    <Button type="button" variant="outline" size="icon" className={cn("h-16 w-16 rounded-2xl border-none shadow-inner shrink-0 transition-colors", attachment ? "bg-primary/20 text-primary" : "bg-muted/40 hover:bg-primary/10 hover:text-primary")} onClick={() => document.getElementById("chat-attachment")?.click()}>
+                      <Paperclip className="w-6 h-6" />
+                    </Button>
+                    
+                    <Input
+                      placeholder={`Message ${selectedUser?.name}...`}
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      disabled={isSendingChat}
+                      className="h-16 bg-muted/40 border-none shadow-inner focus-visible:ring-primary/40 rounded-2xl text-[16px] px-6 placeholder:opacity-50 flex-1"
+                    />
                   </div>
-                </>
-              )}
+                  <Button 
+                    type="submit" 
+                    disabled={isSendingChat || (!newMessage.trim() && !attachment)}
+                    className="h-16 w-16 rounded-2xl gradient-primary shadow-2xl shadow-primary/20 transition-all hover:scale-110 active:scale-95 shrink-0"
+                  >
+                    {isSendingChat ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
+                  </Button>
+                </form>
+              </div>
             </>
           )}
         </div>

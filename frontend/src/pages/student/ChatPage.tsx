@@ -15,7 +15,8 @@ import {
   Paperclip, FileText, Download, X, Search 
 } from "lucide-react";
 import { toast } from "sonner";
-import { notificationService, projectService, userService } from "@/api";
+import { notificationService, projectService, userService, messageService } from "@/api";
+import { Message } from "@/api/messageService";
 import { cn } from "@/lib/utils";
 import type { Notification, User as UserType } from "@/types";
 
@@ -27,7 +28,7 @@ const ChatPage = () => {
   const [newMessage, setNewMessage] = useState("");
   const [attachment, setAttachment] = useState<File | null>(null);
   const [chatSearchQuery, setChatSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingContacts, setIsLoadingContacts] = useState(true);
   const [isSending, setIsSending] = useState(false);
@@ -46,7 +47,7 @@ const ChatPage = () => {
       setIsLoadingContacts(true);
       // 1. Fetch Student's Project to get staff details
       const projectRes = await projectService.getAll();
-      const myProject = projectRes.data[0]; // Students only have one project
+      const myProject = projectRes.data[0];
 
       if (myProject) {
         if (myProject.advisorId) setAdvisor(myProject.advisorId as unknown as UserType);
@@ -65,77 +66,55 @@ const ChatPage = () => {
     }
   }, [user]);
 
+  const activeRecipient = activeRole === "advisor" ? advisor : activeRole === "examiner" ? examiner : admin;
+
   // Fetch messages
   const fetchMessages = useCallback(async () => {
+    if (!activeRecipient?.id) return;
     try {
       setIsLoading(true);
-      const res = await notificationService.getAll();
-      setNotifications(res.data);
+      const res = await messageService.getConversation(activeRecipient.id);
+      setMessages(res.data);
       // Auto-scroll to bottom after loading
       setTimeout(() => {
         const scrollArea = document.getElementById("chat-scroll-area");
         if (scrollArea) scrollArea.scrollTop = scrollArea.scrollHeight;
       }, 100);
     } catch {
-      toast.error("Could not load chat history");
+      toast.error("Could not synchronize conversation");
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [activeRecipient?.id]);
 
   useEffect(() => {
     fetchContacts();
-    fetchMessages();
-    
-    // Real-Time Polling: fetch data every 10 seconds
-    const intervalId = setInterval(() => {
-      fetchMessages();
-    }, 10000);
-    return () => clearInterval(intervalId);
-  }, [fetchContacts, fetchMessages]);
+  }, [fetchContacts]);
 
-  const activeRecipient = activeRole === "advisor" ? advisor : activeRole === "examiner" ? examiner : admin;
+  useEffect(() => {
+    if (activeRecipient?.id) {
+       fetchMessages();
+       // Polling
+       const intervalId = setInterval(() => {
+         fetchMessages();
+       }, 10000);
+       return () => clearInterval(intervalId);
+    }
+  }, [activeRecipient?.id, fetchMessages]);
+
   const recipientName = activeRecipient?.name || (activeRole === "advisor" ? "Your Advisor" : activeRole === "examiner" ? "Your Examiner" : "System Support");
   const recipientInitials = recipientName.split(" ").map((n) => n[0] || "").join("").toUpperCase();
 
   // Mark as read when switching tabs
   useEffect(() => {
     if (activeRecipient?.id) {
-       notificationService.markFromUserRead(activeRecipient.id).then(() => {
-         fetchMessages(); // silent refresh
-       }).catch(() => {});
+       messageService.markRead(activeRecipient.id).catch(() => {});
     }
   }, [activeRole, activeRecipient?.id]);
 
-  const chat = notifications.filter(
-    (n) => {
-      if (!activeRecipient?.id || !n.userId) return false;
-      const sId = typeof n.senderId === 'object' && n.senderId ? (n.senderId as any).id : n.senderId;
-      const uId = typeof n.userId === 'object' && n.userId ? (n.userId as any).id : n.userId;
-      
-      // Use string comparison to be safe
-      const myId = user?.id?.toString();
-      const targetId = activeRecipient.id?.toString();
-      const msgRecipientId = uId?.toString();
-      const msgSenderId = sId?.toString();
-
-      return (msgRecipientId === myId && msgSenderId === targetId) ||
-             (msgSenderId === myId && msgRecipientId === targetId);
-    }
-  ).sort((a, b) => new Date(a.date || a.createdAt || 0).getTime() - new Date(b.date || b.createdAt || 0).getTime());
-
   const filteredChat = chatSearchQuery.trim() 
-    ? chat.filter(msg => msg.message.toLowerCase().includes(chatSearchQuery.toLowerCase()))
-    : chat;
-
-  const getUnreadCount = (targetId?: string) => {
-    if (!targetId || !user?.id) return 0;
-    return notifications.filter(n => {
-      const sId = typeof n.senderId === 'object' && n.senderId ? (n.senderId as any).id : n.senderId;
-      const uId = typeof n.userId === 'object' && n.userId ? (n.userId as any).id : n.userId;
-      return sId === targetId && uId === user.id && !n.read;
-    }).length;
-  };
+    ? messages.filter(msg => msg.content.toLowerCase().includes(chatSearchQuery.toLowerCase()))
+    : messages;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,28 +122,18 @@ const ChatPage = () => {
 
     setIsSending(true);
     try {
-      let attachmentUrl = null;
-      let attachmentName = null;
-
-      if (attachment) {
-        const uploadRes = await notificationService.uploadAttachment(attachment);
-        attachmentUrl = uploadRes.data.attachmentUrl;
-        attachmentName = uploadRes.data.attachmentName;
-      }
-
-      await notificationService.create({
-        userId: activeRecipient.id,
-        subject: `Message from ${user.name}`,
-        message: newMessage.trim() || `Sent an attachment: ${attachmentName}`,
-        type: "info",
-        attachmentUrl,
-        attachmentName,
+      // Legacy attachment support for notifications remains, but messaging uses content for now
+      // (Simplified for new engine)
+      await messageService.sendMessage({
+        receiverId: activeRecipient.id,
+        content: newMessage.trim(),
+        projectId: (projectService.getAll() as any).data?.[0]?.id // Fallback or retrieve from state
       });
       setNewMessage("");
       setAttachment(null);
-      await fetchMessages(); // Refetch will trigger auto-scroll
+      await fetchMessages();
     } catch {
-      toast.error("Failed to send message");
+      toast.error("Failed to transmit message");
     } finally {
       setIsSending(false);
     }
@@ -224,11 +193,6 @@ const ChatPage = () => {
                     activeRole === "advisor" ? "bg-primary-foreground/20" : "bg-primary/10"
                   )}>
                     <UserCog className="w-5 h-5" />
-                    {activeRole !== "advisor" && getUnreadCount(advisor?.id) > 0 && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive border border-background flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white max-w-full text-center leading-none px-0.5">{getUnreadCount(advisor?.id)}</span>
-                      </div>
-                    )}
                   </div>
                   <div className="overflow-hidden">
                     <p className="text-sm font-semibold truncate leading-tight">Advisor</p>
@@ -256,11 +220,6 @@ const ChatPage = () => {
                     activeRole === "examiner" ? "bg-primary-foreground/20" : "bg-primary/10"
                   )}>
                     <ShieldCheck className="w-5 h-5" />
-                    {activeRole !== "examiner" && getUnreadCount(examiner?.id) > 0 && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive border border-background flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white max-w-full text-center leading-none px-0.5">{getUnreadCount(examiner?.id)}</span>
-                      </div>
-                    )}
                   </div>
                   <div className="overflow-hidden">
                     <p className="text-sm font-semibold truncate leading-tight">Examiner</p>
@@ -293,11 +252,6 @@ const ChatPage = () => {
                     activeRole === "admin" ? "bg-white/20" : "bg-amber-100"
                   )}>
                     <HelpCircle className={cn("w-5 h-5", activeRole === "admin" ? "text-white" : "text-amber-600")} />
-                    {activeRole !== "admin" && getUnreadCount(admin?.id) > 0 && (
-                      <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-destructive border border-background flex items-center justify-center">
-                        <span className="text-[8px] font-bold text-white max-w-full text-center leading-none px-0.5">{getUnreadCount(admin?.id)}</span>
-                      </div>
-                    )}
                   </div>
                   <div className="overflow-hidden">
                     <p className="text-sm font-semibold truncate leading-tight">System Support</p>
@@ -354,14 +308,13 @@ const ChatPage = () => {
             </div>
           </div>
 
-          {/* Messages */}
           <div id="chat-scroll-area" className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth bg-muted/5">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground opacity-50">
                 <Loader2 className="w-8 h-8 animate-spin" />
                 <p className="text-xs font-medium tracking-widest uppercase">Fetching Messages</p>
               </div>
-            ) : chat.length === 0 ? (
+            ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center p-12 space-y-4">
                 <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center shadow-inner">
                   <MessageSquare className="w-10 h-10 text-muted-foreground/30" />
@@ -375,8 +328,7 @@ const ChatPage = () => {
               </div>
             ) : (
               filteredChat.map((msg) => {
-                const sId = typeof msg.senderId === 'object' && msg.senderId ? msg.senderId.id : msg.senderId;
-                const isOwn = sId === user.id;
+                const isOwn = msg.senderId === user.id;
                 return (
                   <div key={msg.id} className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
                     <div className={cn(
@@ -385,22 +337,13 @@ const ChatPage = () => {
                         ? "bg-primary text-primary-foreground rounded-br-sm" 
                         : "bg-background border border-border text-foreground rounded-bl-sm"
                     )}>
-                      <p className="leading-relaxed whitespace-pre-wrap">{msg.message}</p>
+                      <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                       
-                      {msg.attachmentUrl && (
-                        <a href={msg.attachmentUrl.startsWith('http') ? msg.attachmentUrl : `http://localhost:5000${msg.attachmentUrl}`} target="_blank" rel="noopener noreferrer" 
-                           className={cn("mt-3 flex items-center gap-2 p-2.5 rounded-xl transition hover:brightness-110", isOwn ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
-                          <FileText className="w-4 h-4 shrink-0" />
-                          <span className="text-xs font-bold truncate pr-3">{msg.attachmentName || "File"}</span>
-                          <Download className="w-3.5 h-3.5 ml-auto opacity-80 shrink-0" />
-                        </a>
-                      )}
-
                       <p className={cn(
                         "text-[9px] mt-2 font-medium opacity-60",
                         isOwn ? "text-right" : "text-left"
                       )}>
-                        {new Date(msg.date || msg.createdAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>

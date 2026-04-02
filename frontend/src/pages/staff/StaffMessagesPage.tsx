@@ -4,7 +4,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { projectService, notificationService, userService } from "@/api";
+import { projectService, notificationService, userService, messageService } from "@/api";
+import { Message } from "@/api/messageService";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -18,7 +19,7 @@ const StaffMessagesPage = () => {
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [students, setStudents] = useState<UserType[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingStudents, setIsLoadingStudents] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -29,7 +30,6 @@ const StaffMessagesPage = () => {
     if (!user) return;
     try {
       setIsLoadingStudents(true);
-      // Fetch projects where staff is advisor or examiner
       const [advisorRes, examinerRes] = await Promise.all([
         projectService.getAll({ advisorId: user.id }),
         projectService.getAll({ examinerId: user.id })
@@ -37,19 +37,14 @@ const StaffMessagesPage = () => {
       
       const allProjects = [...advisorRes.data, ...examinerRes.data];
       const uniqueProjects = allProjects.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-
-      // Extract unique student IDs
-      const studentIds = [...new Set(uniqueProjects.flatMap(p => p.groupMembers))];
+      const studentIds = [...new Set(uniqueProjects.flatMap(p => p.groupMembers.map(m => typeof m === 'string' ? m : m.id)))];
       
       if (studentIds.length > 0) {
-        // For simplicity, we'll fetch all users and filter. 
-        // In a large system, we'd use a search/bulk fetch endpoint.
         const usersRes = await userService.getAll({ limit: 1000 });
         const filteredStudents = usersRes.data.users.filter(u => studentIds.includes(u.id));
         setStudents(filteredStudents);
       }
     } catch (error) {
-      console.error("Error loading staff data:", error);
       toast.error("Could not load assigned students");
     } finally {
       setIsLoadingStudents(false);
@@ -69,50 +64,46 @@ const StaffMessagesPage = () => {
 
   // Fetch messages history
   const fetchMessages = useCallback(async () => {
-    if (!user) return;
+    if (!user || !selectedStudentId) return;
     try {
       setIsLoadingMessages(true);
-      const res = await notificationService.getAll();
-      setNotifications(res.data);
+      const res = await messageService.getConversation(selectedStudentId);
+      setMessages(res.data);
     } catch {
-      toast.error("Could not load message history");
+      toast.error("Could not synchronize conversation");
     } finally {
       setIsLoadingMessages(false);
     }
-  }, [user]);
+  }, [user, selectedStudentId]);
 
   useEffect(() => {
     fetchData();
     fetchAdmin();
-    fetchMessages();
-  }, [fetchData, fetchAdmin, fetchMessages]);
+  }, [fetchData, fetchAdmin]);
+
+  useEffect(() => {
+    if (selectedStudentId) {
+      fetchMessages();
+      const intervalId = setInterval(fetchMessages, 10000);
+      return () => clearInterval(intervalId);
+    }
+  }, [selectedStudentId, fetchMessages]);
 
   const selectedStudent = students.find(s => s.id === selectedStudentId) || (selectedStudentId === adminUser?.id ? adminUser : null);
-
-  // Filter notifications to only show conversation between this staff and the selected student
-  const messages = selectedStudentId
-    ? notifications.filter((n) => {
-        const sId = typeof n.senderId === 'object' ? n.senderId.id : n.senderId;
-        return (n.userId === user?.id && sId === selectedStudentId) ||
-               (sId === user?.id && n.userId === selectedStudentId);
-      }).sort((a, b) => new Date(a.date || a.createdAt || 0).getTime() - new Date(b.date || b.createdAt || 0).getTime())
-    : [];
 
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedStudentId || !user) return;
     
     setIsSending(true);
     try {
-      await notificationService.create({
-        userId: selectedStudentId,
-        subject: `Message from Staff: ${user.name}`,
-        message: newMessage.trim(),
-        type: "info"
+      await messageService.sendMessage({
+        receiverId: selectedStudentId,
+        content: newMessage.trim()
       });
       setNewMessage("");
-      fetchMessages(); // Refresh conversation
+      fetchMessages();
     } catch {
-      toast.error("Failed to send message");
+      toast.error("Failed to transmit message");
     } finally {
       setIsSending(false);
     }
@@ -235,12 +226,11 @@ const StaffMessagesPage = () => {
               </div>
             ) : messages.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-60">
-                <p className="text-sm text-muted-foreground">No recent notifications or messages found for this student.</p>
+                <p className="text-sm text-muted-foreground">No recent messages found for this student.</p>
               </div>
             ) : (
               messages.map((msg) => {
-                const sId = typeof msg.senderId === 'object' ? msg.senderId.id : msg.senderId;
-                const isOwn = sId === user?.id;
+                const isOwn = msg.senderId === user?.id;
                 return (
                   <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm shadow-sm ${
@@ -248,9 +238,9 @@ const StaffMessagesPage = () => {
                         ? "bg-primary text-primary-foreground rounded-br-sm"
                         : "bg-muted text-foreground rounded-bl-sm"
                     }`}>
-                      <p className="leading-relaxed">{msg.message}</p>
+                      <p className="leading-relaxed">{msg.content}</p>
                       <p className={`text-[10px] mt-1.5 opacity-70 ${isOwn ? "text-right" : "text-left"}`}>
-                        {new Date(msg.date || msg.createdAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
                   </div>

@@ -8,3 +8,5 @@ export { default as submissionService } from "./submissionService";
 export { default as evaluationService } from "./evaluationService";
 export { default as settingsService } from "./settingsService";
 export { default as gradeService } from "./gradeService";
+export { default as messageService } from "./messageService";
+export { default as fileService } from "./fileService";

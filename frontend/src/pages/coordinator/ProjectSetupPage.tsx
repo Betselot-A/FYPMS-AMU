@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, UserCheck, Award, RefreshCw } from "lucide-react";
+import { CheckCircle2, UserCheck, Award, RefreshCw, Users, Clock } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import userService from "@/api/userService";
 import projectService from "@/api/projectService";
 import { User, Project } from "@/types";
@@ -71,9 +72,6 @@ const ProjectSetupPage = () => {
     }
   };
 
-  const advisors = staffList.filter((s) => s.staffAssignment?.isAdvisor);
-  const examiners = staffList.filter((s) => s.staffAssignment?.isExaminer);
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
@@ -101,24 +99,54 @@ const ProjectSetupPage = () => {
           {approvedProjects.map((project) => {
             const form = getForm(project.id);
             const hasStaff = project.advisorId || project.examinerId;
-            const advisor = (project.advisorId as any)?.name || staffList.find((s) => s.id === project.advisorId)?.name;
-            const examiner = (project.examinerId as any)?.name || staffList.find((s) => s.id === project.examinerId)?.name;
+            const advisor = (project.advisorId as any)?.name || staffList.find((s) => s.id === (typeof project.advisorId === 'string' ? project.advisorId : (project.advisorId as any)?.id))?.name;
+            const examiner = (project.examinerId as any)?.name || staffList.find((s) => s.id === (typeof project.examinerId === 'string' ? project.examinerId : (project.examinerId as any)?.id))?.name;
 
             return (
-              <Card key={project.id} className="shadow-card">
-                <CardHeader className="pb-3">
+              <Card key={project.id} className="shadow-card overflow-hidden border-sidebar-border/20">
+                <CardHeader className="pb-4 bg-muted/5 border-b border-sidebar-border/10">
                   <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-base">{project.title}</CardTitle>
-                      <CardDescription className="text-xs mt-1">{project.description}</CardDescription>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-primary" />
+                        <CardTitle className="text-lg font-bold tracking-tight text-foreground">
+                          {project.title || "Untitled Group"}
+                        </CardTitle>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1.5 px-3 py-1 bg-background rounded-md border border-border/50 max-w-fit">
+                        <Award className="w-3.5 h-3.5 text-accent" />
+                        <span className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                          Topic: <span className="text-foreground normal-case font-medium">{project.finalTitle || "Selection Pending"}</span>
+                        </span>
+                      </div>
                     </div>
-                    <Badge className={`${project.status === "in-progress" ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"} text-xs capitalize`}>
-                      {project.status === "in-progress" ? <CheckCircle2 className="w-3 h-3 mr-1" /> : null}
-                      {project.status}
+                    <Badge className={cn(
+                      "px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm",
+                      project.status === "in-progress" 
+                        ? "bg-success/10 text-success border-success/20 ring-4 ring-success/5" 
+                        : "bg-warning/10 text-warning border-warning/20 ring-4 ring-warning/5"
+                    )}>
+                      {project.status === "in-progress" ? <CheckCircle2 className="w-3 h-3 mr-1.5" /> : <Clock className="w-3 h-3 mr-1.5" />}
+                      {project.status.replace('-', ' ')}
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="pt-6 space-y-6">
+                  {/* Team Members List */}
+                  <div className="space-y-2.5">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2">
+                       <UserCheck className="w-3.5 h-3.5" />
+                       Assigned Squad Members
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {(project.groupMembers as any[]).map((member: any) => (
+                        <Badge key={member.id || member} variant="secondary" className="bg-muted/40 hover:bg-muted font-medium py-1 px-2.5 border-none">
+                          {member.name || "Student"}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Current staff (if already assigned) */}
                   {hasStaff && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -145,10 +173,10 @@ const ProjectSetupPage = () => {
                             <SelectValue placeholder="Select advisor..." />
                           </SelectTrigger>
                           <SelectContent>
-                            {advisors.length === 0 ? (
-                              <SelectItem value="_none" disabled>No advisors found — set staff flags in Admin panel</SelectItem>
+                            {staffList.length === 0 ? (
+                              <SelectItem value="_none" disabled>No staff members found.</SelectItem>
                             ) : (
-                              advisors.map((s) => (
+                              staffList.map((s) => (
                                 <SelectItem key={s.id} value={s.id}>{s.name} ({s.department})</SelectItem>
                               ))
                             )}
@@ -165,7 +193,7 @@ const ProjectSetupPage = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="">— None —</SelectItem>
-                            {examiners.map((s) => (
+                            {staffList.map((s) => (
                               <SelectItem key={s.id} value={s.id}>{s.name} ({s.department})</SelectItem>
                             ))}
                           </SelectContent>

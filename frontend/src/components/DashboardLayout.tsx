@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { GraduationCap, LayoutDashboard, FolderOpen, MessageSquare,
   Bell, Users, ClipboardCheck, BarChart3, Settings, LogOut, Award, UserCog,
   FileUp, Send, Activity, ChevronDown, ChevronRight, UserPen, Video, Clock,
-  Megaphone, Wrench, Key, UserCheck, Mail,
+  Wrench, Key, UserCheck, Mail, Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { User } from "@/types";
@@ -82,6 +82,7 @@ const getNavConfig = (user: User): NavItem[] => {
     case "admin":
       return [
         { label: "Manage Users", icon: <UserCog className="w-4 h-4" />, path: "/dashboard/admin/users" },
+        { label: "Announcements", icon: <Megaphone className="w-4 h-4" />, path: "/dashboard/admin/announcements" },
         { label: "Group Analysis", icon: <Users className="w-4 h-4" />, path: "/dashboard/admin/grouping" },
         { label: "Grade System", icon: <BarChart3 className="w-4 h-4" />, path: "/dashboard/admin/grade-system" },
         { label: "Passwords", icon: <Key className="w-4 h-4" />, path: "/dashboard/admin/passwords" },

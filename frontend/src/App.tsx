@@ -101,6 +101,7 @@ const App = () => (
             <Route path="/dashboard/coordinator/messages" element={<DashboardPage><AdminMessenger /></DashboardPage>} />
 
             <Route path="/dashboard/admin/users" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><AdminDashboard /></DashboardPage></RequireRole>} />
+            <Route path="/dashboard/admin/announcements" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><AnnouncementsPage /></DashboardPage></RequireRole>} />
             <Route path="/dashboard/admin/grouping" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><StudentGroupingPage /></DashboardPage></RequireRole>} />
             <Route path="/dashboard/admin/grade-system" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><GradeSystemPage /></DashboardPage></RequireRole>} />
             <Route path="/dashboard/admin/passwords" element={<RequireRole allowedRoles={["admin"]}><DashboardPage><PasswordManagementPage /></DashboardPage></RequireRole>} />

@@ -11,6 +11,6 @@ const { authorize } = require("../middleware/roleMiddleware");
 router.use(protect);
 
 router.get("/", getGradeConfig);
-router.put("/", authorize("admin"), updateGradeConfig);
+router.put("/", authorize("admin", "coordinator"), updateGradeConfig);
 
 module.exports = router;
