@@ -18,8 +18,10 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { projectService, fileService } from "@/api";
+import submissionService from "@/api/submissionService";
 import { Project } from "@/api/projectService";
 import { ProjectFile } from "@/api/fileService";
+import { Submission } from "@/types";
 import { cn } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
@@ -35,19 +37,19 @@ const ProjectDetailsPage = () => {
   const role = searchParams.get("role") || "examiner";
   
   const [project, setProject] = useState<Project | null>(null);
-  const [files, setFiles] = useState<ProjectFile[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
     if (!projectId) return;
     try {
       setIsLoading(true);
-      const [projRes, fileRes] = await Promise.all([
+      const [projRes, subRes] = await Promise.all([
         projectService.getById(projectId),
-        fileService.getProjectFiles(projectId)
+        submissionService.getByProject(projectId)
       ]);
       setProject(projRes.data);
-      setFiles(fileRes.data);
+      setSubmissions(subRes.data);
     } catch (error) {
       toast.error("Could not retrieve project dossier.");
     } finally {
@@ -79,21 +81,21 @@ const ProjectDetailsPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto pb-20">
-      <Link to={`/dashboard/staff/project/${projectId}?role=${role}`} className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary mb-6 transition-all group">
+      <Link to={`/dashboard/staff/project/${projectId}?role=${role}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary mb-6 transition-all group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        BACK TO PROJECT OVERVIEW
+        Back to Project Overview
       </Link>
 
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-10">
         <div>
-           <Badge variant="outline" className="text-primary border-primary/20 uppercase text-[10px] font-black tracking-widest px-2 py-0.5 mb-2">
+           <Badge variant="outline" className="text-muted-foreground border-border uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 mb-2">
               Administrative Dossier
            </Badge>
-           <h1 className="text-3xl font-display font-black text-foreground">{project.title}</h1>
-           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">{project.description}</p>
+           <h1 className="text-3xl font-display font-bold text-foreground">{project.title}</h1>
+           <p className="text-sm text-muted-foreground mt-1 max-w-2xl font-medium">{project.description}</p>
         </div>
         <div className="flex gap-2">
-           <Badge className={cn("px-3 py-1 font-black text-[10px] uppercase tracking-widest border-none h-8 flex items-center gap-1.5", statusColors[project.status])}>
+           <Badge className={cn("px-3 py-1 font-bold text-[10px] uppercase tracking-wider border-none h-8 flex items-center gap-1.5", statusColors[project.status])}>
               {project.status === 'completed' ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
               {project.status}
            </Badge>
@@ -106,14 +108,14 @@ const ProjectDetailsPage = () => {
           <CardHeader className="pb-2">
              <div className="flex items-center gap-2 text-primary">
                 <Target className="w-4 h-4" />
-                <CardTitle className="text-sm font-black uppercase tracking-widest">Phase Progression</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider">Phase Progression</CardTitle>
              </div>
           </CardHeader>
           <CardContent>
             <div className="mt-4 mb-6">
                <div className="flex items-end justify-between mb-2">
-                  <span className="text-4xl font-black text-foreground">{progress}%</span>
-                  <span className="text-[10px] font-black text-muted-foreground uppercase mb-1.5 tracking-tighter">Overall sync</span>
+                  <span className="text-4xl font-bold text-foreground">{progress}%</span>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase mb-1.5 tracking-wider">Overall sync</span>
                </div>
                <Progress value={progress} className="h-2.5 bg-muted" />
             </div>
@@ -128,20 +130,20 @@ const ProjectDetailsPage = () => {
           <CardHeader className="pb-2">
              <div className="flex items-center gap-2 text-foreground">
                 <Users className="w-4 h-4" />
-                <CardTitle className="text-sm font-black uppercase tracking-widest">Student Squad members</CardTitle>
+                <CardTitle className="text-sm font-bold uppercase tracking-wider">Student Squad members</CardTitle>
              </div>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4">
             {project.groupMembers.map((m, idx) => (
               <div key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/40 hover:bg-muted/50 transition-colors">
-                <div className="w-10 h-10 rounded-full bg-background border flex items-center justify-center text-[10px] font-black text-primary shadow-sm">
+                <div className="w-10 h-10 rounded-full bg-background border flex items-center justify-center text-[10px] font-bold text-primary shadow-sm">
                    {typeof m === 'object' ? (m as any).name.charAt(0) : 'S'}
                 </div>
                 <div>
                    <p className="text-sm font-bold text-foreground leading-tight">
                       {typeof m === 'object' ? (m as any).name : `Student Member ${idx + 1}`}
                    </p>
-                   <p className="text-[10px] text-muted-foreground uppercase font-medium tracking-tighter mt-0.5">
+                   <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider mt-0.5">
                       {typeof m === 'object' ? (m as any).department : 'CANDIDATE'}
                    </p>
                 </div>
@@ -157,9 +159,9 @@ const ProjectDetailsPage = () => {
               <div className="flex items-center justify-between">
                  <div className="flex items-center gap-2">
                     <LayoutDashboard className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-sm font-black uppercase tracking-widest">Artifact History</CardTitle>
+                    <CardTitle className="text-sm font-bold uppercase tracking-wider">Artifact History</CardTitle>
                  </div>
-                 <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest bg-muted text-muted-foreground px-2">
+                 <Badge variant="secondary" className="text-[9px] font-bold uppercase tracking-wider bg-muted text-muted-foreground px-2">
                     Latest Activity
                  </Badge>
               </div>
@@ -168,7 +170,7 @@ const ProjectDetailsPage = () => {
               <div className="overflow-x-auto">
                  <table className="w-full text-sm">
                     <thead>
-                       <tr className="bg-muted/30 text-muted-foreground font-black uppercase text-[10px] tracking-widest border-b border-border/50">
+                       <tr className="bg-muted/30 text-muted-foreground font-bold uppercase text-[10px] tracking-wider border-b border-border/50">
                           <th className="text-left py-4 px-6 italic">DOCUMENT TITLE</th>
                           <th className="text-center py-4 px-4">TYPE</th>
                           <th className="text-center py-4 px-4">UPLOAD DATE</th>
@@ -176,33 +178,35 @@ const ProjectDetailsPage = () => {
                        </tr>
                     </thead>
                     <tbody className="divide-y divide-border/20">
-                       {files.length === 0 ? (
+                       {submissions.length === 0 ? (
                           <tr>
                              <td colSpan={4} className="py-12 text-center text-muted-foreground italic text-xs font-medium">
                                 No formal artifacts have been committed to the project vault yet.
                              </td>
                           </tr>
                        ) : (
-                          files.slice(0, 5).map((file) => (
-                             <tr key={file.id} className="hover:bg-muted/10 transition-colors">
+                          submissions.slice(0, 5).map((sub) => (
+                             <tr key={sub.id} className="hover:bg-muted/10 transition-colors">
                                 <td className="py-4 px-6">
                                    <div className="flex items-center gap-3">
                                       <FileText className="w-4 h-4 text-primary/60" />
-                                      <span className="font-bold text-foreground truncate max-w-[200px]">{file.originalName}</span>
+                                      <span className="font-bold text-foreground truncate max-w-[200px]">{sub.title}</span>
                                    </div>
                                 </td>
                                 <td className="py-4 px-4 text-center">
                                    <Badge variant="outline" className="text-[9px] font-bold uppercase border-muted h-6">
-                                      {file.fileCategory || "DRAFT"}
+                                      SUBMISSION
                                    </Badge>
                                 </td>
                                 <td className="py-4 px-4 text-center">
-                                   <span className="text-[10px] font-black text-muted-foreground uppercase">{new Date(file.uploadedAt).toLocaleDateString()}</span>
+                                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{new Date(sub.submissionDate).toLocaleDateString()}</span>
                                 </td>
                                 <td className="py-4 px-6 text-right">
-                                   <div className="flex items-center justify-end gap-1.5 text-success">
-                                      <Activity className="w-3.5 h-3.5" />
-                                      <span className="text-[10px] font-black uppercase tracking-widest">VERIFIED</span>
+                                   <div className="flex items-center justify-end gap-1.5 ">
+                                      <Activity className="w-3.5 h-3.5 text-muted-foreground/60" />
+                                      <span className={cn("text-[10px] font-bold uppercase tracking-wider", sub.status === 'graded' ? 'text-success' : sub.status === 'reviewed' ? 'text-info' : 'text-warning')}>
+                                        {sub.status}
+                                      </span>
                                    </div>
                                 </td>
                              </tr>

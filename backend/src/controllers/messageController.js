@@ -1,5 +1,6 @@
 const Message = require("../models/Message");
 const Project = require("../models/Project");
+const Notification = require("../models/Notification");
 
 /**
  * POST /api/messages
@@ -14,6 +15,13 @@ const sendMessage = async (req, res, next) => {
       receiverId,
       projectId: projectId || null,
       content,
+    });
+
+    // Notify receiver
+    await Notification.create({
+      userId: receiverId,
+      message: `New message from ${req.user.name}: "${content.substring(0, 30)}${content.length > 30 ? '...' : ''}"`,
+      type: "info",
     });
 
     res.status(201).json(message);

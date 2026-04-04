@@ -17,6 +17,7 @@ export default {
       fontFamily: {
         sans: ["'Open Sans'", "Inter", "system-ui", "sans-serif"],
         display: ["'Open Sans'", "system-ui", "sans-serif"],
+        serif: ["'Cormorant Garamond'", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",

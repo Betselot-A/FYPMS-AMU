@@ -128,9 +128,9 @@ const StaffProjectDetailPage = () => {
 
   return (
     <div className="max-w-5xl mx-auto pb-20">
-      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary mb-6 transition-all group">
+      <Link to="/dashboard" className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary mb-6 transition-all group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        BACK TO OVERVIEW
+        Back to Overview
       </Link>
 
       <Card className="shadow-card border-none bg-gradient-to-br from-background to-muted/20 overflow-hidden mb-8">
@@ -138,17 +138,17 @@ const StaffProjectDetailPage = () => {
           <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
             <div className="space-y-1">
               <div className="flex items-center gap-3 mb-2">
-                <Badge variant="outline" className={cn("px-2 py-0.5 text-[10px] font-black uppercase tracking-widest", statusColors[project.status])}>
+                <Badge variant="outline" className={cn("px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", statusColors[project.status])}>
                   {project.status}
                 </Badge>
-                <Badge variant="secondary" className="px-2 py-0.5 text-[10px] font-black uppercase tracking-widest bg-primary/10 text-primary border-none">
+                <Badge variant="secondary" className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary border-none">
                   {isAdvisor ? "Lead Advisor" : isExaminer ? "Panel Examiner" : "Stakeholder"}
                 </Badge>
               </div>
-              <CardTitle className="text-3xl font-display font-black text-foreground leading-tight">
+              <CardTitle className="text-3xl font-display font-bold text-foreground leading-tight">
                 {project.title}
               </CardTitle>
-              <CardDescription className="text-sm font-medium leading-relaxed max-w-2xl mt-2 line-clamp-2">
+              <CardDescription className="text-sm font-medium leading-relaxed max-w-2xl mt-2">
                 {project.description}
               </CardDescription>
             </div>
@@ -163,35 +163,35 @@ const StaffProjectDetailPage = () => {
         <CardContent className="pt-2">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 p-4 rounded-2xl bg-background shadow-inner">
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Squad Size</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Squad Size</p>
               <div className="flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
-                <span className="text-sm font-bold">{project.groupMembers.length} Members</span>
+                <span className="text-sm font-semibold">{project.groupMembers.length} Members</span>
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Academic Year</p>
-              <div className="flex items-center gap-2 text-foreground font-bold text-sm">
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Academic Year</p>
+              <div className="flex items-center gap-2 text-foreground font-semibold text-sm">
                 2025/26 GC
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Phase Deadline</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Phase Deadline</p>
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-warning" />
-                <span className="text-sm font-bold">{project.deadline ? new Date(project.deadline).toLocaleDateString() : 'Unset'}</span>
+                <span className="text-sm font-semibold">{project.deadline ? new Date(project.deadline).toLocaleDateString() : 'Unset'}</span>
               </div>
             </div>
             <div className="space-y-1">
-              <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest">Assigned Role</p>
-              <span className="text-sm font-bold text-primary capitalize">{role}</span>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Assigned Role</p>
+              <span className="text-sm font-semibold text-primary capitalize">{role}</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
       <div className="space-y-4">
-        <h2 className="text-xs font-black text-muted-foreground uppercase tracking-[0.3em] ml-2 mb-4">
+        <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-2 mb-4">
           Operational Control
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -204,7 +204,7 @@ const StaffProjectDetailPage = () => {
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h3 className="font-bold text-foreground text-lg">{feature.label}</h3>
+                      <h3 className="font-semibold text-foreground text-lg">{feature.label}</h3>
                       <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                     </div>
                     <p className="text-xs text-muted-foreground mt-1 font-medium leading-relaxed">

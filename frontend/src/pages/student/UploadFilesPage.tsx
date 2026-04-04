@@ -1,38 +1,46 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
-  FileUp, 
-  File as FileIcon, 
+  FileIcon, 
   Trash2, 
   FileText, 
-  Image as ImageIcon, 
+  ImageIcon, 
   Archive, 
   CloudUpload,
   HardDrive,
   Download,
   Search,
   CheckCircle2,
-  AlertCircle,
-  RefreshCw
+  RefreshCw,
+  Send,
+  MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
 import projectService, { Project } from "@/api/projectService";
 import fileService, { ProjectFile } from "@/api/fileService";
+import submissionService from "@/api/submissionService";
+import { Submission } from "@/types";
 import { cn } from "@/lib/utils";
 
 const UploadFilesPage = () => {
   const { user } = useAuth();
   const [project, setProject] = useState<Project | null>(null);
   const [files, setFiles] = useState<ProjectFile[]>([]);
+  const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Submission Form State
+  const [submissionTitle, setSubmissionTitle] = useState("");
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -43,12 +51,16 @@ const UploadFilesPage = () => {
       
       if (myProject) {
         setProject(myProject);
-        const fileRes = await fileService.getProjectFiles(myProject.id);
+        const [fileRes, subRes] = await Promise.all([
+          fileService.getProjectFiles(myProject.id),
+          submissionService.getByProject(myProject.id)
+        ]);
         setFiles(fileRes.data);
+        setSubmissions(subRes.data);
       }
     } catch (error) {
       toast.error("Sync Error", { 
-        description: "Failed to connect to the project's document repository." 
+        description: "Failed to connect to the project's repository." 
       });
     } finally {
       setIsLoading(false);
@@ -72,11 +84,42 @@ const UploadFilesPage = () => {
       fetchData(); // Refresh list
     } catch (error: any) {
       toast.error("Upload Failed", { 
-        description: error.response?.data?.message || "Internal storage error during transmission." 
+        description: error.response?.data?.message || "Internal storage error." 
       });
     } finally {
       setIsUploading(false);
       e.target.value = "";
+    }
+  };
+
+  const handleCreateSubmission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!project || !submissionTitle || !submissionFile) return;
+
+    try {
+      setIsSubmitting(true);
+      const formData = new FormData();
+      formData.append("projectId", project.id);
+      formData.append("title", submissionTitle);
+      formData.append("files", submissionFile);
+
+      await submissionService.create(formData);
+      toast.success("Submission Successful", {
+        description: "Your document has been sent to your advisor for review."
+      });
+      
+      // Reset form
+      setSubmissionTitle("");
+      setSubmissionFile(null);
+      
+      // Refresh list
+      fetchData();
+    } catch (error: any) {
+      toast.error("Submission Failed", {
+        description: error.response?.data?.message || "Failed to submit document for review."
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -85,11 +128,11 @@ const UploadFilesPage = () => {
       await fileService.deleteFile(id);
       setFiles(prev => prev.filter(f => f.id !== id));
       toast.success("File Removed", { 
-        description: "The document has been securely deleted from the project vault." 
+        description: "The document has been securely deleted." 
       });
     } catch (error) {
       toast.error("Delete Failed", { 
-        description: "Could not remove the document from the server repository." 
+        description: "Could not remove the document." 
       });
     }
   };
@@ -114,6 +157,15 @@ const UploadFilesPage = () => {
     f.originalName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "submitted": return "bg-warning/10 text-warning border-warning/20";
+      case "reviewed": return "bg-info/10 text-info border-info/20";
+      case "graded": return "bg-success/10 text-success border-success/20";
+      default: return "bg-muted text-muted-foreground border-muted";
+    }
+  };
+
   if (isLoading) {
     return (
        <div className="space-y-6 max-w-4xl mx-auto">
@@ -135,130 +187,129 @@ const UploadFilesPage = () => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto pb-20">
+    <div className="max-w-5xl mx-auto pb-20">
       <div className="mb-8 space-y-1">
         <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 uppercase text-[10px] font-bold tracking-widest px-2 py-0.5">
-           Project Vault
+           Review Hub
         </Badge>
-        <h1 className="text-2xl font-display font-bold text-foreground">Document Repository</h1>
-        <p className="text-sm text-muted-foreground mt-1">Secure collective storage for project: <span className="text-foreground font-semibold">{project.title}</span></p>
+        <h1 className="text-3xl font-display font-bold text-foreground">Project Workspace</h1>
+        <p className="text-sm text-muted-foreground mt-1">Submit deliverables for advisor review and manage your project vault.</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card className="md:col-span-3 shadow-card border-border/50 bg-muted/20 hover:bg-muted/30 transition-all group relative overflow-hidden">
-          <CardContent className="p-0">
-            <Label htmlFor="file-upload" className="flex flex-col items-center justify-center p-12 cursor-pointer h-full min-h-[160px]">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-4 group-hover:scale-105 transition-transform">
-                {isUploading ? <RefreshCw className="w-6 h-6 animate-spin" /> : <CloudUpload className="w-6 h-6" />}
-              </div>
-              <span className="text-sm font-semibold text-foreground tracking-tight">
-                {isUploading ? "Uploading to secure vault..." : "Upload Research Document"}
-              </span>
-              <span className="text-[11px] text-muted-foreground mt-1.5">PDF, DOCX, ZIP or Images (Max 10MB)</span>
-            </Label>
-            <Input id="file-upload" type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
-          </CardContent>
+      {/* Submission Module */}
+      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 mt-8 flex items-center gap-2">
+         <Send className="w-4 h-4" />
+         Formal Submissions
+      </h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        {/* Create Submission Form */}
+        <Card className="col-span-1 shadow-card border-border/50 bg-background h-fit">
+          <div className="p-6">
+             <h3 className="font-bold text-foreground mb-1">New Submission</h3>
+             <p className="text-xs text-muted-foreground mb-6">Submit a formal document for advisor feedback.</p>
+             
+             <form onSubmit={handleCreateSubmission} className="space-y-4">
+                <div className="space-y-1.5">
+                   <Label className="text-xs font-semibold uppercase text-muted-foreground">Deliverable Title</Label>
+                   <Input 
+                     placeholder="e.g. Chapter 1: Introduction" 
+                     value={submissionTitle}
+                     onChange={(e) => setSubmissionTitle(e.target.value)}
+                     className="bg-muted/30"
+                     required
+                   />
+                </div>
+                
+                <div className="space-y-1.5">
+                   <Label className="text-xs font-semibold uppercase text-muted-foreground">Document</Label>
+                   <Input 
+                     type="file" 
+                     onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+                     className="bg-muted/30 text-xs py-2 file:text-xs file:font-semibold"
+                     required
+                   />
+                </div>
+
+                <Button 
+                   type="submit" 
+                   disabled={isSubmitting || !submissionTitle || !submissionFile}
+                   className="w-full gradient-primary font-bold shadow-lg shadow-primary/20 mt-2"
+                >
+                   {isSubmitting ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+                   Submit to Advisor
+                </Button>
+             </form>
+          </div>
         </Card>
 
-        <div className="space-y-4">
-           <Card className="shadow-card border-border/50 bg-background p-6 flex flex-col justify-center items-center text-center">
-              <p className="text-3xl font-bold text-primary">{files.length}</p>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-1.5">Total Documents</p>
-           </Card>
-           <Card className="shadow-card border-border/50 bg-background p-6 flex flex-col justify-center items-center text-center">
-              <p className="text-sm font-bold text-foreground">
-                 {(files.reduce((s, f) => s + f.fileSize, 0) / (1024 * 1024)).toFixed(1)} MB
-              </p>
-              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest mt-1.5">Vault Utilization</p>
-           </Card>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between px-1">
-           <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-              <RefreshCw className="w-3.5 h-3.5" />
-              Collective Assets
-           </h3>
-           <div className="relative w-56">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-              <Input 
-                placeholder="Search vault..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-xs bg-muted/40 border-border/50 focus:bg-background transition-all"
-              />
-           </div>
-        </div>
-
-        <div className="grid grid-cols-1 gap-3">
-          {filteredFiles.length === 0 && (
-             <div className="py-16 text-center border-2 border-dashed border-muted rounded-3xl">
-                <FileIcon className="w-10 h-10 text-muted/20 mx-auto mb-3" />
-                <p className="text-sm font-bold text-muted-foreground">The project vault is currently empty.</p>
+        {/* List of Previous Submissions */}
+        <div className="col-span-1 md:col-span-2 space-y-4">
+          {submissions.length === 0 ? (
+             <div className="h-full min-h-[250px] flex flex-col items-center justify-center p-10 border-2 border-dashed border-border/50 rounded-2xl bg-muted/10">
+                <FileText className="w-10 h-10 text-muted-foreground/30 mb-3" />
+                <p className="text-sm font-bold text-foreground">No Submissions Yet</p>
+                <p className="text-xs text-muted-foreground text-center mt-1 max-w-xs">Create your first formal submission on the left to request review from your advisor.</p>
              </div>
+          ) : (
+            submissions.map((sub) => (
+              <Card key={sub.id} className="shadow-sm border-border/50 overflow-hidden">
+                 <div className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                       <div>
+                          <Badge variant="outline" className={cn("px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider mb-2", getStatusColor(sub.status))}>
+                             {sub.status}
+                          </Badge>
+                          <h4 className="font-bold text-foreground text-lg">{sub.title}</h4>
+                          <p className="text-[11px] text-muted-foreground font-medium mt-1">Submitted on {new Date(sub.submissionDate).toLocaleDateString()}</p>
+                       </div>
+                       
+                       {/* Attached Files */}
+                       <div className="flex flex-col gap-2">
+                          {sub.files && sub.files.map((fileUrl, idx) => {
+                             const filename = fileUrl.split("/").pop() || "Document";
+                             const isPdf = filename.toLowerCase().endsWith(".pdf");
+                             return (
+                               <a 
+                                 key={idx}
+                                 href={import.meta.env.VITE_API_BASE_URL?.replace('/api', '') + fileUrl} 
+                                 target="_blank" 
+                                 rel="noreferrer"
+                               >
+                                 <Button variant="outline" size="sm" className="h-8 px-3 rounded-lg text-[10px] font-bold gap-2 hover:bg-primary/5 hover:text-primary border-border/50">
+                                   <Download className="w-3.5 h-3.5" />
+                                   Download
+                                 </Button>
+                               </a>
+                             )
+                          })}
+                       </div>
+                    </div>
+                    
+                    {/* Feedback Area */}
+                    {sub.feedback && sub.feedback.length > 0 && (
+                       <div className="mt-4 pt-4 border-t border-border/50 space-y-3">
+                          <h5 className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1.5">
+                            <MessageSquare className="w-3 h-3" /> Advisor Feedback
+                          </h5>
+                          {sub.feedback.map((fb, idx) => (
+                             <div key={idx} className="bg-muted/40 p-3 rounded-xl border border-border/50 relative">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <span className="text-xs font-bold text-foreground">{fb.fromUserName}</span>
+                                  <span className="text-[9px] text-muted-foreground">{new Date(fb.date).toLocaleDateString()}</span>
+                                </div>
+                                <p className="text-xs text-muted-foreground/90 whitespace-pre-line leading-relaxed">{fb.message}</p>
+                             </div>
+                          ))}
+                       </div>
+                    )}
+                 </div>
+              </Card>
+            ))
           )}
-          
-          {filteredFiles.map((file) => (
-            <Card key={file.id} className="shadow-card border-none hover:ring-2 hover:ring-primary/20 transition-all group overflow-hidden">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                     <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
-                           {getFileIcon(file.fileType)}
-                        </div>
-                        <div className="min-w-0">
-                           <p className="text-sm font-semibold text-foreground truncate">{file.originalName}</p>
-                           <div className="flex items-center gap-2.5 mt-0.5">
-                              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{formatFileSize(file.fileSize)}</span>
-                              <span className="text-[10px] text-muted-foreground/60">•</span>
-                              <span className="text-[10px] text-muted-foreground">Uploaded by {file.uploadedBy.name}</span>
-                              <Badge variant="outline" className="text-[9px] h-4 px-1.5 font-bold uppercase text-muted-foreground/60 border-muted-foreground/20">
-                                 {file.fileType}
-                              </Badge>
-                           </div>
-                        </div>
-                     </div>
-                     
-                     <div className="flex items-center gap-2">
-                        <a 
-                          href={import.meta.env.VITE_API_BASE_URL?.replace('/api', '') + file.filePath} 
-                          target="_blank" 
-                          rel="noreferrer"
-                        >
-                           <Button variant="ghost" size="icon" className="w-9 h-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-colors">
-                              <Download className="w-4 h-4" />
-                           </Button>
-                        </a>
-                        {(file.uploadedBy.id === user.id || user.role === 'coordinator') && (
-                           <Button 
-                             variant="ghost" 
-                             size="icon" 
-                             onClick={() => handleRemove(file.id)}
-                             className="w-9 h-9 rounded-xl hover:bg-rose-500/10 hover:text-rose-500 transition-colors"
-                           >
-                              <Trash2 className="w-4 h-4" />
-                           </Button>
-                        )}
-                     </div>
-                  </div>
-               </CardContent>
-            </Card>
-          ))}
         </div>
       </div>
-      
-      <div className="mt-12 p-6 bg-primary/5 rounded-3xl border border-primary/10 flex items-start gap-4">
-         <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-sm border border-primary/10">
-            <CheckCircle2 className="w-5 h-5 text-primary" />
-         </div>
-         <div>
-            <h4 className="text-sm font-bold text-foreground uppercase tracking-wider">Secure Storage Protocol</h4>
-            <p className="text-xs text-muted-foreground font-medium mt-1 leading-relaxed">
-               All documents uploaded here are encrypted and accessible only to your project team members, designated advisor, and the department coordinator.
-            </p>
-         </div>
-      </div>
+
     </div>
   );
 };

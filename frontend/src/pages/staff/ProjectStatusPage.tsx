@@ -64,17 +64,17 @@ const ProjectStatusPage = () => {
 
   return (
     <div className="max-w-4xl mx-auto pb-20">
-      <Link to={`/dashboard/staff/project/${projectId}?role=${role}`} className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary mb-6 transition-all group">
+      <Link to={`/dashboard/staff/project/${projectId}?role=${role}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary mb-6 transition-all group">
         <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        BACK TO PROJECT OVERVIEW
+        Back to Project Overview
       </Link>
 
       <div className="mb-10">
-         <Badge variant="outline" className="text-primary border-primary/20 uppercase text-[10px] font-black tracking-widest px-2 py-0.5 mb-2">
+         <Badge variant="outline" className="text-muted-foreground border-border uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 mb-2">
             Operational Roadmap
          </Badge>
-         <h1 className="text-3xl font-display font-black text-foreground">Project Phase Tracking</h1>
-         <p className="text-sm text-muted-foreground mt-1">Real-time visualization of research milestones and validation status.</p>
+         <h1 className="text-3xl font-display font-bold text-foreground">Project Phase Tracking</h1>
+         <p className="text-sm text-muted-foreground mt-1 font-medium">Real-time visualization of research milestones and validation status.</p>
       </div>
 
       <Card className="shadow-card border-none bg-gradient-to-br from-primary/5 via-background to-background mb-10 overflow-hidden">
@@ -88,19 +88,19 @@ const ProjectStatusPage = () => {
                     <Target className="w-8 h-8 text-primary" />
                  </div>
                  <div>
-                    <p className="text-2xl font-black text-foreground leading-none">{progress}%</p>
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1.5">OVERALL COMPLETION</p>
+                    <p className="text-2xl font-bold text-foreground leading-none">{progress}%</p>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-1.5">OVERALL COMPLETION</p>
                  </div>
               </div>
               <div className="flex items-center gap-8">
                  <div className="text-center md:text-right">
                     <p className="font-bold text-foreground leading-none">{completed}</p>
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">VALIDATED</p>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mt-1">VALIDATED</p>
                  </div>
                  <div className="w-px h-8 bg-border/50 hidden md:block" />
                  <div className="text-center md:text-right">
                     <p className="font-bold text-foreground leading-none">{project.milestones.length - completed}</p>
-                    <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">PENDING</p>
+                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mt-1">PENDING</p>
                  </div>
               </div>
            </div>
@@ -135,9 +135,9 @@ const ProjectStatusPage = () => {
                 
                 <div className="flex-1">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-                    <h3 className="font-bold text-foreground text-base tracking-tight">{m.title}</h3>
+                    <h3 className="font-semibold text-foreground text-base tracking-tight">{m.title}</h3>
                     <Badge variant="outline" className={cn(
-                      "font-black text-[9px] uppercase tracking-widest border-none h-6 px-2",
+                      "font-bold text-[9px] uppercase tracking-wider border-none h-6 px-2",
                       m.status === "approved" ? "bg-success/10 text-success" : 
                       m.status === "rejected" ? "bg-destructive/10 text-destructive" : 
                       "bg-warning/10 text-warning"
@@ -145,9 +145,9 @@ const ProjectStatusPage = () => {
                       {m.status}
                     </Badge>
                   </div>
-                  <p className="text-sm text-muted-foreground mt-1 max-w-xl">{m.description}</p>
+                  <p className="text-sm text-muted-foreground mt-1 max-w-xl font-medium">{m.description}</p>
                   <div className="flex items-center gap-4 mt-3">
-                     <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground uppercase tracking-tighter">
+                     <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                         <Calendar className="w-3.5 h-3.5" />
                         DUE: {new Date(m.dueDate).toLocaleDateString()}
                      </div>

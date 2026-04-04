@@ -8,18 +8,19 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  ArrowLeft, 
-  Send, 
-  User, 
-  ChevronDown, 
-  ChevronRight, 
-  Award, 
-  Star, 
-  CheckCircle2, 
+import {
+  ArrowLeft,
+  Send,
+  User,
+  ChevronDown,
+  ChevronRight,
+  Award,
+  Star,
+  CheckCircle2,
   AlertCircle,
   RefreshCw,
-  LayoutDashboard
+  LayoutDashboard,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 import projectService, { Project } from "@/api/projectService";
@@ -32,12 +33,12 @@ const ProjectEvaluatePage = () => {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
+
   const [project, setProject] = useState<Project | null>(null);
   const [phaseConfig, setPhaseConfig] = useState<EvaluationPhase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [scores, setScores] = useState<Record<string, Record<string, string>>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
   const [expandedMember, setExpandedMember] = useState<string | null>(null);
@@ -61,7 +62,7 @@ const ProjectEvaluatePage = () => {
       let searchName = "";
       if (user.id === advisorId) searchName = "Advisor";
       else if (user.id === examinerId) searchName = "Examiner";
-      
+
       if (searchName) {
         const phase = confRes.data.phases.find(p => p.name.includes(searchName));
         setPhaseConfig(phase || null);
@@ -109,11 +110,11 @@ const ProjectEvaluatePage = () => {
 
     try {
       setIsSubmitting(true);
-      
+
       const promises = members.map(async (m) => {
         const memberId = typeof m === 'string' ? m : m.id;
         const memberScores = scores[memberId] || {};
-        
+
         const marks = phaseConfig.criteria.map(c => ({
           criterionId: (c as any)._id || c.id,
           mark: parseInt(memberScores[(c as any)._id || c.id]) || 0
@@ -155,45 +156,45 @@ const ProjectEvaluatePage = () => {
     <div className="max-w-4xl mx-auto pb-20">
       <Link
         to={`/dashboard/staff/project/${projectId}`}
-        className="inline-flex items-center gap-1.5 text-xs font-bold text-muted-foreground hover:text-primary mb-6 transition-all group"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary mb-6 transition-all group"
       >
-        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> 
-        BACK TO PROJECT CONTEXT
+        <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+        Back to Project Overview
       </Link>
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div className="space-y-2">
-          <Badge variant="outline" className="border-primary/20 text-primary uppercase text-[10px] font-black tracking-[0.2em] px-2 py-0.5">
-             EVALUATION PORTAL
+          <Badge variant="outline" className="border-primary/20 text-primary uppercase text-[10px] font-bold tracking-wider px-2 py-0.5">
+            EVALUATION PORTAL
           </Badge>
-          <h1 className="text-3xl font-display font-black text-foreground leading-tight">
+          <h1 className="text-3xl font-display font-bold text-foreground leading-tight">
             Perform Academic Assessment
           </h1>
           <p className="text-sm text-muted-foreground font-medium">
-             Project: <span className="text-foreground">{project.title}</span>
+            Project: <span className="text-foreground">{project.title}</span>
           </p>
         </div>
-        
+
         {phaseConfig && (
-           <div className="px-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-3">
-              <Star className="w-5 h-5 text-primary" />
-              <div>
-                 <p className="text-[10px] font-black uppercase tracking-widest text-primary/60">ACTIVE PHASE</p>
-                 <p className="text-sm font-bold text-foreground">{phaseConfig.name}</p>
-              </div>
-           </div>
+          <div className="px-4 py-3 bg-primary/5 border border-primary/20 rounded-2xl flex items-center gap-3">
+            <Star className="w-5 h-5 text-primary" />
+            <div>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">ACTIVE PHASE</p>
+              <p className="text-sm font-bold text-foreground">{phaseConfig.name}</p>
+            </div>
+          </div>
         )}
       </div>
 
       {!phaseConfig && (
         <Card className="border-warning/30 bg-warning/5 mb-8">
-           <CardContent className="p-6 flex items-center gap-4 text-warning">
-              <AlertCircle className="w-6 h-6" />
-              <p className="text-sm font-bold">
-                 Role Mismatch: You are not assigned as the Advisor or Examiner for this project. 
-                 Please contact the coordinator if this is an error.
-              </p>
-           </CardContent>
+          <CardContent className="p-6 flex items-center gap-4 text-warning">
+            <AlertCircle className="w-6 h-6" />
+            <p className="text-sm font-bold">
+              Role Mismatch: You are not assigned as the Advisor or Examiner for this project.
+              Please contact the coordinator if this is an error.
+            </p>
+          </CardContent>
         </Card>
       )}
 
@@ -219,15 +220,15 @@ const ProjectEvaluatePage = () => {
                       "w-10 h-10 rounded-full flex items-center justify-center transition-all",
                       isExpanded ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                     )}>
-                       {isExpanded ? <ChevronDown className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+                      {isExpanded ? <ChevronDown className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
                     </div>
                     <div>
-                      <CardTitle className="text-lg font-black">{memberName}</CardTitle>
-                      <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Student Member</CardDescription>
+                      <CardTitle className="text-lg font-bold">{memberName}</CardTitle>
+                      <CardDescription className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Student Member</CardDescription>
                     </div>
                   </div>
                   <div className="px-4 py-1.5 bg-background border rounded-full shadow-sm">
-                    <span className="text-sm font-black text-primary">{total}</span>
+                    <span className="text-sm font-bold text-primary">{total}</span>
                     <span className="text-[10px] font-bold text-muted-foreground ml-1.5">/ {maxTotal}</span>
                   </div>
                 </div>
@@ -243,13 +244,13 @@ const ProjectEvaluatePage = () => {
                             {i + 1}. {c.label}
                           </p>
                           <div className="flex items-center gap-2">
-                             <div className="w-20 h-1 rounded-full bg-muted overflow-hidden">
-                                <div 
-                                  className="h-full bg-primary" 
-                                  style={{ width: `${(parseInt(scores[memberId]?.[(c as any)._id || c.id] || '0') / c.maxMark) * 100}%` }} 
-                                />
-                             </div>
-                             <p className="text-[9px] font-black text-muted-foreground tracking-tighter uppercase">MAX {c.maxMark} POINTS</p>
+                            <div className="w-20 h-1 rounded-full bg-muted overflow-hidden">
+                              <div
+                                className="h-full bg-primary"
+                                style={{ width: `${(parseInt(scores[memberId]?.[(c as any)._id || c.id] || '0') / c.maxMark) * 100}%` }}
+                              />
+                            </div>
+                            <p className="text-[9px] font-bold text-muted-foreground tracking-tighter uppercase">MAX {c.maxMark} POINTS</p>
                           </div>
                         </div>
                         <Input
@@ -259,14 +260,14 @@ const ProjectEvaluatePage = () => {
                           placeholder="0"
                           value={scores[memberId]?.[(c as any)._id || c.id] || ""}
                           onChange={(e) => handleScoreChange(memberId, (c as any)._id || c.id, e.target.value, c.maxMark)}
-                          className="w-full sm:w-24 h-11 text-center font-display font-black text-xl bg-background border-none shadow-sm focus-visible:ring-primary/20"
+                          className="w-full sm:w-24 h-11 text-center font-display font-bold text-xl bg-background border-none shadow-sm focus-visible:ring-primary/20"
                         />
                       </div>
                     ))}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground ml-2">Internal Remarks</Label>
+                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground ml-2">Internal Remarks</Label>
                     <Textarea
                       placeholder="Enter qualitative performance feedback..."
                       value={comments[memberId] || ""}
@@ -282,26 +283,26 @@ const ProjectEvaluatePage = () => {
       </div>
 
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-12 pt-8 border-t border-border/50">
-         <div className="text-xs text-muted-foreground font-medium text-center sm:text-left">
-            All submitted marks are final and will be used for graduation grading.
-         </div>
-         <Button 
-          onClick={handleSubmit} 
+        <div className="text-xs text-muted-foreground font-medium text-center sm:text-left">
+          All submitted marks are final and will be used for graduation grading.
+        </div>
+        <Button
+          onClick={handleSubmit}
           disabled={isSubmitting || !phaseConfig || members.length === 0}
-          className="w-full sm:w-auto h-12 px-12 gradient-primary text-primary-foreground shadow-xl shadow-primary/20 rounded-2xl font-black uppercase tracking-widest text-xs"
-         >
-            {isSubmitting ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Processing Ledger...
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-4 h-4 mr-2" />
-                Submit Final Assessment
-              </>
-            )}
-         </Button>
+          className="w-full sm:w-auto h-12 px-12 gradient-primary text-primary-foreground shadow-xl shadow-primary/20 rounded-2xl font-bold uppercase tracking-wider text-xs transition-all hover:scale-[1.02] active:scale-95"
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Processing Ledger...
+            </>
+          ) : (
+            <>
+              <CheckCircle2 className="w-4 h-4 mr-2" />
+              Submit Final Assessment
+            </>
+          )}
+        </Button>
       </div>
     </div>
   );

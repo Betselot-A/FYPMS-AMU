@@ -14,9 +14,7 @@ const submissionService = {
   // POST /api/submissions (student, multipart/form-data)
   // FormData must include: projectId, title, files
   create: (data: FormData) =>
-    apiClient.post<Submission>("/submissions", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }),
+    apiClient.post<Submission>("/submissions", data),
 
   // POST /api/submissions/:submissionId/feedback (staff/coordinator)
   addFeedback: (submissionId: string, message: string) =>

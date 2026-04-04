@@ -72,10 +72,10 @@ const ProjectDeadlinesPage = () => {
       </Link>
 
       <div className="mb-10">
-         <Badge variant="outline" className="text-primary border-primary/20 uppercase text-[10px] font-black tracking-widest px-2 py-0.5 mb-2">
+         <Badge variant="outline" className="text-muted-foreground border-border uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 mb-2">
             Temporal Management
          </Badge>
-         <h1 className="text-3xl font-display font-black text-foreground">Phase Timeline</h1>
+         <h1 className="text-3xl font-display font-bold text-foreground">Phase Timeline</h1>
          <p className="text-sm text-muted-foreground mt-1">Official institutional deadlines and administrative milestones for this research project.</p>
       </div>
 
@@ -83,7 +83,7 @@ const ProjectDeadlinesPage = () => {
         {sortedMilestones.length === 0 ? (
            <div className="flex flex-col items-center justify-center py-20 text-muted-foreground bg-muted/20 rounded-3xl border-2 border-dashed border-border/50">
               <Timer className="w-12 h-12 opacity-20 mb-4" />
-              <p className="text-sm font-black uppercase tracking-widest">No active milestones defined.</p>
+              <p className="text-sm font-bold uppercase tracking-wider">No active milestones defined.</p>
               <p className="text-xs mt-1 italic">Contact the coordinator to sync the project schedule.</p>
            </div>
         ) : (
@@ -109,9 +109,9 @@ const ProjectDeadlinesPage = () => {
                         "md:w-48 p-6 flex flex-col justify-center border-b md:border-b-0 md:border-r border-border/50",
                         isCompleted ? "bg-success/5" : isLate ? "bg-destructive/5" : "bg-muted/10"
                       )}>
-                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1.5">Official Due Date</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5">Official Due Date</p>
                         <p className={cn(
-                          "text-lg font-black leading-tight",
+                          "text-lg font-bold leading-tight",
                           isLate ? "text-destructive" : "text-foreground"
                         )}>
                           {new Date(m.dueDate).toLocaleDateString("en-US", { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -130,9 +130,9 @@ const ProjectDeadlinesPage = () => {
                       
                       <div className="flex-1 p-6">
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-black text-foreground text-sm uppercase tracking-tight">{m.title}</h3>
+                          <h3 className="font-bold text-foreground text-sm uppercase tracking-tight">{m.title}</h3>
                           <Badge variant="outline" className={cn(
-                            "text-[9px] font-black uppercase tracking-widest border-none h-6 px-2",
+                            "text-[9px] font-bold uppercase tracking-wider border-none h-6 px-2",
                             isCompleted ? "bg-success/10 text-success" : 
                             isLate ? "bg-destructive/10 text-destructive" : 
                             "bg-warning/10 text-warning"
@@ -143,11 +143,11 @@ const ProjectDeadlinesPage = () => {
                         <p className="text-xs text-muted-foreground leading-relaxed italic">{m.description || "Administrative project phase requiring submission and review."}</p>
                         
                         <div className="flex items-center gap-4 mt-6 pt-4 border-t border-border/50">
-                           <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground uppercase">
+                           <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
                               <Flag className="w-3 h-3" />
                               Required Action: Artifact Upload
                            </div>
-                           <div className="flex items-center gap-1.5 text-[9px] font-black text-muted-foreground uppercase ml-auto">
+                           <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground uppercase tracking-wider ml-auto">
                               <ShieldCheck className="w-3 h-3 text-primary/60" />
                               {role.toUpperCase()} VERIFICATION REQUIRED
                            </div>
@@ -170,7 +170,7 @@ const ProjectDeadlinesPage = () => {
                </div>
                <div>
                   <p className="text-sm font-bold text-foreground">Timeline Insight</p>
-                  <p className="text-[10px] font-black text-muted-foreground uppercase">The project is currently in Phase {project.milestones.filter(m => m.status === 'approved').length + 1}</p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">The project is currently in Phase {project.milestones.filter(m => m.status === 'approved').length + 1}</p>
                </div>
             </div>
             <Link to={`/dashboard/staff/project/${projectId}/status?role=${role}`}>

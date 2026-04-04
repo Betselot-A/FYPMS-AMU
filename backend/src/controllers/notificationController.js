@@ -96,7 +96,7 @@ const markAllAsRead = async (req, res, next) => {
 // Body: { userId?, userIds?, subject?, message, type?, attachmentUrl?, attachmentName? }
 const createNotification = async (req, res, next) => {
   try {
-    const { userId, userIds, subject, message, type, attachmentUrl, attachmentName } = req.body;
+    const { userId, userIds, subject, message, type, attachmentUrl, attachmentName, date } = req.body;
 
     if (!message || message.trim() === "") {
       return res.status(400).json({ error: "VALIDATION", message: "Message is required" });
@@ -135,6 +135,7 @@ const createNotification = async (req, res, next) => {
       type: type || "info",
       attachmentUrl: attachmentUrl || null,
       attachmentName: attachmentName || null,
+      date: date || undefined,
     }));
 
     const created = await Notification.insertMany(notifications);

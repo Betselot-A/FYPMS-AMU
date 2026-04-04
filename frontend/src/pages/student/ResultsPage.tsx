@@ -135,10 +135,10 @@ const ResultsPage = () => {
   return (
     <div className="max-w-4xl mx-auto pb-20 pt-10 px-4 md:px-0">
       <div className="mb-10 text-center md:text-left space-y-1">
-        <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 uppercase text-[10px] font-bold tracking-widest px-3 py-1 mb-2">
+        <Badge variant="outline" className="text-muted-foreground border-border uppercase text-[10px] font-bold tracking-wider px-3 py-1 mb-2">
            Academic Performance Hub
         </Badge>
-        <h1 className="text-2xl font-display font-bold text-foreground">Graduation Ledger</h1>
+        <h1 className="text-4xl font-display font-bold text-foreground">Graduation Ledger</h1>
         <p className="text-sm text-muted-foreground">Institutional records for: <span className="text-foreground font-semibold">{project.title}</span></p>
       </div>
 
@@ -158,7 +158,7 @@ const ResultsPage = () => {
                   </p>
                </div>
               <div className="pt-4">
-                  <Badge variant="outline" className="bg-background/80 backdrop-blur-sm border-warning/30 text-warning px-6 py-2 rounded-full uppercase tracking-widest font-bold text-[10px]">
+                  <Badge variant="outline" className="bg-background/80 backdrop-blur-sm border-border text-muted-foreground px-6 py-2 rounded-full uppercase tracking-wider font-bold text-[10px]">
                      Status: Quality Assurance Phase
                   </Badge>
               </div>
@@ -179,12 +179,12 @@ const ResultsPage = () => {
               <div className="flex flex-col md:flex-row items-center justify-between gap-12">
                   <div className="space-y-6 text-center md:text-left flex-1">
                      <div className="space-y-2">
-                        <p className="text-[10px] font-bold uppercase tracking-[0.3em] opacity-80">Summative Academic Grade</p>
-                        <h2 className="text-9xl font-display font-black leading-none">{transcriptData.grade}</h2>
+                        <p className="text-[10px] font-bold uppercase tracking-wider opacity-80">Summative Academic Grade</p>
+                        <h2 className="font-serif text-[72px] font-normal leading-[72px] text-[#131720]">{transcriptData.grade}</h2>
                      </div>
                      <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
                         <div className="px-6 py-3 bg-white/20 backdrop-blur-md rounded-2xl border border-white/20">
-                           <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">AGGREGATE SCORE</p>
+                           <p className="text-[10px] font-bold uppercase tracking-wider opacity-80 mb-1">AGGREGATE SCORE</p>
                            <p className="text-3xl font-bold">{transcriptData.totalWeightedScore.toFixed(1)}%</p>
                         </div>
                         <Badge className="bg-white text-primary font-bold uppercase text-[11px] h-10 px-6 border-none shadow-xl rounded-xl">
@@ -200,7 +200,7 @@ const ResultsPage = () => {
                        This record represents the final verified academic achievement for your final year project. 
                        We congratulate you on your dedication and successful research outcome.
                     </p>
-                     <div className="inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] bg-white/10 px-5 py-2.5 rounded-xl border border-white/20">
+                     <div className="inline-flex items-center gap-3 text-[10px] font-bold uppercase tracking-wider bg-white/10 px-5 py-2.5 rounded-xl border border-white/20">
                         <ShieldAlert className="w-4 h-4 text-white" />
                         Official Academic Transcript
                      </div>
@@ -212,40 +212,42 @@ const ResultsPage = () => {
           {/* Breakdown & Feedback */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div className="space-y-6">
-                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-2 flex items-center gap-2">
-                   <TrendingUp className="w-4 h-4" /> 
+                 <h3 className="text-xl font-serif font-bold text-foreground uppercase tracking-wider ml-2 flex items-center gap-2">
+                   <TrendingUp className="w-5 h-5 text-primary" /> 
                    Weightage Distribution
                  </h3>
                 {transcriptData.phaseBreakdown.map((phase) => (
-                   <Card key={phase.id} className="shadow-card border-none overflow-hidden hover:translate-y-[-4px] transition-all duration-300">
-                      <CardContent className="p-6">
-                         <div className="flex items-center justify-between mb-5">
-                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-display font-bold text-sm border border-primary/20">
+                   <Card key={phase.id} className="shadow-premium border-none overflow-hidden hover:translate-y-[-4px] transition-all duration-300 rounded-[1.5rem] bg-card">
+                      <CardContent className="p-7">
+                         <div className="flex items-center justify-between mb-6">
+                             <div className="flex items-center gap-5">
+                                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/10 to-success/10 text-primary flex items-center justify-center font-display font-bold text-base border border-primary/20 shadow-sm">
                                    {phase.weight}%
                                  </div>
                                 <div>
-                                   <h4 className="font-bold text-foreground text-lg">{phase.name}</h4>
-                                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tighter">Phase Density</p>
+                                   <h4 className="font-serif font-bold text-foreground text-xl">{phase.name}</h4>
+                                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Phase Density</p>
                                 </div>
                              </div>
                              <div className="text-right">
-                                <p className="text-2xl font-bold text-primary">{phase.weightedContribution.toFixed(1)}%</p>
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase opacity-50">Contribution</p>
+                                <p className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-success">
+                                   {phase.weightedContribution.toFixed(1)}%
+                                </p>
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider opacity-60">Contribution</p>
                              </div>
                          </div>
-                                                  <div className="space-y-2">
-                             <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                         <div className="space-y-3">
+                             <div className="flex items-center justify-between text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
                                 <span>Performance Intensity</span>
                                 <span className="text-foreground">{phase.percentage.toFixed(1)}%</span>
                              </div>
-                            <div className="h-2 w-full bg-muted rounded-full overflow-hidden p-0.5 border border-border/40">
+                            <div className="h-2.5 w-full bg-muted/30 rounded-full overflow-hidden p-0.5 border border-border/20">
                                <div 
-                                 className="h-full bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary),0.3)]" 
+                                 className="h-full bg-gradient-to-r from-primary to-success rounded-full shadow-[0_0_12px_rgba(var(--primary),0.2)]" 
                                  style={{ width: `${phase.percentage}%` }}
                                />
                             </div>
-                            <p className="text-[10px] text-muted-foreground text-center pt-1 font-bold italic">
+                            <p className="text-[11px] text-muted-foreground text-center pt-2 font-bold italic opacity-70">
                                Verified Score: {phase.earnedMark} / {phase.maxMark} points
                             </p>
                          </div>
@@ -255,32 +257,35 @@ const ResultsPage = () => {
              </div>
 
               <div className="space-y-6">
-                 <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest ml-2 flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
+                 <h3 className="text-xl font-serif font-bold text-foreground uppercase tracking-wider ml-2 flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-success" />
                     Qualitative Remarks
                  </h3>
-                <Card className="shadow-card border-none bg-muted/20">
-                   <CardContent className="p-8 space-y-8">
+                <Card className="shadow-premium border-none bg-muted/5 rounded-[1.5rem]">
+                   <CardContent className="p-8 space-y-10">
                       {transcriptData.allFeedback.length > 0 ? transcriptData.allFeedback.map((fb, idx) => (
-                          <div key={idx} className="space-y-3">
-                             <div className="flex items-center gap-2">
-                                <Star className="w-3.5 h-3.5 text-primary fill-primary" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-primary/60">{fb.phase}</span>
+                          <div key={idx} className="space-y-4">
+                             <div className="flex items-center gap-3">
+                                <Star className="w-4 h-4 text-success fill-success/20" />
+                                <span className="text-[11px] font-serif font-bold uppercase tracking-wider text-primary">{fb.phase}</span>
                              </div>
-                            <blockquote className="text-sm font-medium text-foreground leading-relaxed italic bg-background p-5 rounded-2xl shadow-sm border-l-4 border-primary relative">
+                            <blockquote className="text-sm font-medium text-foreground/90 leading-relaxed italic bg-background/50 p-6 rounded-2xl shadow-sm border-l-4 border-success relative group hover:border-primary transition-all duration-300">
+                               <span className="absolute -top-3 -left-1 text-4xl text-success/20 font-serif">"</span>
                                "{fb.message}"
                             </blockquote>
                          </div>
                       )) : (
-                         <div className="py-20 text-center space-y-4 opacity-40">
-                            <MessageSquare className="w-12 h-12 mx-auto" />
-                            <p className="text-xs font-black uppercase tracking-widest">No formal feedback records</p>
+                         <div className="py-24 text-center space-y-5 opacity-30">
+                            <MessageSquare className="w-14 h-14 mx-auto text-muted-foreground" />
+                            <p className="text-xs font-bold uppercase tracking-wider">No formal feedback records available at this time</p>
                          </div>
                       )}
                       
-                      <div className="pt-8 border-t border-border/40">
-                         <div className="p-6 bg-primary/5 rounded-3xl border border-primary/20 flex items-center gap-5">
-                            <ShieldAlert className="w-8 h-8 text-primary opacity-50 shrink-0" />
+                      <div className="pt-8 border-t border-border/30">
+                         <div className="p-6 bg-gradient-to-br from-primary/5 to-success/5 rounded-3xl border border-primary/10 flex items-center gap-6 shadow-inner">
+                            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-sm">
+                               <ShieldAlert className="w-6 h-6 text-primary opacity-60" />
+                            </div>
                             <p className="text-xs font-medium text-muted-foreground leading-relaxed">
                                This ledger is a digitally signed academic document. For official transcripts, please contact the Registrar's Office.
                             </p>
@@ -294,7 +299,7 @@ const ResultsPage = () => {
       ) : (
         <Card className="border-none bg-muted/10 p-20 text-center rounded-[2rem]">
            <TrendingUp className="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
-           <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs">Awaiting Final Mark Aggregation</p>
+           <p className="text-muted-foreground font-bold uppercase tracking-wider text-xs">Awaiting Final Mark Aggregation</p>
         </Card>
       )}
     </div>

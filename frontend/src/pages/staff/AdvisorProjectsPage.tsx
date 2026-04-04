@@ -70,11 +70,11 @@ const AdvisorProjectsPage = () => {
     <div className="max-w-6xl mx-auto pb-20">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
-          <Badge variant="outline" className="border-primary/20 text-primary uppercase text-[10px] font-black tracking-widest px-2 py-0.5 mb-2">
+          <Badge variant="outline" className="border-border text-muted-foreground uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 mb-2">
              ADVISOR PORTFOLIO
           </Badge>
-          <h1 className="text-4xl font-display font-black text-foreground">Assigned Squads</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <h1 className="text-4xl font-display font-bold text-foreground">Assigned Squads</h1>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">
              Manage and mentor research groups assigned under your supervision.
           </p>
         </div>
@@ -97,7 +97,7 @@ const AdvisorProjectsPage = () => {
             <div className="w-16 h-16 rounded-2xl bg-background border flex items-center justify-center mx-auto mb-6 shadow-sm">
                <FolderOpen className="w-8 h-8 text-muted-foreground/40" />
             </div>
-            <h3 className="text-lg font-bold text-foreground">No Squads Assigned</h3>
+            <h3 className="text-lg font-semibold text-foreground">No Squads Assigned</h3>
             <p className="text-muted-foreground font-medium text-sm mt-1 max-w-xs mx-auto">
                You are not currently supervising any research projects for this cycle.
             </p>
@@ -113,15 +113,15 @@ const AdvisorProjectsPage = () => {
                 <Card className="shadow-card border-none hover:ring-2 hover:ring-primary/20 transition-all duration-300 group overflow-hidden h-full flex flex-col">
                   <CardHeader className="pb-4 relative">
                     <div className="absolute top-0 right-0 p-4">
-                        <Badge className={cn("text-[9px] font-black border-none h-6 px-2 uppercase tracking-widest", statusColors[project.status])}>
+                        <Badge className={cn("text-[9px] font-bold border-none h-6 px-2 uppercase tracking-wider", statusColors[project.status])}>
                            {project.status}
                         </Badge>
                     </div>
                     <div className="space-y-1 pt-2">
-                        <CardTitle className="text-xl font-black group-hover:text-primary transition-colors leading-tight pr-12">
+                        <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors leading-tight pr-12">
                           {project.title}
                         </CardTitle>
-                        <CardDescription className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                        <CardDescription className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60">
                            <ShieldCheck className="w-3.5 h-3.5" />
                            Lead Advisor Access
                         </CardDescription>
@@ -134,7 +134,7 @@ const AdvisorProjectsPage = () => {
                     </p>
 
                     <div className="space-y-4">
-                       <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                       <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                           <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" /> GROUP MEMBERS</span>
                           <span>{members.length} Total</span>
                        </div>
@@ -150,7 +150,7 @@ const AdvisorProjectsPage = () => {
                           ))}
                           {members.length > 3 && (
                              <div className="h-8 px-2.5 rounded-xl border border-dashed border-border/50 flex items-center justify-center">
-                                <span className="text-[10px] font-black text-muted-foreground">+{members.length - 3}</span>
+                                <span className="text-[10px] font-bold text-muted-foreground">+{members.length - 3}</span>
                              </div>
                           )}
                        </div>
@@ -159,7 +159,7 @@ const AdvisorProjectsPage = () => {
                     <div className="pt-6 border-t border-border/40 flex items-center justify-between mt-auto">
                       <div className="flex items-center gap-2 text-muted-foreground">
                          <Clock className="w-4 h-4" />
-                         <span className="text-[10px] font-black uppercase tracking-widest">
+                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                             {project.deadline ? new Date(project.deadline).toLocaleDateString() : 'NO DEADLINE'}
                          </span>
                       </div>

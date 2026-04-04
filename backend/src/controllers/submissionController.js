@@ -59,13 +59,38 @@ const createSubmission = async (req, res, next) => {
       files,
     });
 
-    // Notify advisor
+    // Notify stakeholders
+    const notifications = [];
+    
+    // 1. Notify other students in the group
+    project.groupMembers.forEach((memberId) => {
+       if (memberId.toString() !== req.user._id.toString()) {
+          notifications.push({
+             userId: memberId,
+             message: `${req.user.name} submitted a new deliverable: "${title}" to the advisor.`,
+             type: "info"
+          });
+       }
+    });
+
+    // 2. Notify staff
     if (project.advisorId) {
-      await Notification.create({
+      notifications.push({
         userId: project.advisorId,
+        message: `New submission "${title}" uploaded for project "${project.title}" by ${req.user.name}`,
+        type: "info",
+      });
+    }
+    if (project.examinerId) {
+      notifications.push({
+        userId: project.examinerId,
         message: `New submission "${title}" uploaded for project "${project.title}"`,
         type: "info",
       });
+    }
+    
+    if (notifications.length > 0) {
+      await Notification.insertMany(notifications);
     }
 
     res.status(201).json(submission);
@@ -101,12 +126,25 @@ const addFeedback = async (req, res, next) => {
     submission.status = "reviewed";
     await submission.save();
 
-    // Notify the student who submitted
-    await Notification.create({
-      userId: submission.userId,
-      message: `You received feedback on "${submission.title}" from ${req.user.name}`,
-      type: "info",
-    });
+    // Fetch project to get all group members
+    const project = await Project.findById(submission.projectId);
+
+    if (project && project.groupMembers) {
+       // Notify all group members
+       const notifications = project.groupMembers.map(memberId => ({
+         userId: memberId,
+         message: `New feedback on "${submission.title}" from ${req.user.name}`,
+         type: "info",
+       }));
+       await Notification.insertMany(notifications);
+    } else {
+       // Fallback to just the submitter
+       await Notification.create({
+         userId: submission.userId,
+         message: `New feedback on "${submission.title}" from ${req.user.name}`,
+         type: "info",
+       });
+    }
 
     res.status(201).json(feedbackEntry);
   } catch (error) {

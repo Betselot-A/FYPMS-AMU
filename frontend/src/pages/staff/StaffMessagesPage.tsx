@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Send, Loader2, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Project, User as UserType, Notification } from "@/types";
@@ -110,10 +111,13 @@ const StaffMessagesPage = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-display font-bold text-foreground">Communicate with Students</h1>
-        <p className="text-sm text-muted-foreground mt-1">Message students from your assigned projects</p>
+    <div className="max-w-7xl mx-auto pb-20">
+      <div className="mb-10">
+        <Badge variant="outline" className="border-border text-muted-foreground uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 mb-2">
+           COMMUNICATION HUB
+        </Badge>
+        <h1 className="text-4xl font-display font-bold text-foreground">Secure Messaging</h1>
+        <p className="text-sm text-muted-foreground mt-1 font-medium">Communicate with students and stakeholders from your assigned projects.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -146,8 +150,8 @@ const StaffMessagesPage = () => {
                       <HelpCircle className="w-4 h-4 text-primary" />
                     </div>
                     <div className="overflow-hidden">
-                      <p className="text-sm font-semibold truncate leading-tight tracking-tight">System Support</p>
-                      <p className="text-[10px] text-primary/70 truncate uppercase font-bold tracking-widest">Admin</p>
+                      <p className="text-sm font-bold truncate leading-tight tracking-tight">System Support</p>
+                      <p className="text-[10px] text-primary/70 truncate uppercase font-bold tracking-wider">Admin</p>
                     </div>
                   </button>
                 )}

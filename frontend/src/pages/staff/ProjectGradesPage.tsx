@@ -143,17 +143,17 @@ const ProjectGradesPage = () => {
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div>
-           <Badge variant="outline" className="text-primary border-primary/20 uppercase text-[10px] font-black tracking-widest px-2 py-0.5 mb-2">
+           <Badge variant="outline" className="text-muted-foreground border-border uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 mb-2">
               Formal Assessment Phase: {phase.name}
            </Badge>
-           <h1 className="text-3xl font-display font-black text-foreground">Scorecard Entry</h1>
+           <h1 className="text-3xl font-display font-bold text-foreground">Scorecard Entry</h1>
            <p className="text-sm text-muted-foreground mt-1">Submit technical evaluation marks for each student in the squad.</p>
         </div>
         
         <div className="flex items-center gap-3">
            <div className="text-right">
-              <p className="text-2xl font-black text-foregroundLeading-none">/ {maxPhaseScore}</p>
-              <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">MAX PHASE POINTS</p>
+              <p className="text-2xl font-bold text-foreground leading-none">/ {maxPhaseScore}</p>
+              <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-1">MAX PHASE POINTS</p>
            </div>
         </div>
       </div>
@@ -179,14 +179,14 @@ const ProjectGradesPage = () => {
                      <User className="w-6 h-6" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg font-black text-foreground">{studentName}</CardTitle>
-                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mt-1">CANDIDATE SCORECARD</p>
+                    <CardTitle className="text-lg font-bold text-foreground">{studentName}</CardTitle>
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-1">CANDIDATE SCORECARD</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-6">
                    <div className="text-right">
-                      <p className="text-2xl font-black text-primary leading-none">{total}</p>
-                      <p className="text-[9px] font-black text-muted-foreground uppercase tracking-widest mt-1">TOTAL MARK</p>
+                      <p className="text-2xl font-bold text-primary leading-none">{total}</p>
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mt-1">TOTAL MARK</p>
                    </div>
                    <ChevronRight className={cn("w-5 h-5 text-muted-foreground transition-transform", isExpanded && "rotate-90")} />
                 </div>
@@ -201,7 +201,7 @@ const ProjectGradesPage = () => {
                       <div key={c.id} className="space-y-3">
                         <div className="flex justify-between items-center">
                            <Label className="text-xs font-bold text-foreground uppercase tracking-tight">{c.label}</Label>
-                           <span className="text-[10px] font-black text-muted-foreground">MAX: {c.maxMark}</span>
+                           <span className="text-[10px] font-bold text-muted-foreground tracking-wider">MAX: {c.maxMark}</span>
                         </div>
                         <div className="relative">
                            <Input
@@ -239,7 +239,7 @@ const ProjectGradesPage = () => {
         <Button 
           disabled={isSubmitting || project.groupMembers.length === 0}
           onClick={handleSubmitAll} 
-          className="w-full h-16 rounded-2xl gradient-primary text-primary-foreground font-black text-lg uppercase tracking-widest shadow-2xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-3"
+          className="w-full h-16 rounded-2xl gradient-primary text-primary-foreground font-bold text-lg uppercase tracking-wider shadow-2xl shadow-primary/20 transition-all hover:scale-[1.01] active:scale-95 flex items-center justify-center gap-3"
         >
           {isSubmitting ? (
              <><Loader2 className="w-6 h-6 animate-spin" /> COMMITTING GRADES...</>
@@ -247,7 +247,7 @@ const ProjectGradesPage = () => {
              <><Award className="w-6 h-6" /> COMMIT FINAL EVALUATION</>
           )}
         </Button>
-        <p className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-tighter mt-4 flex items-center justify-center gap-2">
+        <p className="text-center text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-4 flex items-center justify-center gap-2">
            <ShieldCheck className="w-3.5 h-3.5 text-success" /> 
            This action will finalize the phase marks and trigger graduation ledger updates.
         </p>

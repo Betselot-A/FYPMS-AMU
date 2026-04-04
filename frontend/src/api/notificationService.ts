@@ -14,6 +14,7 @@ export interface CreateNotificationRequest {
   type?: "info" | "warning" | "success" | "deadline";
   attachmentUrl?: string | null;
   attachmentName?: string | null;
+  date?: string;           // Optional display date
 }
 
 export interface SentNotification {

@@ -24,9 +24,12 @@ const ExaminerProjectsPage = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground">Assigned Projects</h1>
-        <p className="text-sm text-muted-foreground mt-1">Projects assigned for examination</p>
+      <div className="mb-10">
+        <Badge variant="outline" className="border-border text-muted-foreground uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 mb-2">
+           EXAMINER PORTFOLIO
+        </Badge>
+        <h1 className="text-4xl font-display font-bold text-foreground">Assigned Projects</h1>
+        <p className="text-sm text-muted-foreground mt-1 font-medium">Projects assigned for academic examination and assessment.</p>
       </div>
 
       {projects.length === 0 ? (
@@ -46,14 +49,14 @@ const ExaminerProjectsPage = () => {
             const completedMilestones = project.milestones.filter((m) => m.status === "approved").length;
 
             return (
-              <Card key={project.id} className="shadow-card">
+              <Card key={project.id} className="shadow-card border-none hover:ring-2 hover:ring-primary/20 transition-all duration-300 group overflow-hidden">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div>
-                      <CardTitle className="text-lg">{project.title}</CardTitle>
-                      <CardDescription className="mt-1">{project.description}</CardDescription>
+                      <CardTitle className="text-lg font-bold group-hover:text-primary transition-colors">{project.title}</CardTitle>
+                      <CardDescription className="text-xs mt-1 text-muted-foreground font-medium">{project.description}</CardDescription>
                     </div>
-                    <Badge variant="outline" className={statusColors[project.status]}>
+                    <Badge variant="outline" className={cn("px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border-border/50", statusColors[project.status])}>
                       {project.status}
                     </Badge>
                   </div>
@@ -61,20 +64,20 @@ const ExaminerProjectsPage = () => {
                 <CardContent className="space-y-4">
                   {/* Group Members */}
                   <div>
-                    <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-2">
                       <Users className="w-4 h-4" /> Student Group
                     </p>
                     <div className="flex flex-wrap gap-3">
                       {members.map((member) => (
                         <div key={member!.id} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-muted/30">
                           <Avatar className="w-7 h-7">
-                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                            <AvatarFallback className="text-[10px] font-bold bg-primary/10 text-primary uppercase">
                               {member!.name.split(" ").map((n) => n[0]).join("")}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="text-sm font-medium text-foreground">{member!.name}</p>
-                            <p className="text-xs text-muted-foreground">{member!.department}</p>
+                            <p className="text-sm font-bold text-foreground">{member!.name}</p>
+                            <p className="text-[10px] text-muted-foreground font-medium">{member!.department}</p>
                           </div>
                         </div>
                       ))}
@@ -84,21 +87,21 @@ const ExaminerProjectsPage = () => {
                   {/* Project Details */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className="p-3 rounded-lg bg-muted/30 border border-border">
-                      <p className="text-xs text-muted-foreground">Advisor</p>
-                      <p className="text-sm font-medium text-foreground">{advisor?.name ?? "—"}</p>
+                      <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Advisor</p>
+                      <p className="text-sm font-bold text-foreground">{advisor?.name ?? "—"}</p>
                     </div>
                     <div className="p-3 rounded-lg bg-muted/30 border border-border flex items-center gap-2">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Deadline</p>
-                        <p className="text-sm font-medium text-foreground">{project.deadline}</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Deadline</p>
+                        <p className="text-sm font-bold text-foreground">{project.deadline}</p>
                       </div>
                     </div>
                     <div className="p-3 rounded-lg bg-muted/30 border border-border flex items-center gap-2">
                       <Target className="w-4 h-4 text-muted-foreground" />
                       <div>
-                        <p className="text-xs text-muted-foreground">Milestones</p>
-                        <p className="text-sm font-medium text-foreground">{completedMilestones}/{project.milestones.length} done</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Milestones</p>
+                        <p className="text-sm font-bold text-foreground">{completedMilestones}/{project.milestones.length} done</p>
                       </div>
                     </div>
                   </div>
