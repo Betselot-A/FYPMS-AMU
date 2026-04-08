@@ -30,8 +30,10 @@ const getUsers = async (req, res, next) => {
     if (role) {
       filter.role = role;
     }
-    if (department && (req.user.role === "admin" || req.user.role === "coordinator")) {
-      filter.department = department;
+    
+    // Universal department filtering (case-insensitive)
+    if (department) {
+      filter.department = { $regex: new RegExp(`^${department}$`, "i") };
     }
 
     if (req.user.role === "admin") {
@@ -59,7 +61,8 @@ const getUsers = async (req, res, next) => {
       visibilityOr = [
         { _id: { $in: Array.from(linkedUserIds) } },
         { role: "admin" },
-        { role: "coordinator", department: req.user.department }
+        { role: "coordinator", department: req.user.department },
+        { role: "student", department: req.user.department } // Staff can also see students in their dept
       ];
     } else if (req.user.role === "student") {
       // Student Discovery Logic
@@ -76,6 +79,11 @@ const getUsers = async (req, res, next) => {
         { role: "admin" },
         { role: "coordinator", department: req.user.department }
       ];
+
+      // CRITICAL: Allow students to see other students IF they are viewing groupings
+      if (groupStatus === "grouped" || groupStatus === "ungrouped") {
+        visibilityOr.push({ role: "student" });
+      }
     }
 
     if (visibilityOr.length > 0) {
@@ -460,6 +468,30 @@ const resetUserPassword = async (req, res, next) => {
   }
 };
 
+/**
+ * GET /api/users/departments
+ * Admin/Coordinator/Staff/Student — fetch unique department names
+ */
+const getDepartments = async (req, res, next) => {
+  try {
+    // Only fetch departments from academic roles to hide "Administration" etc.
+    const departments = await User.distinct("department", {
+      role: { $in: ["student", "staff", "coordinator"] }
+    });
+
+    // Normalize casing (Uppercase) and remove duplicates using a Set
+    const sanitized = Array.from(new Set(
+      departments
+        .filter(d => !!d)
+        .map(d => d.trim().toUpperCase())
+    )).sort();
+
+    res.json(sanitized);
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -470,4 +502,5 @@ module.exports = {
   bulkUploadUsersFromFile,
   bulkDeleteUsers,
   resetUserPassword,
+  getDepartments,
 };

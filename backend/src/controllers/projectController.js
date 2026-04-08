@@ -36,7 +36,9 @@ const getProjects = async (req, res, next) => {
     if (proposalStatus) filter.proposalStatus = proposalStatus;
     if (advisorId) filter.advisorId = advisorId;
     if (examinerId) filter.examinerId = examinerId;
-    if (department) filter.department = department;
+    if (department) {
+      filter.department = { $regex: new RegExp(`^${department}$`, "i") };
+    }
 
     const projects = await Project.find(filter)
       .populate("groupMembers", "name email studentId")

@@ -123,7 +123,7 @@ const SubmitPage = () => {
       toast.success("Proposal Submitted", { 
         description: "Your academic project ideas have been delivered to the coordinator." 
       });
-      navigate("/dashboard/student/status");
+      navigate("/dashboard/project/status");
     } catch (err: any) {
       toast.error("Submission Failed", { 
         description: err.response?.data?.message || "Internal server error during proposal transmission." 

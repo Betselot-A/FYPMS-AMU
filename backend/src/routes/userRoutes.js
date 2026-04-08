@@ -14,6 +14,7 @@ const {
   bulkUploadUsersFromFile,
   bulkDeleteUsers,
   resetUserPassword,
+  getDepartments,
 } = require("../controllers/userController");
 const { protect } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
@@ -24,6 +25,7 @@ router.use(protect);
 
 // Authenticated users can list users (Students/Staff will be filtered in controller)
 router.get("/", getUsers);
+router.get("/departments", getDepartments);
 
 // Admin-only CRUD
 router.post("/", authorize("admin"), createUser);

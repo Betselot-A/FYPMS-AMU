@@ -67,6 +67,9 @@ const userService = {
 
   resetPassword: (id: string) =>
     apiClient.post<{ message: string }>(`/users/${id}/reset-password`),
+
+  getDepartments: () => 
+    apiClient.get<string[]>("/users/departments"),
 };
 
 export default userService;
