@@ -33,7 +33,7 @@ export interface UpdateProjectRequest {
 
 const projectService = {
   // GET /api/projects
-  getAll: (params?: { status?: string; advisorId?: string; examinerId?: string }) =>
+  getAll: (params?: { status?: string; advisorId?: string; examinerId?: string; proposalStatus?: string; department?: string }) =>
     apiClient.get<Project[]>("/projects", { params }),
 
   // GET /api/projects/:id

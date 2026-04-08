@@ -26,11 +26,27 @@ interface NavItem {
 const getStudentNav = (): NavItem[] => [
   { label: "Dashboard", icon: <LayoutDashboard className="w-4 h-4" />, path: "/dashboard" },
   {
-    label: "Project",
+    label: "Grouping",
+    icon: <Users className="w-4 h-4" />,
+    children: [
+      { label: "Grouped", path: "/dashboard/grouping/grouped" },
+      { label: "Not Grouped", path: "/dashboard/grouping/not-grouped" },
+    ],
+  },
+  {
+    label: "Project Titles",
     icon: <FolderOpen className="w-4 h-4" />,
     children: [
+      { label: "Previous Titles", path: "/dashboard/project-titles/previous" },
+      { label: "Titles Submission", path: "/dashboard/project/submit" },
+      { label: "View Approved Titles", path: "/dashboard/project-titles/approved" },
+    ],
+  },
+  {
+    label: "Project",
+    icon: <ClipboardCheck className="w-4 h-4" />,
+    children: [
       { label: "Upload Files", icon: <FileUp className="w-4 h-4" />, path: "/dashboard/project/upload" },
-      { label: "Submit", icon: <Send className="w-4 h-4" />, path: "/dashboard/project/submit" },
       { label: "Status", icon: <Activity className="w-4 h-4" />, path: "/dashboard/project/status" },
     ],
   },

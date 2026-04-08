@@ -22,9 +22,17 @@ const generateTempPassword = () => {
  */
 const getUsers = async (req, res, next) => {
   try {
-    const { role, department, search, page = 1, limit = 1000 } = req.query;
+    const { role, department, search, page = 1, limit = 1000, groupStatus } = req.query;
     const filter = {};
     let visibilityOr = [];
+
+    // Apply explicit role and department filters
+    if (role) {
+      filter.role = role;
+    }
+    if (department && (req.user.role === "admin" || req.user.role === "coordinator")) {
+      filter.department = department;
+    }
 
     if (req.user.role === "admin") {
       // Admins see everyone
@@ -75,12 +83,16 @@ const getUsers = async (req, res, next) => {
       filter.$and.push({ $or: visibilityOr });
     }
 
-    // Apply explicit role and department filters
-    if (role) {
-      filter.role = role;
-    }
-    if (department && req.user.role === "admin") {
-      filter.department = department;
+    // Grouping Status Filter
+    if (groupStatus === "grouped" || groupStatus === "ungrouped") {
+      const allProjects = await Project.find({}, "groupMembers");
+      const groupedUserIds = allProjects.flatMap(p => p.groupMembers.map(id => id.toString()));
+      
+      if (groupStatus === "grouped") {
+        filter._id = { ...filter._id, $in: groupedUserIds };
+      } else {
+        filter._id = { ...filter._id, $nin: groupedUserIds };
+      }
     }
 
     // Apply search search across name and email
@@ -131,7 +143,7 @@ const getUserById = async (req, res, next) => {
  */
 const createUser = async (req, res, next) => {
   try {
-    const { name, email, role, department, staffAssignment } = req.body;
+    const { name, email, role, department, studentId, staffAssignment } = req.body;
 
     const existing = await User.findOne({ email });
     if (existing) {
@@ -155,6 +167,7 @@ const createUser = async (req, res, next) => {
       password: tempPassword,
       role,
       department: userDept,
+      studentId: studentId || "",
       staffAssignment: staffAssignment || { isAdvisor: false, isExaminer: false },
       mustChangePassword: true,
     });
@@ -171,7 +184,7 @@ const createUser = async (req, res, next) => {
  */
 const updateUser = async (req, res, next) => {
   try {
-    const { name, email, department, role, staffAssignment, cgpa } = req.body;
+    const { name, email, department, studentId, role, staffAssignment, cgpa } = req.body;
 
     const user = await User.findById(req.params.id);
     if (!user) {
@@ -184,6 +197,7 @@ const updateUser = async (req, res, next) => {
     if (name !== undefined) user.name = name;
     if (email !== undefined) user.email = email;
     if (department !== undefined) user.department = department;
+    if (studentId !== undefined) user.studentId = studentId;
     if (role !== undefined) user.role = role;
     if (staffAssignment !== undefined) user.staffAssignment = staffAssignment;
     if (cgpa !== undefined) user.cgpa = cgpa;
@@ -237,7 +251,7 @@ const bulkCreateUsers = async (req, res, next) => {
 
     for (let i = 0; i < users.length; i++) {
       try {
-        const { name, email, role, department, staffAssignment } = users[i];
+        const { name, email, role, department, studentId, staffAssignment } = users[i];
         const existing = await User.findOne({ email });
         if (existing) {
           errors.push(`Row ${i + 1}: email '${email}' already exists`);
@@ -257,6 +271,7 @@ const bulkCreateUsers = async (req, res, next) => {
           password: tempPassword,
           role,
           department: userDept,
+          studentId: studentId || "",
           staffAssignment: staffAssignment || { isAdvisor: false, isExaminer: false },
           mustChangePassword: true,
         });
@@ -294,6 +309,7 @@ const bulkUploadUsersFromFile = async (req, res, next) => {
       const row = rows[i];
       const name = row.name || row.Name || row.fullname || row.FullName || row["Full Name"];
       const email = row.email || row.Email;
+      const studentId = row.studentId || row.studentID || row["Student ID"] || row.id || row.ID || "";
       let role = row.role || row.Role || "student";
       let department = row.department || row.Department || "";
 
@@ -326,6 +342,7 @@ const bulkUploadUsersFromFile = async (req, res, next) => {
           password: tempPassword,
           role,
           department,
+          studentId: studentId.toString(),
           mustChangePassword: true,
         });
 
@@ -333,6 +350,7 @@ const bulkUploadUsersFromFile = async (req, res, next) => {
           name: user.name,
           email: user.email,
           role: user.role,
+          studentId: user.studentId,
           tempPassword,
         });
       } catch (err) {

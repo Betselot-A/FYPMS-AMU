@@ -20,6 +20,10 @@ import ProjectStatusPage from "./pages/student/ProjectStatusPage";
 import ChatPage from "./pages/student/ChatPage";
 import ResultsPage from "./pages/student/ResultsPage";
 import EditProfilePage from "./pages/student/EditProfilePage";
+import GroupedPage from "./pages/student/GroupedPage";
+import NotGroupedPage from "./pages/student/NotGroupedPage";
+import PreviousTitlesPage from "./pages/student/PreviousTitlesPage";
+import ApprovedTitlesPage from "./pages/student/ApprovedTitlesPage";
 
 // Staff sub-pages
 import StaffProjectDetailPage from "./pages/staff/StaffProjectDetailPage";
@@ -74,6 +78,12 @@ const App = () => (
             <Route path="/dashboard/messages" element={<DashboardPage><ChatPage /></DashboardPage>} />
             <Route path="/dashboard/results" element={<DashboardPage><ResultsPage /></DashboardPage>} />
             <Route path="/dashboard/profile" element={<DashboardPage><EditProfilePage /></DashboardPage>} />
+
+            {/* Students: Grouping & Project Titles */}
+            <Route path="/dashboard/grouping/grouped" element={<DashboardPage><GroupedPage /></DashboardPage>} />
+            <Route path="/dashboard/grouping/not-grouped" element={<DashboardPage><NotGroupedPage /></DashboardPage>} />
+            <Route path="/dashboard/project-titles/previous" element={<DashboardPage><PreviousTitlesPage /></DashboardPage>} />
+            <Route path="/dashboard/project-titles/approved" element={<DashboardPage><ApprovedTitlesPage /></DashboardPage>} />
 
             {/* Staff: Project detail and sub-pages */}
             <Route path="/dashboard/staff/project/:projectId" element={<DashboardPage><StaffProjectDetailPage /></DashboardPage>} />

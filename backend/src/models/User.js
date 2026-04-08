@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    studentId: {
+      type: String,
+      trim: true,
+      default: "",
+    },
     avatar: {
       type: String,
       default: "",

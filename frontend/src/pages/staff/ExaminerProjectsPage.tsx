@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { FolderOpen, Users, Calendar, Target } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const statusColors: Record<string, string> = {
   "pending": "bg-warning/10 text-warning border-warning/20",

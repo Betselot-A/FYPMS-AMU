@@ -17,6 +17,7 @@ export interface User {
   role: UserRole;
   department: string;
   avatar?: string;
+  studentId?: string;
   createdAt: string;
   staffAssignment?: StaffAssignment; // only relevant for staff role
   cgpa?: number; // only relevant for students

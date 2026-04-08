@@ -13,26 +13,33 @@ const Settings = require("../models/Settings");
 const getProjects = async (req, res, next) => {
   try {
     const { role, _id: userId } = req.user;
-    const { status, advisorId, examinerId } = req.query;
+    const { status, advisorId, examinerId, proposalStatus, department } = req.query;
     let filter = {};
 
     // Role-based filtering
     if (role === "student") {
-      filter.groupMembers = userId;
+      // Students can browse all approved projects part of titles repo, 
+      // but only their own projects for dashboard overview.
+      // If proposalStatus is requested, we allow broader access for browsing.
+      if (!proposalStatus) {
+        filter.groupMembers = userId;
+      }
     } else if (role === "staff") {
       filter.$or = [{ advisorId: userId }, { examinerId: userId }];
     }
     // coordinator & admin see all, but coordinator is filtered by department
-    if (role === "coordinator") {
+    if (role === "coordinator" && !department) {
       filter.department = req.user.department;
     }
 
     if (status) filter.status = status;
+    if (proposalStatus) filter.proposalStatus = proposalStatus;
     if (advisorId) filter.advisorId = advisorId;
     if (examinerId) filter.examinerId = examinerId;
+    if (department) filter.department = department;
 
     const projects = await Project.find(filter)
-      .populate("groupMembers", "name email")
+      .populate("groupMembers", "name email studentId")
       .populate("advisorId", "name email")
       .populate("examinerId", "name email")
       .sort({ createdAt: -1 });

@@ -28,6 +28,7 @@ export interface UsersQueryParams {
   page?: number;
   limit?: number;
   search?: string;
+  groupStatus?: "grouped" | "ungrouped" | "all";
 }
 
 const userService = {
