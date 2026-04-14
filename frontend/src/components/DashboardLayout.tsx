@@ -152,15 +152,15 @@ const NavItems = ({ items, currentPath, isCollapsed }: { items: NavItem[]; curre
         <button
           onClick={() => toggleGroup(item.label)}
           className={cn(
-            "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 group relative",
-            isChildActive
-              ? "bg-sidebar-accent/80 text-sidebar-primary"
+            "w-full flex items-center justify-center h-12 rounded-l-full text-sm font-bold transition-all duration-300 group relative",
+            isCollapsed ? "px-0" : "px-3 gap-3",
+            isChildActive && !isOpen
+              ? "text-primary bg-sidebar-accent/30"
               : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground",
-            isCollapsed && "justify-center px-0"
+            isCollapsed && isChildActive && "bg-background liquid-collapsed-parent z-[100] mr-[-4px]"
           )}
         >
-          {isChildActive && <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-sidebar-primary animate-in fade-in slide-in-from-left-2 duration-300" />}
-          <div className={cn("transition-transform duration-200 shrink-0", isChildActive ? "scale-110" : "group-hover:scale-110")}>
+          <div className={cn("transition-all duration-300 shrink-0 flex items-center justify-center", isCollapsed ? "w-10 h-10 rounded-xl" : "w-6 h-6", isChildActive ? "scale-110 text-primary" : "group-hover:scale-110")}>
             {item.icon}
           </div>
           {!isCollapsed && (
@@ -184,27 +184,26 @@ const NavItems = ({ items, currentPath, isCollapsed }: { items: NavItem[]; curre
           {isOpen && !isCollapsed && (
             <div className="ml-4 mt-1.5 space-y-0.5 relative pl-2 animate-in slide-in-from-top-2 duration-200">
               <div className="absolute left-[13px] top-0 bottom-2 w-px bg-sidebar-border/40" />
-              {item.children.map((child) => {
-                const isActive = currentPath === child.path;
-                return (
-                  <Link
-                    key={child.path}
-                    to={child.path}
-                    className={cn(
-                      "flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all duration-200 group relative",
-                      isActive
-                        ? "text-sidebar-primary font-semibold"
-                        : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground"
-                    )}
-                  >
-                    {isActive && <div className="absolute left-[-9px] w-2 h-2 rounded-full bg-sidebar-primary top-1/2 -translate-y-1/2 border-[3px] border-sidebar" />}
-                    <div className={cn("transition-all duration-200 shrink-0", isActive ? "scale-100" : "group-hover:translate-x-0.5")}>
-                      {child.icon || <div className="w-4 h-4" />}
-                    </div>
-                    {child.label}
-                  </Link>
-                );
-              })}
+                  {item.children.map((child) => {
+                    const isActive = currentPath === child.path;
+                    return (
+                      <Link
+                        key={child.path}
+                        to={child.path}
+                        className={cn(
+                          "flex items-center gap-3 px-3 h-10 rounded-l-full text-sm transition-all duration-300 group relative",
+                          isActive
+                            ? "bg-background text-primary font-black liquid-child z-[100] mr-[-4px] shadow-[-15px_0_30px_-15px_rgba(0,0,0,0.15),4px_0_0_0_hsl(var(--background))]"
+                            : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground z-10"
+                        )}
+                      >
+                        <div className={cn("transition-all duration-300 shrink-0 flex items-center justify-center w-5 h-5", isActive ? "scale-100" : "group-hover:translate-x-1")}>
+                          {child.icon || <div className="w-2 h-2 rounded-full bg-current shadow-[0_0_8px_currentColor] transition-all" />}
+                        </div>
+                        <span className="truncate leading-none pt-[1px]">{child.label}</span>
+                      </Link>
+                    );
+                  })}
             </div>
           )}
         </div>
@@ -217,18 +216,20 @@ const NavItems = ({ items, currentPath, isCollapsed }: { items: NavItem[]; curre
         key={item.path}
         to={item.path!}
         className={cn(
-          "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
+          "w-full flex items-center h-12 rounded-l-full text-sm font-bold transition-all duration-300 group relative",
+          isCollapsed ? "justify-center px-0" : "justify-start px-3 gap-3",
           isActive
-            ? "bg-sidebar-accent/80 text-sidebar-primary"
-            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground",
-          isCollapsed && "justify-center px-0"
+            ? cn(
+                "bg-background text-primary z-[100] mr-[-4px] shadow-[-15px_0_30px_-15px_rgba(0,0,0,0.15),4px_0_0_0_hsl(var(--background))]",
+                isCollapsed ? "liquid-collapsed-parent" : "liquid-parent"
+              )
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground z-10"
         )}
       >
-        {isActive && <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-sidebar-primary animate-in fade-in slide-in-from-left-2 duration-300" />}
-        <div className={cn("transition-transform duration-200 shrink-0", isActive ? "scale-110" : "group-hover:scale-110")}>
+        <div className={cn("transition-all duration-300 shrink-0 flex items-center justify-center", isCollapsed ? "w-10 h-10 rounded-xl" : "w-6 h-6", isActive ? "scale-110 text-primary" : "group-hover:scale-110")}>
           {item.icon}
         </div>
-        {!isCollapsed && <span className="truncate">{item.label}</span>}
+        {!isCollapsed && <span className="truncate leading-none pt-[1px]">{item.label}</span>}
       </Link>
     );
 
@@ -241,7 +242,10 @@ const NavItems = ({ items, currentPath, isCollapsed }: { items: NavItem[]; curre
   };
 
   return (
-    <nav className={cn("flex-1 p-3 space-y-1", isCollapsed && "px-2")}>
+    <nav className={cn(
+      "flex-1 pl-4 space-y-2 py-4 overflow-y-auto hide-scrollbar scroll-smooth",
+      isCollapsed && "px-2"
+    )}>
       {items.map(renderItem)}
     </nav>
   );
@@ -277,22 +281,78 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     : user.role.charAt(0).toUpperCase() + user.role.slice(1);
 
   return (
-    <div className="h-screen flex bg-background overflow-hidden relative">
+    <div className="h-screen flex bg-background overflow-hidden relative font-sans antialiased text-foreground">
+      <style>{`
+        @keyframes logo-pulse {
+          0% { filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.1)); }
+          50% { filter: drop-shadow(0 0 10px hsl(var(--primary) / 0.3)); }
+          100% { filter: drop-shadow(0 0 2px hsl(var(--primary) / 0.1)); }
+        }
+        .logo-glow {
+          animation: logo-pulse 3s infinite ease-in-out;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        /* Mathematical Perfection: S-Curves synced to heights */
+        .liquid-parent::before, .liquid-parent::after,
+        .liquid-child::before, .liquid-child::after {
+          content: "";
+          position: absolute;
+          right: 0;
+          background-color: transparent;
+          pointer-events: none;
+          z-index: 100;
+        }
+
+        /* Parent (h-12 = 48px) -> 24px Radius Join */
+        .liquid-parent::before, .liquid-parent::after { width: 48px; height: 48px; }
+        .liquid-parent::before { top: -48px; border-bottom-right-radius: 24px; box-shadow: 20px 20px 0 0 hsl(var(--background)); }
+        .liquid-parent::after { bottom: -48px; border-top-right-radius: 24px; box-shadow: 20px -20px 0 0 hsl(var(--background)); }
+
+        /* Child (h-10 = 40px) -> 20px Radius Join */
+        .liquid-child::before, .liquid-child::after { width: 40px; height: 40px; }
+        .liquid-child::before { top: -40px; border-bottom-right-radius: 20px; box-shadow: 20px 20px 0 0 hsl(var(--background)); }
+        .liquid-child::after { bottom: -40px; border-top-right-radius: 20px; box-shadow: 20px -20px 0 0 hsl(var(--background)); }
+
+        /* Collapsed Selection (Minimalist Liquid) */
+        .liquid-collapsed-parent::before, .liquid-collapsed-parent::after {
+          content: "";
+          position: absolute;
+          right: 0;
+          width: 25px;
+          height: 25px;
+          background-color: transparent;
+          pointer-events: none;
+          z-index: 100;
+        }
+        .liquid-collapsed-parent::before { top: -25px; border-bottom-right-radius: 15px; box-shadow: 10px 10px 0 0 hsl(var(--background)); }
+        .liquid-collapsed-parent::after { bottom: -25px; border-top-right-radius: 15px; box-shadow: 10px -10px 0 0 hsl(var(--background)); }
+
+        .group-logo:hover .toggle-btn {
+          opacity: 1;
+          transform: translateY(-50%) scale(1);
+        }
+      `}</style>
       <aside
         className={cn(
-          "bg-sidebar text-sidebar-foreground flex flex-col border-r border-sidebar-border shrink-0 shadow-xl relative z-20 transition-all duration-300 ease-in-out",
+          "bg-sidebar text-sidebar-foreground flex flex-col shrink-0 shadow-2xl relative z-20 transition-all duration-300 ease-in-out",
           isCollapsed ? "w-20" : "w-64"
         )}
       >
         <div className={cn("p-6 border-b border-sidebar-border mb-2 relative group-logo", isCollapsed && "p-4")}>
-          <Link to="/dashboard" className={cn("flex items-center gap-3 group/logo", isCollapsed && "justify-center")}>
-            <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover/logo:scale-105 transition-transform duration-300 shrink-0">
-              <GraduationCap className="w-5 h-5 text-primary-foreground" />
+          <Link to="/dashboard" className={cn("flex items-center gap-3 group/logo logo-glow", isCollapsed && "justify-center")}>
+            <div className="w-10 h-10 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20 group-hover/logo:scale-105 transition-transform duration-500 shrink-0">
+              <GraduationCap className="w-6 h-6 text-primary-foreground" />
             </div>
             {!isCollapsed && (
               <div className="flex flex-col animate-in fade-in duration-500">
                 <span className="font-display font-bold text-lg tracking-tight text-sidebar-foreground leading-none">ProjectHub</span>
-                <span className="text-[10px] text-sidebar-foreground/40 font-bold uppercase tracking-[0.2em] mt-1">Management</span>
+                <span className="text-[10px] text-sidebar-foreground/40 font-bold uppercase tracking-[0.2em] mt-1 text-center lg:text-left">Management</span>
               </div>
             )}
           </Link>
@@ -300,7 +360,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           {/* Sidebar Toggle Button */}
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
-            className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-sidebar-border text-sidebar-foreground flex items-center justify-center hover:bg-sidebar-primary hover:text-primary-foreground transition-all shadow-md z-30"
+            className="toggle-btn absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-sidebar-border text-sidebar-foreground flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-all shadow-md z-30 opacity-0 scale-90"
           >
             {isCollapsed ? <PanelLeftOpen className="w-3 h-3" /> : <PanelLeftClose className="w-3 h-3" />}
           </button>
@@ -308,15 +368,15 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
         <NavItems items={navItems} currentPath={location.pathname} isCollapsed={isCollapsed} />
 
-        <div className={cn("p-5 border-t border-sidebar-border mt-auto bg-sidebar-accent/20 transition-all", isCollapsed && "p-4")}>
-          <div className={cn("flex items-center gap-3 mb-4 p-2 rounded-xl bg-sidebar-accent/30 border border-sidebar-border/50", isCollapsed && "justify-center px-0")}>
-            <Avatar className="w-10 h-10 border-2 border-sidebar-primary/20 shadow-inner shrink-0">
-              <AvatarFallback className="bg-sidebar-primary/10 text-sidebar-primary text-sm font-black">{initials}</AvatarFallback>
+        <div className={cn("p-5 border-t border-sidebar-border mt-auto bg-sidebar-accent/10 transition-all", isCollapsed && "p-4")}>
+          <div className={cn("flex items-center gap-3 mb-4 p-2 rounded-2xl bg-sidebar-accent/20 border border-sidebar-border/30", isCollapsed && "justify-center px-0")}>
+            <Avatar className="w-10 h-10 border-2 border-sidebar-primary/10 shadow-inner shrink-0 leading-[10px]">
+              <AvatarFallback className="bg-sidebar-primary/5 text-sidebar-primary text-sm font-black">{initials}</AvatarFallback>
             </Avatar>
             {!isCollapsed && (
               <div className="overflow-hidden animate-in fade-in duration-500">
                 <p className="text-sm font-bold text-sidebar-foreground truncate leading-tight group-hover:text-sidebar-primary transition-colors">{user.name}</p>
-                <p className="text-[9px] text-sidebar-foreground/40 uppercase font-black tracking-[0.15em] mt-1">{roleLabel}</p>
+                <p className="text-[9px] text-sidebar-foreground/30 uppercase font-black tracking-[0.1em] mt-1">{roleLabel}</p>
               </div>
             )}
           </div>
@@ -327,13 +387,13 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  "w-full justify-start text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10 h-10 rounded-xl transition-all duration-200 font-bold group",
+                  "w-full justify-start text-sidebar-foreground/60 hover:text-destructive hover:bg-destructive/10 h-11 rounded-2xl transition-all duration-200 font-bold group",
                   isCollapsed && "justify-center px-0"
                 )}
                 onClick={handleLogout}
               >
                 <LogOut className="w-4 h-4 shrink-0 transition-transform group-hover:-translate-x-0.5" />
-                {!isCollapsed && <span className="ml-2">Sign Out</span>}
+                {!isCollapsed && <span className="ml-2 uppercase text-[10px] tracking-widest">Sign Out</span>}
               </Button>
             </TooltipTrigger>
             {isCollapsed && <TooltipContent side="right" className="ml-2 font-bold bg-destructive text-white">Sign Out</TooltipContent>}
