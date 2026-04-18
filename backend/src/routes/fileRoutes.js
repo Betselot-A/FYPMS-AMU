@@ -5,15 +5,8 @@ const { protect } = require("../middleware/authMiddleware");
 const multer = require("multer");
 const path = require("path");
 
-// Configure storage
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "uploads/");
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
+// Configure memory storage for GridFS
+const storage = multer.memoryStorage();
 
 const upload = multer({
   storage,
@@ -32,6 +25,9 @@ router.use(protect);
 
 // GET /api/files/:projectId
 router.get("/:projectId", fileController.getProjectFiles);
+
+// GET /api/files/download/:fileId
+router.get("/download/:fileId", fileController.downloadFile);
 
 // POST /api/files
 router.post("/", upload.single("file"), fileController.uploadFile);

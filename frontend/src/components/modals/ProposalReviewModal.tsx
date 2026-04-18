@@ -9,6 +9,7 @@ import { Project, User } from "@/types";
 import { toast } from "sonner";
 import projectService from "@/api/projectService";
 import userService from "@/api/userService";
+import fileService from "@/api/fileService";
 import { MultiUserSelect } from "@/components/MultiUserSelect";
 
 interface ProposalReviewModalProps {
@@ -148,7 +149,7 @@ const ProposalReviewModal = ({ isOpen, onClose, project, onSuccess }: ProposalRe
           </div>
 
           {/* Accompanying Document */}
-          {currentProposal.documentUrl && (
+          {currentProposal.documentId && (
             <div className="flex items-center justify-between p-4 bg-muted/20 border border-dashed border-border rounded-xl">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-background border flex items-center justify-center shadow-sm">
@@ -161,7 +162,7 @@ const ProposalReviewModal = ({ isOpen, onClose, project, onSuccess }: ProposalRe
               </div>
               <Button size="sm" variant="secondary" className="text-[10px] uppercase font-bold h-8" asChild>
                 <a 
-                  href={import.meta.env.VITE_API_BASE_URL?.replace('/api', '') + currentProposal.documentUrl} 
+                  href={fileService.getDownloadUrl(currentProposal.documentId)} 
                   target="_blank" 
                   rel="noreferrer"
                 >

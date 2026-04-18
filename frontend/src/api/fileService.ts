@@ -8,7 +8,7 @@ import apiClient from "./client";
 export interface ProjectFile {
   id: string;
   originalName: string;
-  filePath: string;
+  fileId: string;
   fileType: string;
   fileSize: number;
   fileCategory?: string;
@@ -37,6 +37,12 @@ const fileService = {
   // DELETE /api/files/:id
   deleteFile: (id: string) =>
     apiClient.delete(`/files/${id}`),
+
+  // Helper to get download URL
+  getDownloadUrl: (fileId: string) => {
+    const token = sessionStorage.getItem("auth_token");
+    return `${apiClient.defaults.baseURL}/files/download/${fileId}${token ? `?token=${token}` : ""}`;
+  },
 };
 
 export default fileService;

@@ -7,6 +7,7 @@ const Project = require("../models/Project");
 const fs = require("fs");
 const csv = require("csv-parser");
 const XLSX = require("xlsx");
+const { Readable } = require("stream");
 
 // Helper: generate random temp password
 const generateTempPassword = () => {
@@ -366,8 +367,6 @@ const bulkUploadUsersFromFile = async (req, res, next) => {
       }
     }
 
-    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
-
     res.json({
       message: `Processed ${rows.length} rows.`,
       createdCount: createdUsers.length,
@@ -377,27 +376,28 @@ const bulkUploadUsersFromFile = async (req, res, next) => {
   };
 
   if (fileExtension === "csv") {
-    fs.createReadStream(req.file.path)
+    const readableStream = new Readable();
+    readableStream.push(req.file.buffer);
+    readableStream.push(null);
+
+    readableStream
       .pipe(csv())
       .on("data", (data) => results.push(data))
       .on("end", () => processRows(results))
       .on("error", (err) => {
-        if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         next(err);
       });
   } else if (["xlsx", "xls"].includes(fileExtension)) {
     try {
-      const workbook = XLSX.readFile(req.file.path);
+      const workbook = XLSX.read(req.file.buffer, { type: "buffer" });
       const sheetName = workbook.SheetNames[0];
       const sheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(sheet);
       await processRows(rows);
     } catch (err) {
-      if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
       next(err);
     }
   } else {
-    if (fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
     return res.status(400).json({
       error: "INVALID_FILE_TYPE",
       message: "Unsupported file type. Please upload CSV or Excel (.xlsx, .xls).",

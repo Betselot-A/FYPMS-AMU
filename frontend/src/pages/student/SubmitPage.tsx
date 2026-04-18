@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Send, CheckCircle2, ClipboardList, RefreshCw, FileText, XCircle, AlertCircle, Upload, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import projectService from "@/api/projectService";
+import fileService from "@/api/fileService";
 import { Project, Proposal } from "@/types";
 
 const SubmitPage = () => {
@@ -331,11 +332,11 @@ const SubmitPage = () => {
                 />
               </Button>
               
-              {lastProposal?.documentUrl && (
+              {lastProposal?.documentId && (
                 <div className="w-48 text-center p-4 border rounded-xl bg-muted/20 flex flex-col items-center justify-center">
                   <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Current/Previous File</p>
                   <a 
-                    href={import.meta.env.VITE_API_BASE_URL?.replace('/api', '') + lastProposal.documentUrl} 
+                    href={fileService.getDownloadUrl(lastProposal.documentId)} 
                     target="_blank" 
                     rel="noreferrer"
                     className="flex flex-col items-center gap-1 group"

@@ -170,23 +170,20 @@ const ProjectSubmissionsPage = () => {
 
                            {/* Attached Files */}
                            <div className="flex flex-wrap gap-2 w-full md:w-auto">
-                              {sub.files && sub.files.map((fileUrl, idx) => {
-                                 const filename = fileUrl.split("/").pop() || "Document";
-                                 return (
-                                    <a
-                                       key={idx}
-                                       href={import.meta.env.VITE_API_BASE_URL?.replace('/api', '') + fileUrl}
-                                       target="_blank"
-                                       rel="noreferrer"
-                                    >
-                                       <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl text-xs font-bold gap-2 hover:bg-primary/5 hover:text-primary border-border">
-                                          <FileText className="w-4 h-4 text-primary" />
-                                          Review Document
-                                          <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                                       </Button>
-                                    </a>
-                                 )
-                              })}
+                              {sub.files && sub.files.map((fileId, idx) => (
+                                 <a
+                                    key={idx}
+                                    href={fileService.getDownloadUrl(fileId)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                 >
+                                    <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl text-xs font-bold gap-2 hover:bg-primary/5 hover:text-primary border-border">
+                                       <FileText className="w-4 h-4 text-primary" />
+                                       Review Document
+                                       <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                                    </Button>
+                                 </a>
+                              ))}
                            </div>
                         </div>
 
@@ -243,7 +240,7 @@ const ProjectSubmissionsPage = () => {
          <hr className="border-border/50 my-10" />
 
          {/* General Vault View */}
-         {/* <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+         <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 mt-12 flex items-center gap-2">
             <FolderOpen className="w-4 h-4" />
             General Project Vault
          </h3>
@@ -264,11 +261,13 @@ const ProjectSubmissionsPage = () => {
                            <div className="min-w-0 flex-1">
                               <p className="text-sm font-semibold text-foreground truncate">{file.originalName}</p>
                               <div className="flex items-center gap-2 mt-0.5">
+                                 <span className="text-[10px] text-muted-foreground uppercase">{file.fileType}</span>
+                                 <span className="text-[10px] text-muted-foreground/50 text-[8px]">•</span>
                                  <span className="text-[10px] text-muted-foreground">{formatFileSize(file.fileSize)}</span>
                               </div>
                            </div>
                            <a
-                              href={import.meta.env.VITE_API_BASE_URL?.replace('/api', '') + file.filePath}
+                              href={fileService.getDownloadUrl(file.fileId)}
                               target="_blank"
                               rel="noreferrer"
                            >
@@ -281,7 +280,7 @@ const ProjectSubmissionsPage = () => {
                   </Card>
                ))
             )}
-         </div> */}
+         </div>
 
       </div>
    );

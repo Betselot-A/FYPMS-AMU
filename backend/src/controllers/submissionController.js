@@ -1,10 +1,7 @@
-// ============================================================
-// ProjectHub Project Submission & Feedback System
-// ============================================================
-
 const Submission = require("../models/Submission");
 const Project = require("../models/Project");
 const Notification = require("../models/Notification");
+const { uploadToGridFS } = require("../utils/gridfs");
 
 /**
  * GET /api/submissions/:projectId
@@ -49,8 +46,12 @@ const createSubmission = async (req, res, next) => {
       });
     }
 
-    // Collect uploaded file paths
-    const files = req.files ? req.files.map((f) => `/uploads/${f.filename}`) : [];
+    // Upload all files to GridFS
+    const files = req.files ? await Promise.all(
+        req.files.map(async (file) => {
+          return await uploadToGridFS(file.buffer, file.originalname, file.mimetype);
+        })
+      ) : [];
 
     const submission = await Submission.create({
       projectId,

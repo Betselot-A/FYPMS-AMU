@@ -31,8 +31,8 @@ const submissionSchema = new mongoose.Schema(
       type: String,
       required: [true, "Submission title is required"],
     },
-    // Array of file paths / URLs
-    files: [{ type: String }],
+    // Array of GridFS file IDs
+    files: [{ type: mongoose.Schema.Types.ObjectId }],
     feedback: [feedbackSchema],
     status: {
       type: String,

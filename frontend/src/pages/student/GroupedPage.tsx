@@ -8,7 +8,7 @@ import { Project, User } from "@/types";
 import { toast } from "sonner";
 
 const GroupedPage = () => {
-  const [selectedDept, setSelectedDept] = useState<string>("");
+  const [selectedDept, setSelectedDept] = useState<string>("all");
   const [departments, setDepartments] = useState<string[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -19,11 +19,7 @@ const GroupedPage = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedDept) {
-      fetchGroupedProjects();
-    } else {
-      setProjects([]);
-    }
+    fetchGroupedProjects();
   }, [selectedDept]);
 
   const fetchDepartments = async () => {
@@ -41,9 +37,11 @@ const GroupedPage = () => {
   const fetchGroupedProjects = async () => {
     setIsDataLoading(true);
     try {
-      const res = await projectService.getAll({
-        department: selectedDept,
-      });
+      const params: any = { proposalStatus: "approved" };
+      if (selectedDept && selectedDept !== "all") {
+        params.department = selectedDept;
+      }
+      const res = await projectService.getAll(params);
       setProjects(res.data);
     } catch (error) {
       toast.error("Failed to fetch groupings.");
@@ -80,9 +78,10 @@ const GroupedPage = () => {
             ) : (
               <Select value={selectedDept} onValueChange={setSelectedDept}>
                 <SelectTrigger className="h-12 bg-background/50 border-border/50 focus:ring-primary/20 transition-all shadow-sm">
-                  <SelectValue placeholder="--- Select Subject Dept ---" />
+                  <SelectValue placeholder="All Departments" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">All Departments</SelectItem>
                   {departments.length > 0 ? (
                     departments.map((dept) => (
                       <SelectItem key={dept} value={dept}>{dept}</SelectItem>
@@ -102,7 +101,7 @@ const GroupedPage = () => {
           <CardHeader className="border-b border-border/40 bg-muted/20 py-4 px-8">
             <CardTitle className="text-sm font-bold flex items-center gap-2 text-foreground/80">
               <Users className="w-4 h-4 text-primary" />
-              Verified Project Groups: <span className="text-primary">{selectedDept}</span>
+              Verified Project Groups: <span className="text-primary">{(selectedDept && selectedDept !== "all") ? selectedDept : "All Departments"}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
@@ -184,7 +183,7 @@ const GroupedPage = () => {
                 </div>
                 <h3 className="text-xl font-bold text-foreground tracking-tight">No project groups found</h3>
                 <p className="text-sm text-muted-foreground max-w-sm mx-auto mt-2 italic">
-                  Academic records for <span className="font-bold text-primary not-italic">{selectedDept}</span> show no official project groups formed yet.
+                  Academic records for <span className="font-bold text-primary not-italic">{(selectedDept && selectedDept !== "all") ? selectedDept : "All Departments"}</span> show no official project groups formed yet.
                 </p>
               </div>
             )}

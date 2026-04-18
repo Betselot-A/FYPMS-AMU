@@ -32,7 +32,7 @@ const proposalSchema = new mongoose.Schema({
     ],
     required: true,
   },
-  documentUrl: { type: String }, // Path to PDF/DOCX
+  documentId: { type: mongoose.Schema.Types.ObjectId }, // Link to GridFS file
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],

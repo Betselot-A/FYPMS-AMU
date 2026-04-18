@@ -5,6 +5,7 @@
 const Project = require("../models/Project");
 const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
+const { uploadToGridFS } = require("../utils/gridfs");
 
 /**
  * GET /api/projects
@@ -20,9 +21,14 @@ const getProjects = async (req, res, next) => {
     if (role === "student") {
       // Students can browse all approved projects part of titles repo, 
       // but only their own projects for dashboard overview.
-      // If proposalStatus is requested, we allow broader access for browsing.
-      if (!proposalStatus) {
+      // If proposalStatus/browseAll is requested, we allow broader access for browsing.
+      if (!proposalStatus && req.query.browseAll !== "true") {
         filter.groupMembers = userId;
+      }
+      
+      // If browsing, only show projects that have at least one proposal submission
+      if (req.query.browseAll === "true") {
+        filter.proposalStatus = { $ne: "not-submitted" };
       }
     } else if (role === "staff") {
       filter.$or = [{ advisorId: userId }, { examinerId: userId }];
@@ -140,7 +146,7 @@ const bulkCreateProjects = async (req, res, next) => {
         groupMembers: group.groupMembers || [],
         department: req.user.role === "coordinator" ? req.user.department : (group.department || ""),
         status: "pending",
-        proposalStatus: "approved", // Bulk created projects skip proposal
+        proposalStatus: "not-submitted", // Must submit titles through the initiation phase
       });
       createdProjects.push(project);
     }
@@ -323,7 +329,15 @@ const submitProposal = async (req, res, next) => {
       return res.status(400).json({ message: "You must provide exactly 3 project description options." });
     }
 
-    const documentUrl = req.file ? `/uploads/proposals/${req.file.filename}` : null;
+    // Handle file upload to GridFS
+    let documentId = null;
+    if (req.file) {
+      documentId = await uploadToGridFS(
+        req.file.buffer,
+        req.file.originalname,
+        req.file.mimetype
+      );
+    }
     
     // Versioning logic: if there is a previous proposal, increment version
     let nextVersion = 1;
@@ -334,7 +348,7 @@ const submitProposal = async (req, res, next) => {
     const newProposal = {
       titles,
       descriptions,
-      documentUrl,
+      documentId,
       submittedBy: req.user._id,
       status: "pending",
       version: nextVersion

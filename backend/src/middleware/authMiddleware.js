@@ -9,12 +9,14 @@ const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Extract token from Authorization header
+    // Extract token from Authorization header or Query params (for downloads)
     if (
       req.headers.authorization &&
       req.headers.authorization.startsWith("Bearer")
     ) {
       token = req.headers.authorization.split(" ")[1];
+    } else if (req.query.token) {
+      token = req.query.token;
     }
 
     if (!token) {

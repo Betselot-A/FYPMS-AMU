@@ -1,7 +1,7 @@
 const File = require("../models/File");
 const Project = require("../models/Project");
 const path = require("path");
-const fs = require("fs");
+const { uploadToGridFS, downloadFromGridFS, deleteFromGridFS } = require("../utils/gridfs");
 
 /**
  * GET /api/files/:projectId
@@ -38,9 +38,16 @@ const uploadFile = async (req, res, next) => {
       return res.status(404).json({ message: "Project context not found." });
     }
 
+    // Upload to GridFS
+    const fileId = await uploadToGridFS(
+      req.file.buffer,
+      req.file.originalname,
+      req.file.mimetype
+    );
+
     const newFile = await File.create({
       originalName: req.file.originalname,
-      filePath: `/uploads/${req.file.filename}`,
+      fileId: fileId,
       fileType: path.extname(req.file.originalname).substring(1),
       fileSize: req.file.size,
       uploadedBy: req.user._id,
@@ -48,6 +55,18 @@ const uploadFile = async (req, res, next) => {
     });
 
     res.status(201).json(newFile);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * GET /api/files/download/:fileId
+ * Download a file from GridFS
+ */
+const downloadFile = async (req, res, next) => {
+  try {
+    await downloadFromGridFS(req.params.fileId, res);
   } catch (error) {
     next(error);
   }
@@ -69,14 +88,12 @@ const deleteFile = async (req, res, next) => {
         return res.status(403).json({ message: "Not authorized to delete this document." });
     }
 
-    // Attempt to remove physical file
-    const absolutePath = path.join(__dirname, "../../", file.filePath);
-    if (fs.existsSync(absolutePath)) {
-      fs.unlinkSync(absolutePath);
-    }
+    // Remove from GridFS
+    await deleteFromGridFS(file.fileId);
 
+    // Remove metadata record
     await file.deleteOne();
-    res.json({ message: "Document removed successfully." });
+    res.json({ message: "Document removed successfully from database." });
   } catch (error) {
     next(error);
   }
@@ -85,5 +102,6 @@ const deleteFile = async (req, res, next) => {
 module.exports = {
   getProjectFiles,
   uploadFile,
+  downloadFile,
   deleteFile
 };

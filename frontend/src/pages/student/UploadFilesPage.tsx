@@ -266,13 +266,10 @@ const UploadFilesPage = () => {
                        
                        {/* Attached Files */}
                        <div className="flex flex-col gap-2">
-                          {sub.files && sub.files.map((fileUrl, idx) => {
-                             const filename = fileUrl.split("/").pop() || "Document";
-                             const isPdf = filename.toLowerCase().endsWith(".pdf");
-                             return (
+                          {sub.files && sub.files.map((fileId, idx) => (
                                <a 
                                  key={idx}
-                                 href={import.meta.env.VITE_API_BASE_URL?.replace('/api', '') + fileUrl} 
+                                 href={fileService.getDownloadUrl(fileId)} 
                                  target="_blank" 
                                  rel="noreferrer"
                                >
@@ -281,8 +278,8 @@ const UploadFilesPage = () => {
                                    Download
                                  </Button>
                                </a>
-                             )
-                          })}
+                            )
+                          )}
                        </div>
                     </div>
                     
@@ -308,6 +305,93 @@ const UploadFilesPage = () => {
             ))
           )}
         </div>
+      </div>
+
+      <hr className="border-border/50 my-10" />
+
+      {/* General Vault Module */}
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+          <HardDrive className="w-4 h-4" />
+          Project Repository Vault
+        </h3>
+        <div className="flex items-center gap-3">
+          <div className="relative group/search">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground group-focus-within/search:text-primary transition-colors" />
+            <input 
+              type="text"
+              placeholder="Search repository..."
+              className="pl-9 pr-4 py-1.5 text-xs bg-muted/20 border-border/50 rounded-full w-48 focus:w-64 focus:ring-1 focus:ring-primary/20 transition-all outline-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button 
+            className="h-8 rounded-full gradient-primary text-[10px] font-bold gap-2 px-4 shadow-md shadow-primary/10"
+            onClick={() => document.getElementById("general-upload")?.click()}
+            disabled={isUploading}
+          >
+            {isUploading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <CloudUpload className="w-3.5 h-3.5" />}
+            Upload New Document
+            <input 
+              id="general-upload" 
+              type="file" 
+              className="hidden" 
+              onChange={handleUpload} 
+            />
+          </Button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredFiles.length === 0 ? (
+          <div className="col-span-full py-16 text-center border-2 border-dashed border-border/30 rounded-3xl bg-muted/5">
+             <div className="w-16 h-16 rounded-2xl bg-background border flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <CloudUpload className="w-8 h-8 text-muted-foreground/30" />
+             </div>
+             <p className="text-sm font-semibold text-foreground">Repository is empty</p>
+             <p className="text-xs text-muted-foreground mt-1">Upload reference materials, research papers, or drafts here.</p>
+          </div>
+        ) : (
+          filteredFiles.map((file) => (
+            <Card key={file.id} className="shadow-sm border-none hover:ring-1 hover:ring-primary/20 transition-all group overflow-hidden bg-background">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
+                    {getFileIcon(file.fileType)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-foreground truncate">{file.originalName}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-[10px] text-muted-foreground uppercase">{file.fileType}</span>
+                      <span className="text-[10px] text-muted-foreground/50 text-[8px]">•</span>
+                      <span className="text-[10px] text-muted-foreground">{formatFileSize(file.fileSize)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <a
+                      href={fileService.getDownloadUrl(file.fileId)}
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors">
+                        <Download className="w-4 h-4" />
+                      </Button>
+                    </a>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleRemove(file.id)}
+                      className="w-8 h-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
     </div>

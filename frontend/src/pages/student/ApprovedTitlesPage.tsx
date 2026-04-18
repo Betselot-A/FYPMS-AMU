@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle2, XCircle, Search, Loader2, Info } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Search, Loader2, Info } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import projectService from "@/api/projectService";
@@ -28,8 +28,8 @@ const ApprovedTitlesPage = () => {
   const fetchTitles = async () => {
     setIsLoading(true);
     try {
-      const res = await projectService.getAll();
-      setProjects(res.data.filter(p => p.proposalStatus !== "not-submitted"));
+      const res = await projectService.getAll({ browseAll: "true" });
+      setProjects(res.data);
     } catch (error) {
       toast.error("Failed to fetch title records.");
     } finally {
@@ -73,6 +73,19 @@ const ApprovedTitlesPage = () => {
           });
         });
       }
+    } else {
+      // Handles 'pending' and 'not-submitted'
+      flattenedData.push({
+        sNo: counter++,
+        submittedBy: displaySubmittedBy,
+        projectTitle: project.proposalStatus === "not-submitted" 
+          ? "No title submitted yet" 
+          : (project.proposals?.[project.proposals.length - 1]?.titles[0] || "Title pending review"),
+        status: "pending",
+        comments: project.proposalStatus === "not-submitted" 
+          ? "Awaiting initial proposal submission from the group"
+          : "Proposal currently under review by the coordinator",
+      });
     }
   });
 
@@ -156,13 +169,19 @@ const ApprovedTitlesPage = () => {
                     </td>
                     <td className="px-8 py-6">
                       <div className="flex justify-center">
-                        {item.status === "approved" ? (
+                        {item.status === "approved" && (
                           <div className="w-7 h-7 rounded-md bg-success/10 border border-success/20 flex items-center justify-center">
                             <CheckCircle2 className="w-4 h-4 text-success" />
                           </div>
-                        ) : (
+                        )}
+                        {item.status === "rejected" && (
                           <div className="w-7 h-7 rounded-md bg-destructive/10 border border-destructive/20 flex items-center justify-center">
                             <XCircle className="w-4 h-4 text-destructive" />
+                          </div>
+                        )}
+                        {item.status === "pending" && (
+                          <div className="w-7 h-7 rounded-md bg-warning/10 border border-warning/20 flex items-center justify-center">
+                            <Clock className="w-4 h-4 text-warning" />
                           </div>
                         )}
                       </div>

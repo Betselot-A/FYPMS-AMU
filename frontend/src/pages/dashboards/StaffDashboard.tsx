@@ -44,12 +44,12 @@ const StaffDashboard = () => {
 
   if (!user) return null;
 
-  const isAdvisor = user.staffAssignment?.isAdvisor ?? false;
-  const isExaminer = user.staffAssignment?.isExaminer ?? false;
-
   const advisorProjects = projects.filter((p) => p.advisorId?.id === user.id);
   const examinerProjects = projects.filter((p) => p.examinerId?.id === user.id);
   const unreadNotifications = notifications.filter(n => !n.read);
+
+  const isAdvisor = (user.staffAssignment?.isAdvisor ?? false) || advisorProjects.length > 0;
+  const isExaminer = (user.staffAssignment?.isExaminer ?? false) || examinerProjects.length > 0;
 
   return (
     <div>
@@ -65,7 +65,7 @@ const StaffDashboard = () => {
       </div>
 
       {/* No assignment message */}
-      {!isAdvisor && !isExaminer && (
+      {!isAdvisor && !isExaminer && !isLoading && (
         <Card className="shadow-card mb-6 border-warning/30 bg-warning/5">
           <CardContent className="p-12 text-center">
             <LayoutDashboard className="w-12 h-12 text-warning mx-auto mb-4 opacity-40" />

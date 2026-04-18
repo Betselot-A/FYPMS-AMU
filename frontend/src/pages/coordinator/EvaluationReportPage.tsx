@@ -124,7 +124,11 @@ const EvaluationReportPage = () => {
       config.phases
         .filter((p) => p.active)
         .forEach((phase) => {
-          const phaseEval = evals.find((e) => e.phaseId === phase.id);
+          const phaseEval = evals.find((e) => {
+            const eStudentId = typeof e.studentId === "string" ? e.studentId : e.studentId.id;
+            return e.phaseId === phase.id && eStudentId === student.id;
+          });
+          
           if (phaseEval) {
             const maxPossible = phase.criteria.reduce(
               (s, c) => s + c.maxMark,
@@ -150,8 +154,10 @@ const EvaluationReportPage = () => {
         project,
         phaseResults,
         finalScore,
-        grade: band?.label || "F",
-        gradeColor: band?.color || "bg-destructive/10 text-destructive border-destructive/20",
+        grade: isComplete ? (band?.label || "F") : "Pending",
+        gradeColor: isComplete 
+          ? (band?.color || "bg-destructive/10 text-destructive border-destructive/20") 
+          : "bg-muted text-muted-foreground border-border",
         isComplete,
         resultsReleased: project?.resultsReleased || false,
       };
@@ -568,14 +574,21 @@ const EvaluationReportPage = () => {
 
                     {/* Grade badge */}
                     <td className="py-4 px-4 text-center">
-                      <Badge
-                        className={cn(
-                          "px-3 py-1 font-bold text-sm rounded-lg border capitalize",
-                          row.gradeColor
-                        )}
-                      >
-                        {row.grade}
-                      </Badge>
+                      {row.grade === "Pending" ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground/50 italic font-medium justify-center">
+                          <Clock className="w-3.5 h-3.5" />
+                          Pending
+                        </span>
+                      ) : (
+                        <Badge
+                          className={cn(
+                            "px-3 py-1 font-bold text-sm rounded-lg border capitalize",
+                            row.gradeColor
+                          )}
+                        >
+                          {row.grade}
+                        </Badge>
+                      )}
                     </td>
 
                     {/* Final Score */}

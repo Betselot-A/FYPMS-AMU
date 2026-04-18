@@ -29,7 +29,7 @@ export interface Proposal {
   titles: string[];
   descriptions: string[];
   description?: string; // legacy support if any
-  documentUrl?: string; // path to PDF/DOCX
+  documentId?: string; // ID of file in GridFS
   status: "pending" | "approved" | "rejected";
   feedback?: string; // feedback for rejection
   version: number;

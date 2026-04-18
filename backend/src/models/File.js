@@ -11,9 +11,9 @@ const fileSchema = new mongoose.Schema(
             required: [true, "Original file name is required"],
         },
 
-        filePath: {
-            type: String,
-            required: [true, "File path is required"],
+        fileId: {
+            type: mongoose.Schema.Types.ObjectId,
+            required: [true, "GridFS file ID is required"],
         },
 
         fileType: {
