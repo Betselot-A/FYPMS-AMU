@@ -10,7 +10,9 @@ const {
   createProject,
   updateProject,
   deleteProject,
+  addMilestone,
   updateMilestone,
+  deleteMilestone,
   submitProposal,
   reviewProposal,
   assignStaff,
@@ -32,7 +34,7 @@ router.get("/:id", getProjectById);
 // Student/Coordinator/Admin: update (ownership check in controller for student)
 router.post("/", authorize("coordinator", "admin"), createProject);
 router.post("/bulk", authorize("coordinator", "admin"), bulkCreateProjects);
-router.put("/:id", authorize("coordinator", "admin", "student"), updateProject);
+router.put("/:id", authorize("coordinator", "admin", "student", "staff"), updateProject);
 router.delete("/:id", authorize("coordinator", "admin"), deleteProject);
 
 // Student: submit a proposal (exactly 3 titles + file)
@@ -52,11 +54,21 @@ router.put("/:id/assign-staff", authorize("coordinator", "admin"), assignStaff);
 // Coordinator: officially release results
 router.put("/:id/release-results", authorize("coordinator", "admin"), releaseResults);
 
-// Advisor/Coordinator: update milestones
+// Advisor/Coordinator: manage milestones
+router.post(
+  "/:projectId/milestones",
+  authorize("staff", "coordinator", "admin"),
+  addMilestone
+);
 router.put(
   "/:projectId/milestones/:milestoneId",
   authorize("staff", "coordinator", "admin"),
   updateMilestone
+);
+router.delete(
+  "/:projectId/milestones/:milestoneId",
+  authorize("staff", "coordinator", "admin"),
+  deleteMilestone
 );
 
 module.exports = router;

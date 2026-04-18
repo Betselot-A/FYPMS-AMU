@@ -27,7 +27,11 @@ const messageRoutes = require("./routes/messageRoutes");
 const app = express();
 
 // --------------- Global Middleware ---------------
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors({ 
+  origin: true, 
+  credentials: true,
+  exposedHeaders: ['Content-Disposition']
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));

@@ -80,6 +80,14 @@ const projectService = {
   updateMilestone: (projectId: string, milestoneId: string, data: Partial<Milestone>) =>
     apiClient.put<Milestone>(`/projects/${projectId}/milestones/${milestoneId}`, data),
 
+  // POST /api/projects/:projectId/milestones
+  addMilestone: (projectId: string, data: Partial<Milestone>) =>
+    apiClient.post<Milestone>(`/projects/${projectId}/milestones`, data),
+
+  // DELETE /api/projects/:projectId/milestones/:milestoneId
+  deleteMilestone: (projectId: string, milestoneId: string) =>
+    apiClient.delete(`/projects/${projectId}/milestones/${milestoneId}`),
+
   // PUT /api/projects/:id/release-results — coordinator officially release results
   releaseResults: (projectId: string) =>
     apiClient.put<{ message: string; project: Project }>(`/projects/${projectId}/release-results`, {}),

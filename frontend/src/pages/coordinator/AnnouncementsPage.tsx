@@ -134,7 +134,8 @@ const AnnouncementsPage = () => {
         subject: composeForm.subject, 
         message: composeForm.message, 
         type: composeForm.type,
-        date: composeForm.date 
+        date: composeForm.date,
+        isAnnouncement: true
       };
 
       if (targetUserIds) {

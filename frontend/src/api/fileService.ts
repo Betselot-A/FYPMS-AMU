@@ -43,6 +43,14 @@ const fileService = {
     const token = sessionStorage.getItem("auth_token");
     return `${apiClient.defaults.baseURL}/files/download/${fileId}${token ? `?token=${token}` : ""}`;
   },
+
+  // Professional background download
+  downloadFile: async (fileId: string) => {
+    const response = await apiClient.get(`/files/download/${fileId}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  }
 };
 
 export default fileService;

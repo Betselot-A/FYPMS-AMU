@@ -6,6 +6,7 @@ import projectService from "@/api/projectService";
 import userService from "@/api/userService";
 import { Project, User } from "@/types";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 const GroupedPage = () => {
   const [selectedDept, setSelectedDept] = useState<string>("all");
@@ -114,43 +115,37 @@ const GroupedPage = () => {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-muted/30 border-b border-border/40">
-                      <th className="px-8 py-5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80 w-56">Group Identifier</th>
-                      <th className="px-8 py-5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">Team Membership</th>
-                      <th className="px-8 py-5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80 text-center w-40">Group Progress</th>
+                    <tr className="bg-muted/10 border-b border-border/30">
+                      <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/70 w-64">Registry Identifier</th>
+                      <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/70">Group Members</th>
+                      <th className="px-8 py-5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground/70 text-center w-48">Project Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border/30">
+                  <tbody className="divide-y divide-border/20">
                     {projects.map((project) => (
-                      <tr key={project.id} className="hover:bg-muted/40 transition-all duration-200">
+                      <tr key={project.id} className="hover:bg-muted/5 transition-colors duration-200">
                         <td className="px-8 py-8 align-top">
-                          <div className="flex flex-col gap-1.5">
-                            <div className="flex items-center gap-2">
-                              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                                <Folder className="w-4 h-4" />
-                              </div>
-                              <span className="text-base font-bold text-foreground tracking-tight">{project.title}</span>
-                            </div>
-                            <div className="pl-10">
-                              <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold uppercase tracking-wider border border-primary/10">Official Group</span>
-                            </div>
+                          <div className="flex flex-col gap-1">
+                            <h3 className="text-sm font-bold text-foreground leading-tight">{project.title}</h3>
+                            <span className="text-[9px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-1">
+                               Official Project Group
+                            </span>
                           </div>
                         </td>
                         <td className="px-8 py-8">
-                           <div className="grid grid-cols-1 gap-6">
+                           <div className="space-y-4">
                             {(project.groupMembers as User[]).map((member) => (
-                               <div key={member.id} className="flex items-center gap-4 animate-in fade-in duration-300">
-                                <div className="w-10 h-10 rounded-full bg-background border border-border shadow-sm flex items-center justify-center text-primary text-xs font-bold ring-2 ring-primary/5">
+                               <div key={member.id} className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-muted/30 border border-border/40 flex items-center justify-center text-muted-foreground text-[10px] font-bold">
                                   {member.name.charAt(0)}
                                 </div>
                                 <div className="flex flex-col">
-                                  <span className="text-sm font-bold text-foreground/90">{member.name}</span>
+                                  <span className="text-xs font-bold text-foreground">{member.name}</span>
                                   <div className="flex items-center gap-2 mt-0.5">
-                                    <span className="text-[11px] font-bold text-primary px-1.5 py-0.5 bg-primary/5 rounded border border-primary/10 tracking-tight">
+                                    <span className="text-[9px] font-bold text-muted-foreground/50 border border-border/50 px-1 py-0 rounded">
                                       {member.studentId || "NO_ID"}
                                     </span>
-                                    <span className="text-xs text-muted-foreground/60 flex items-center gap-1.5 ml-2">
-                                      <Mail className="w-3 h-3" />
+                                    <span className="text-[10px] text-muted-foreground/40 hidden sm:flex items-center gap-1 ml-2 italic">
                                       {member.email}
                                     </span>
                                   </div>
@@ -161,12 +156,12 @@ const GroupedPage = () => {
                         </td>
                         <td className="px-8 py-8 align-top">
                            <div className="flex justify-center">
-                              <div className={`px-3 py-1.5 rounded-md border text-[10px] font-bold uppercase tracking-widest flex items-center gap-2 ${
+                              <div className={cn(
+                                "px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-widest",
                                 project.status === 'completed' 
                                   ? 'bg-success/10 text-success border-success/20' 
-                                  : 'bg-primary/5 text-primary border-primary/20'
-                              }`}>
-                                <div className={`w-1.5 h-1.5 rounded-full ${project.status === 'completed' ? 'bg-success animate-pulse' : 'bg-primary'}`} />
+                                  : 'bg-background text-muted-foreground border-border'
+                              )}>
                                 {project.status.replace('-', ' ')}
                               </div>
                            </div>

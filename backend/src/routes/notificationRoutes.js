@@ -22,8 +22,8 @@ router.use(protect);
 // Get current user's notifications (inbox)
 router.get("/", getNotifications);
 
-// Admin/Coordinator: get messages they sent
-router.get("/sent", authorize("admin", "coordinator"), getSentNotifications);
+// Admin/Coordinator/Staff: get messages they sent
+router.get("/sent", authorize("admin", "coordinator", "staff"), getSentNotifications);
 
 // Mark as read
 router.put("/read-all", markAllAsRead);

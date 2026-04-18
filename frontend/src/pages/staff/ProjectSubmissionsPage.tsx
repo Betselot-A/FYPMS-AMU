@@ -34,8 +34,8 @@ const ProjectSubmissionsPage = () => {
 
    const [project, setProject] = useState<Project | null>(null);
    const [submissions, setSubmissions] = useState<Submission[]>([]);
-   const [vaultFiles, setVaultFiles] = useState<ProjectFile[]>([]);
    const [isLoading, setIsLoading] = useState(true);
+   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
    // Feedback State
    const [feedbackText, setFeedbackText] = useState<{ [key: string]: string }>({});
@@ -45,14 +45,12 @@ const ProjectSubmissionsPage = () => {
       if (!projectId) return;
       try {
          setIsLoading(true);
-         const [projRes, subRes, fileRes] = await Promise.all([
+         const [projRes, subRes] = await Promise.all([
             projectService.getById(projectId),
-            submissionService.getByProject(projectId),
-            fileService.getProjectFiles(projectId)
+            submissionService.getByProject(projectId)
          ]);
          setProject(projRes.data);
          setSubmissions(subRes.data);
-         setVaultFiles(fileRes.data);
       } catch (error) {
          toast.error("Data Sync Error", { description: "Could not load submissions and deliverables." });
       } finally {
@@ -78,6 +76,28 @@ const ProjectSubmissionsPage = () => {
          toast.error("Feedback Failed", { description: "Could not send the feedback to the students." });
       } finally {
          setIsSubmitting(prev => ({ ...prev, [subId]: false }));
+      }
+   };
+
+   const handleDownload = async (fileId: string, title: string) => {
+      try {
+         setDownloadingId(fileId);
+         const blob = await fileService.downloadFile(fileId);
+         const url = window.URL.createObjectURL(blob);
+         const a = document.createElement('a');
+         a.href = url;
+         // Clean fallback name for documents
+         const cleanTitle = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+         a.download = `${cleanTitle}.pdf`;
+         document.body.appendChild(a);
+         a.click();
+         window.URL.revokeObjectURL(url);
+         document.body.removeChild(a);
+         toast.success("Document Downloaded");
+      } catch (error) {
+         toast.error("Download Error", { description: "The server could not process the file request." });
+      } finally {
+         setDownloadingId(null);
       }
    };
 
@@ -171,18 +191,17 @@ const ProjectSubmissionsPage = () => {
                            {/* Attached Files */}
                            <div className="flex flex-wrap gap-2 w-full md:w-auto">
                               {sub.files && sub.files.map((fileId, idx) => (
-                                 <a
+                                 <Button 
                                     key={idx}
-                                    href={fileService.getDownloadUrl(fileId)}
-                                    target="_blank"
-                                    rel="noreferrer"
+                                    variant="outline" 
+                                    size="sm" 
+                                    disabled={downloadingId === fileId}
+                                    onClick={() => handleDownload(fileId, sub.title)}
+                                    className="h-9 px-4 rounded-xl text-xs font-bold gap-2 hover:bg-primary/5 hover:text-primary border-border"
                                  >
-                                    <Button variant="outline" size="sm" className="h-9 px-4 rounded-xl text-xs font-bold gap-2 hover:bg-primary/5 hover:text-primary border-border">
-                                       <FileText className="w-4 h-4 text-primary" />
-                                       Review Document
-                                       <ExternalLink className="w-3 h-3 text-muted-foreground" />
-                                    </Button>
-                                 </a>
+                                    {downloadingId === fileId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-4 h-4 text-primary" />}
+                                    Review Document
+                                 </Button>
                               ))}
                            </div>
                         </div>
@@ -237,51 +256,9 @@ const ProjectSubmissionsPage = () => {
             )}
          </div>
 
-         <hr className="border-border/50 my-10" />
-
-         {/* General Vault View */}
-         <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 mt-12 flex items-center gap-2">
-            <FolderOpen className="w-4 h-4" />
-            General Project Vault
-         </h3>
-
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {vaultFiles.length === 0 ? (
-               <div className="col-span-full py-10 text-center border border-dashed border-border/50 rounded-2xl bg-muted/10">
-                  <p className="text-sm font-semibold text-muted-foreground">Vault is empty.</p>
-               </div>
-            ) : (
-               vaultFiles.map(file => (
-                  <Card key={file.id} className="shadow-sm border-none hover:ring-1 hover:ring-primary/20 transition-all group overflow-hidden bg-background">
-                     <CardContent className="p-4">
-                        <div className="flex items-center gap-4">
-                           <div className="w-10 h-10 rounded-xl bg-muted/50 flex items-center justify-center shrink-0">
-                              <FileIcon className="w-5 h-5 text-muted-foreground" />
-                           </div>
-                           <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-foreground truncate">{file.originalName}</p>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                 <span className="text-[10px] text-muted-foreground uppercase">{file.fileType}</span>
-                                 <span className="text-[10px] text-muted-foreground/50 text-[8px]">•</span>
-                                 <span className="text-[10px] text-muted-foreground">{formatFileSize(file.fileSize)}</span>
-                              </div>
-                           </div>
-                           <a
-                              href={fileService.getDownloadUrl(file.fileId)}
-                              target="_blank"
-                              rel="noreferrer"
-                           >
-                              <Button variant="ghost" size="icon" className="w-8 h-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-colors">
-                                 <Download className="w-4 h-4" />
-                              </Button>
-                           </a>
-                        </div>
-                     </CardContent>
-                  </Card>
-               ))
-            )}
+         <div className="mt-12 text-center text-muted-foreground/30 text-[10px] uppercase font-bold tracking-widest">
+            End of records
          </div>
-
       </div>
    );
 };

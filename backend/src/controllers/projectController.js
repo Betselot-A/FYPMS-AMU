@@ -3,9 +3,11 @@
 // ============================================================
 
 const Project = require("../models/Project");
+const User = require("../models/User");
 const Notification = require("../models/Notification");
 const Settings = require("../models/Settings");
 const { uploadToGridFS } = require("../utils/gridfs");
+const notificationUtils = require("../utils/notificationUtils");
 
 /**
  * GET /api/projects
@@ -115,6 +117,30 @@ const createProject = async (req, res, next) => {
         type: "info",
       }));
       await Notification.insertMany(notifications);
+    }
+
+    // Notify Advisor and Examiner
+    try {
+      if (advisorId) {
+        await notificationUtils.sendNotification({
+          userId: advisorId,
+          message: `You have been appointed as Advisor for the new project: "${title}"`,
+          subject: "New Project Assignment",
+          type: "info",
+          senderId: req.user._id
+        });
+      }
+      if (examinerId) {
+        await notificationUtils.sendNotification({
+          userId: examinerId,
+          message: `You have been appointed as Examiner for the new project: "${title}"`,
+          subject: "New Project Assignment",
+          type: "info",
+          senderId: req.user._id
+        });
+      }
+    } catch (notifyError) {
+      console.error("Failed to notify staff in createProject:", notifyError.message);
     }
 
     const populated = await Project.findById(project._id)
@@ -246,6 +272,53 @@ const deleteProject = async (req, res, next) => {
   }
 };
 
+
+/**
+ * POST /api/projects/:projectId/milestones
+ * Advisor/Coordinator — create a new milestone
+ */
+const addMilestone = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+    const { title, dueDate, description } = req.body;
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        error: "NOT_FOUND",
+        message: "Project not found",
+      });
+    }
+
+    const newMilestone = {
+      title,
+      dueDate,
+      description: description || "",
+      status: "pending",
+    };
+
+    project.milestones.push(newMilestone);
+    await project.save();
+
+    // Notify group members of new milestone
+    try {
+      await notificationUtils.sendBulkNotifications({
+        userIds: project.groupMembers,
+        message: `A new milestone has been set: "${title}" (Due: ${new Date(dueDate).toLocaleDateString()})`,
+        subject: "New Milestone Added",
+        type: "info",
+        senderId: req.user._id
+      });
+    } catch (notifyError) {
+      console.error("Failed to notify in addMilestone:", notifyError.message);
+    }
+
+    res.status(201).json(project.milestones[project.milestones.length - 1]);
+  } catch (error) {
+    next(error);
+  }
+};
+
 /**
  * PUT /api/projects/:projectId/milestones/:milestoneId
  * Advisor/Coordinator — update a milestone
@@ -277,7 +350,55 @@ const updateMilestone = async (req, res, next) => {
 
     await project.save();
 
+    // Notify group members if status is updated
+    if (req.body.status !== undefined) {
+      try {
+        await notificationUtils.sendBulkNotifications({
+          userIds: project.groupMembers,
+          message: `Milestone "${milestone.title}" status updated to: ${milestone.status.toUpperCase()}`,
+          subject: "Milestone Update",
+          type: milestone.status === "completed" ? "success" : "info",
+          senderId: req.user._id
+        });
+      } catch (notifyError) {
+        console.error("Failed to notify in updateMilestone:", notifyError.message);
+      }
+    }
+
     res.json(milestone);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * DELETE /api/projects/:projectId/milestones/:milestoneId
+ * Advisor/Coordinator — delete a milestone
+ */
+const deleteMilestone = async (req, res, next) => {
+  try {
+    const { projectId, milestoneId } = req.params;
+    const project = await Project.findById(projectId);
+
+    if (!project) {
+      return res.status(404).json({
+        error: "NOT_FOUND",
+        message: "Project not found",
+      });
+    }
+
+    const milestone = project.milestones.id(milestoneId);
+    if (!milestone) {
+      return res.status(404).json({
+        error: "NOT_FOUND",
+        message: "Milestone not found",
+      });
+    }
+
+    project.milestones.pull(milestoneId);
+    await project.save();
+
+    res.json({ message: "Milestone deleted" });
   } catch (error) {
     next(error);
   }
@@ -357,6 +478,26 @@ const submitProposal = async (req, res, next) => {
     project.proposals.push(newProposal);
     project.proposalStatus = "pending";
     await project.save();
+
+    // Notify coordinators of the department
+    try {
+      const coordinators = await User.find({ 
+        role: "coordinator", 
+        department: { $regex: new RegExp(`^${project.department}$`, "i") } 
+      });
+      
+      if (coordinators.length > 0) {
+        await notificationUtils.sendBulkNotifications({
+          userIds: coordinators.map(c => c._id),
+          message: `New project title proposal submitted for review by group: "${project.title}"`,
+          subject: "Title Proposal Received",
+          type: "info",
+          senderId: req.user._id
+        });
+      }
+    } catch (notifyError) {
+      console.error("Failed to notify coordinator:", notifyError.message);
+    }
 
     res.status(201).json(project);
   } catch (error) {
@@ -458,6 +599,30 @@ const assignStaff = async (req, res, next) => {
     }));
     await Notification.insertMany(notifications);
 
+    // Notify Advisor and Examiner
+    try {
+      if (advisorId) {
+        await notificationUtils.sendNotification({
+          userId: advisorId,
+          message: `You have been assigned as Advisor for project group: "${project.title}"`,
+          subject: "New Project Assignment",
+          type: "info",
+          senderId: req.user._id
+        });
+      }
+      if (examinerId) {
+        await notificationUtils.sendNotification({
+          userId: examinerId,
+          message: `You have been assigned as Examiner for project group: "${project.title}"`,
+          subject: "New Project Assignment",
+          type: "info",
+          senderId: req.user._id
+        });
+      }
+    } catch (notifyError) {
+      console.error("Failed to notify staff in assignStaff:", notifyError.message);
+    }
+
     const populated = await Project.findById(project._id)
       .populate("groupMembers", "name email")
       .populate("advisorId", "name email")
@@ -502,7 +667,9 @@ module.exports = {
   createProject,
   updateProject,
   deleteProject,
+  addMilestone,
   updateMilestone,
+  deleteMilestone,
   submitProposal,
   reviewProposal,
   assignStaff,

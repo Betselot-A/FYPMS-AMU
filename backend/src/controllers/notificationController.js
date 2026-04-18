@@ -4,6 +4,7 @@
 
 const Notification = require("../models/Notification");
 const User = require("../models/User");
+const Project = require("../models/Project");
 
 /**
  * GET /api/notifications
@@ -31,7 +32,7 @@ const getNotifications = async (req, res, next) => {
  */
 const getSentNotifications = async (req, res, next) => {
   try {
-    const sent = await Notification.find({ senderId: req.user._id })
+    const sent = await Notification.find({ senderId: req.user._id, isAnnouncement: true })
       .populate("userId", "name email role department")
       .sort({ createdAt: -1 })
       .limit(100);
@@ -96,32 +97,53 @@ const markAllAsRead = async (req, res, next) => {
 // Body: { userId?, userIds?, subject?, message, type?, attachmentUrl?, attachmentName? }
 const createNotification = async (req, res, next) => {
   try {
-    const { userId, userIds, subject, message, type, attachmentUrl, attachmentName, date } = req.body;
+    const { userId, userIds, subject, message, type, attachmentUrl, attachmentName, date, isAnnouncement } = req.body;
 
     if (!message || message.trim() === "") {
       return res.status(400).json({ error: "VALIDATION", message: "Message is required" });
     }
 
-    const isAdminOrCoordinator = ["admin", "coordinator"].includes(req.user.role);
+    const isAuthorizedToBroadcast = ["admin", "coordinator", "staff"].includes(req.user.role);
     let targets = [];
 
     if (userIds && Array.isArray(userIds) && userIds.length > 0) {
       targets = userIds;
     } else if (userId) {
       targets = [userId];
-    } else if (!isAdminOrCoordinator) {
-      // Students/Staff trying to broadcast
+    } else if (!isAuthorizedToBroadcast) {
+      // Students trying to broadcast
       return res.status(403).json({
         error: "FORBIDDEN",
         message: "You are not authorized to broadcast messages to all users.",
       });
     } else {
-      // Broadcast to all non-admin users (excluding sender) — ONLY for Admin/Coordinator
-      const nonAdmins = await User.find({ 
-        role: { $ne: "admin" },
-        _id: { $ne: req.user._id }
-      }).select("_id");
-      targets = nonAdmins.map((u) => u._id.toString());
+      // Broadcast to all non-admin users (excluding sender) — ONLY for Admin/Coordinator/Staff
+      if (req.user.role === "staff") {
+        // Staff Broadcast: ONLY target students in their assigned project groups
+        const myProjects = await Project.find({
+          $or: [{ advisorId: req.user._id }, { examinerId: req.user._id }]
+        });
+        
+        const linkedUserIds = new Set();
+        myProjects.forEach(p => {
+          p.groupMembers.forEach(id => linkedUserIds.add(id.toString()));
+        });
+        
+        targets = Array.from(linkedUserIds);
+      } else {
+        // Admin or Coordinator Broadcast
+        const query = {
+          role: { $ne: "admin" },
+          _id: { $ne: req.user._id }
+        };
+
+        if (req.user.role === "coordinator") {
+          query.department = req.user.department;
+        }
+
+        const eligibleUsers = await User.find(query).select("_id");
+        targets = eligibleUsers.map((u) => u._id.toString());
+      }
     }
 
     // Ensure the sender is never in the target list (even if manually added)
@@ -136,6 +158,7 @@ const createNotification = async (req, res, next) => {
       attachmentUrl: attachmentUrl || null,
       attachmentName: attachmentName || null,
       date: date || undefined,
+      isAnnouncement: isAnnouncement === true,
     }));
 
     const created = await Notification.insertMany(notifications);

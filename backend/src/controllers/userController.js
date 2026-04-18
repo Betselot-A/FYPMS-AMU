@@ -63,7 +63,7 @@ const getUsers = async (req, res, next) => {
         { _id: { $in: Array.from(linkedUserIds) } },
         { role: "admin" },
         { role: "coordinator", department: req.user.department },
-        { role: "student", department: req.user.department } // Staff can also see students in their dept
+        { role: "staff", department: req.user.department }
       ];
     } else if (req.user.role === "student") {
       // Student Discovery Logic

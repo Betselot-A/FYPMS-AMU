@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Send, Loader2, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Project, User as UserType, Notification } from "@/types";
+import { cn } from "@/lib/utils";
 
 const StaffMessagesPage = () => {
   const { user } = useAuth();
@@ -26,27 +27,16 @@ const StaffMessagesPage = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [adminUser, setAdminUser] = useState<UserType | null>(null);
 
-  // Fetch projects and students
+  // Fetch all authorized contacts (Coordinators, Colleagues, assigned Students)
   const fetchData = useCallback(async () => {
     if (!user) return;
     try {
       setIsLoadingStudents(true);
-      const [advisorRes, examinerRes] = await Promise.all([
-        projectService.getAll({ advisorId: user.id }),
-        projectService.getAll({ examinerId: user.id })
-      ]);
-      
-      const allProjects = [...advisorRes.data, ...examinerRes.data];
-      const uniqueProjects = allProjects.filter((v, i, a) => a.findIndex(t => t.id === v.id) === i);
-      const studentIds = [...new Set(uniqueProjects.flatMap(p => p.groupMembers.map(m => typeof m === 'string' ? m : m.id)))];
-      
-      if (studentIds.length > 0) {
-        const usersRes = await userService.getAll({ limit: 1000 });
-        const filteredStudents = usersRes.data.users.filter(u => studentIds.includes(u.id));
-        setStudents(filteredStudents);
-      }
+      // Fetch users - backend now automatically handles discovery restrictions for staff
+      const res = await userService.getAll({ limit: 1000 });
+      setStudents(res.data.users.filter(u => u.id !== user.id)); // Exclude self
     } catch (error) {
-      toast.error("Could not load assigned students");
+      toast.error("Contact Sync Error", { description: "Could not retrieve your authorized contact list." });
     } finally {
       setIsLoadingStudents(false);
     }
@@ -90,7 +80,12 @@ const StaffMessagesPage = () => {
     }
   }, [selectedStudentId, fetchMessages]);
 
-  const selectedStudent = students.find(s => s.id === selectedStudentId) || (selectedStudentId === adminUser?.id ? adminUser : null);
+  // Categorize for UI
+  const leadership = students.filter(s => ["admin", "coordinator"].includes(s.role));
+  const colleagues = students.filter(s => s.role === "staff");
+  const myStudents = students.filter(s => s.role === "student");
+
+  const selectedStudent = students.find(s => s.id === selectedStudentId);
 
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedStudentId || !user) return;
@@ -128,59 +123,65 @@ const StaffMessagesPage = () => {
             <CardDescription>Select a student to chat</CardDescription>
           </CardHeader>
           <CardContent className="p-2 space-y-1">
-            {isLoadingStudents ? (
+             {isLoadingStudents ? (
               <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
                 <Loader2 className="w-6 h-6 animate-spin" />
-                <p className="text-xs">Loading students...</p>
+                <p className="text-xs">Finding contacts...</p>
               </div>
-            ) : students.length === 0 && !adminUser ? (
-              <p className="text-sm text-muted-foreground text-center py-8 px-4">No students or support assigned.</p>
+            ) : students.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-8 px-4">No authorized contacts found for your account.</p>
             ) : (
-              <div className="space-y-1">
-                {adminUser && (
-                  <button
-                    onClick={() => setSelectedStudentId(adminUser.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors border border-primary/20 bg-primary/5 mb-2 ${
-                      selectedStudentId === adminUser.id
-                        ? "bg-primary/20 text-primary font-medium"
-                        : "hover:bg-primary/10 text-foreground"
-                    }`}
-                  >
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                      <HelpCircle className="w-4 h-4 text-primary" />
+              <div className="space-y-6">
+                {/* Leadership Section */}
+                {leadership.length > 0 && (
+                  <div>
+                    <h4 className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Leadership & Support</h4>
+                    <div className="space-y-1">
+                      {leadership.map(contact => (
+                        <ContactButton 
+                          key={contact.id} 
+                          contact={contact} 
+                          isActive={selectedStudentId === contact.id} 
+                          onClick={() => setSelectedStudentId(contact.id)} 
+                        />
+                      ))}
                     </div>
-                    <div className="overflow-hidden">
-                      <p className="text-sm font-bold truncate leading-tight tracking-tight">System Support</p>
-                      <p className="text-[10px] text-primary/70 truncate uppercase font-bold tracking-wider">Admin</p>
-                    </div>
-                  </button>
+                  </div>
                 )}
-                
-                {students.map((student) => {
-                  const isActive = selectedStudentId === student.id;
-                  const initials = student.name.split(" ").map((n) => n[0]).join("").toUpperCase();
-                  return (
-                    <button
-                      key={student.id}
-                      onClick={() => setSelectedStudentId(student.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${
-                        isActive
-                          ? "bg-primary/10 text-primary font-medium"
-                          : "hover:bg-muted/50 text-foreground"
-                      }`}
-                    >
-                      <Avatar className="w-8 h-8 border border-border">
-                        <AvatarFallback className="text-[10px] bg-background text-primary font-bold">
-                          {initials}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="overflow-hidden">
-                        <p className="text-sm truncate">{student.name}</p>
-                        <p className="text-[10px] text-muted-foreground truncate">{student.department}</p>
-                      </div>
-                    </button>
-                  );
-                })}
+
+                {/* Colleagues Section */}
+                {colleagues.length > 0 && (
+                  <div>
+                    <h4 className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">My Department Staff</h4>
+                    <div className="space-y-1">
+                      {colleagues.map(contact => (
+                        <ContactButton 
+                          key={contact.id} 
+                          contact={contact} 
+                          isActive={selectedStudentId === contact.id} 
+                          onClick={() => setSelectedStudentId(contact.id)} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Students Section */}
+                {myStudents.length > 0 && (
+                  <div>
+                    <h4 className="px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Assigned Students</h4>
+                    <div className="space-y-1">
+                      {myStudents.map(contact => (
+                        <ContactButton 
+                          key={contact.id} 
+                          contact={contact} 
+                          isActive={selectedStudentId === contact.id} 
+                          onClick={() => setSelectedStudentId(contact.id)} 
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
@@ -282,6 +283,41 @@ const StaffMessagesPage = () => {
         </Card>
       </div>
     </div>
+  );
+};
+
+const ContactButton = ({ contact, isActive, onClick }: { contact: UserType, isActive: boolean, onClick: () => void }) => {
+  const initials = contact.name.split(" ").map((n) => n[0]).join("").toUpperCase();
+  
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
+        isActive
+          ? "bg-primary/10 text-primary shadow-sm"
+          : "hover:bg-muted/50 text-foreground"
+      }`}
+    >
+      <Avatar className="w-8 h-8 border border-border shrink-0">
+        <AvatarFallback className={cn(
+          "text-[10px] font-bold",
+          contact.role === "admin" || contact.role === "coordinator" ? "bg-primary text-primary-foreground" : "bg-background text-primary"
+        )}>
+          {initials}
+        </AvatarFallback>
+      </Avatar>
+      <div className="overflow-hidden">
+        <div className="flex items-center gap-2">
+           <p className={cn("text-xs truncate", isActive ? "font-bold" : "font-medium")}>{contact.name}</p>
+           {contact.role !== "student" && (
+             <Badge variant="outline" className="text-[8px] px-1 py-0 h-3 capitalize font-bold border-primary/20 bg-primary/5 text-primary">
+               {contact.role}
+             </Badge>
+           )}
+        </div>
+        <p className="text-[10px] text-muted-foreground truncate leading-tight">{contact.department || "General Administration"}</p>
+      </div>
+    </button>
   );
 };
 
