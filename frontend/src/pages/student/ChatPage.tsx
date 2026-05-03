@@ -32,6 +32,7 @@ const ChatPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingContacts, setIsLoadingContacts] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [showMobileList, setShowMobileList] = useState(true);
   const [inCall, setInCall] = useState(false);
   const [videoOn, setVideoOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
@@ -109,6 +110,9 @@ const ChatPage = () => {
   useEffect(() => {
     if (activeRecipient?.id) {
        messageService.markRead(activeRecipient.id).catch(() => {});
+       setShowMobileList(false); // Hide list on mobile when contact selected
+    } else {
+       setShowMobileList(true);
     }
   }, [activeRole, activeRecipient?.id]);
 
@@ -162,9 +166,12 @@ const ChatPage = () => {
         </div>
       </div>
 
-      <div className="flex-1 overflow-hidden grid grid-cols-1 md:grid-cols-4 lg:grid-cols-4">
+      <div className="flex-1 overflow-hidden flex relative">
         {/* Sidebar: Contacts */}
-        <div className="col-span-1 border-r border-border bg-muted/10 flex flex-col overflow-hidden">
+        <div className={cn(
+          "absolute inset-0 z-20 bg-background md:relative md:inset-auto md:z-0 md:flex md:w-80 flex-col shrink-0 border-r border-border bg-muted/10 overflow-hidden transition-transform duration-300",
+          showMobileList ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}>
           <div className="px-5 py-4 border-b border-border/50 bg-background/50">
             <h2 className="font-semibold text-sm flex items-center gap-2 text-foreground">
               <MessageSquare className="w-4 h-4 text-primary" /> Contacts
@@ -269,11 +276,19 @@ const ChatPage = () => {
         </div>
 
         {/* Chat Area */}
-        <div className="col-span-1 md:col-span-3 lg:col-span-3 flex flex-col overflow-hidden bg-background relative">
+        <div className="flex-1 flex flex-col overflow-hidden bg-background relative">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-card/30 backdrop-blur-sm z-10 shrink-0">
-            <div className="flex items-center gap-4">
-              <Avatar className="w-10 h-10 ring-2 ring-primary/10">
+          <div className="px-4 sm:px-6 py-4 border-b border-border flex items-center justify-between bg-card/30 backdrop-blur-sm z-10 shrink-0">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="md:hidden h-8 w-8 -ml-1 mr-1" 
+                onClick={() => setShowMobileList(true)}
+              >
+                <MessageSquare className="w-5 h-5 rotate-180" />
+              </Button>
+              <Avatar className="w-9 h-9 sm:w-10 sm:h-10 ring-2 ring-primary/10">
                 <AvatarFallback className="bg-primary/5 text-primary font-bold">
                   {recipientInitials}
                 </AvatarFallback>

@@ -4,7 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { User, Lock, Eye, EyeOff } from "lucide-react";
+import { User, Lock, Eye, EyeOff, Info, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -34,6 +35,17 @@ const LoginPage = () => {
         
         {/* Left Side: Branding & Decorative */}
         <div className="w-full md:w-[45%] bg-gradient-to-br from-[#0ea5e9] to-[#2563eb] relative overflow-hidden flex flex-col justify-center p-12 text-white">
+          {/* Back to Home Link */}
+          <Link 
+            to="/" 
+            className="absolute top-8 left-8 z-20 flex items-center gap-2 text-xs font-bold text-blue-100 hover:text-white transition-all group"
+          >
+            <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center group-hover:bg-white/20 transition-all">
+              <ArrowLeft className="w-4 h-4" />
+            </div>
+            BACK TO HOME
+          </Link>
+
           {/* Abstract circles */}
           <div className="absolute top-[-10%] left-[-20%] w-[300px] h-[300px] rounded-full bg-white/10 blur-2xl" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[250px] h-[250px] rounded-full bg-blue-600/20 shadow-inner" />
@@ -105,7 +117,16 @@ const LoginPage = () => {
                   <Checkbox id="remember" className="rounded-md border-slate-300 data-[state=checked]:bg-[#2563eb] data-[state=checked]:border-[#2563eb]" />
                   <label htmlFor="remember" className="text-sm font-semibold text-slate-600 cursor-pointer select-none">Remember me</label>
                 </div>
-                <button type="button" className="text-sm font-bold text-[#2563eb] hover:underline transition-all">Forgot Password?</button>
+                <button 
+                  type="button" 
+                  onClick={() => toast.info("Password Reset", {
+                    description: "Please contact the Final Year Project office or System Administrator to reset your credentials.",
+                    icon: <Info className="w-4 h-4 text-blue-500" />
+                  })}
+                  className="text-sm font-bold text-[#2563eb] hover:underline transition-all"
+                >
+                  Forgot Password?
+                </button>
               </div>
 
               <div className="space-y-6 pt-4">

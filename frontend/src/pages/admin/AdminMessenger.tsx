@@ -39,6 +39,16 @@ const AdminMessenger = () => {
   const [attachment, setAttachment] = useState<File | null>(null);
   const [isSendingChat, setIsSendingChat] = useState(false);
   const [chatSearchQuery, setChatSearchQuery] = useState("");
+  const [showMobileList, setShowMobileList] = useState(true);
+
+  // Sync mobile view with selected user
+  useEffect(() => {
+    if (selectedUserId) {
+      setShowMobileList(false);
+    } else {
+      setShowMobileList(true);
+    }
+  }, [selectedUserId]);
 
   // 1. Fetch Data
   const fetchData = useCallback(async () => {
@@ -156,42 +166,46 @@ const AdminMessenger = () => {
 
   return (
     <div className="h-full flex flex-col bg-background overflow-hidden relative">
-      <div className="flex items-center justify-between px-8 py-4 border-b border-border bg-background/50 backdrop-blur-sm shrink-0">
+      <div className="flex items-center justify-between px-4 sm:px-8 py-3 sm:py-4 border-b border-border bg-background/50 backdrop-blur-sm shrink-0">
         <div>
-          <h1 className="text-xl font-display font-bold text-foreground flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <MessageSquare className="w-4 h-4 text-primary-foreground" />
+          <h1 className="text-lg sm:text-xl font-display font-bold text-foreground flex items-center gap-2 sm:gap-2.5">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg gradient-primary flex items-center justify-center">
+              <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary-foreground" />
             </div>
-            Messenger Suites
+            Messenger
           </h1>
         </div>
-        <div className="flex items-center gap-3">
-           <Badge variant="outline" className="gap-1.5 border-primary/20 bg-primary/5 text-primary py-1 px-3 rounded-full">
-             <History className="w-3.5 h-3.5" />
-             <span className="font-bold tracking-tight">{notifications.length} Logs</span>
+        <div className="flex items-center gap-2 sm:gap-3">
+           <Badge variant="outline" className="gap-1 sm:gap-1.5 border-primary/20 bg-primary/5 text-primary py-0.5 sm:py-1 px-2 sm:px-3 rounded-full">
+             <History className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+             <span className="text-[10px] sm:text-xs font-bold tracking-tight">{notifications.length} Logs</span>
            </Badge>
         </div>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex overflow-hidden relative">
         {/* SIDEBAR: CONTACTS & COMPOSE */}
-        <div className="w-80 flex flex-col shrink-0 border-r border-border bg-sidebar/5 overflow-hidden">
-          <CardHeader className="p-4 border-b border-sidebar-border/30 space-y-3">
+        <div className={cn(
+          "absolute inset-0 z-20 bg-background lg:relative lg:inset-auto lg:z-0 lg:flex lg:w-80 flex-col shrink-0 border-r border-border bg-sidebar/5 overflow-hidden transition-transform duration-300",
+          showMobileList ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}>
+          <CardHeader className="p-3 sm:p-4 border-b border-sidebar-border/30 space-y-3">
             <Button 
               onClick={() => navigate(currentUser?.role === 'admin' ? '/dashboard/admin/announcements' : '/dashboard/coordinator/announcements')} 
               variant="outline"
-              className="w-full justify-start gap-3 h-11 transition-all bg-background/50 border-primary/20 hover:bg-primary/5 hover:text-primary"
+              size="sm"
+              className="w-full justify-start gap-2 sm:gap-3 h-10 sm:h-11 transition-all bg-background/50 border-primary/20 hover:bg-primary/5 hover:text-primary"
             >
-              <Megaphone className="w-4 h-4" />
-              <span className="font-bold text-sm">Announcements</span>
+              <Megaphone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+              <span className="font-bold text-xs sm:text-sm">Announcements</span>
             </Button>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
               <Input
                 placeholder="Find contact..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-10 text-sm bg-background/50 border-none shadow-none focus-visible:ring-primary/20"
+                className="pl-9 h-9 sm:h-10 text-xs sm:text-sm bg-background/50 border-none shadow-none focus-visible:ring-primary/20"
               />
             </div>
           </CardHeader>
@@ -219,36 +233,36 @@ const AdminMessenger = () => {
                       key={u.id}
                       onClick={() => handleSelectUser(u.id)}
                       className={cn(
-                        "w-full flex items-center gap-3 p-4 text-left transition-all relative group",
+                        "w-full flex items-center gap-2 sm:gap-3 p-3 sm:p-4 text-left transition-all relative group",
                         isActive 
                           ? "bg-primary text-primary-foreground" 
                           : "hover:bg-muted/40 text-foreground"
                       )}
                     >
                       <div className="relative">
-                        <Avatar className={cn("w-10 h-10 ring-2", isActive ? "ring-white/20" : "ring-primary/5")}>
-                          <AvatarFallback className={cn("text-xs font-bold", isActive ? "bg-white/10" : "bg-primary/5 text-primary")}>
+                        <Avatar className={cn("w-8 h-8 sm:w-10 sm:h-10 ring-2", isActive ? "ring-white/20" : "ring-primary/5")}>
+                          <AvatarFallback className={cn("text-[10px] sm:text-xs font-bold", isActive ? "bg-white/10" : "bg-primary/5 text-primary")}>
                             {initials}
                           </AvatarFallback>
                         </Avatar>
                         {!isActive && unreadCount > 0 && (
-                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full border-2 border-background flex items-center justify-center">
-                            <span className="text-[10px] font-bold text-white leading-none">{unreadCount > 9 ? '9+' : unreadCount}</span>
+                          <div className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-destructive rounded-full border-2 border-background flex items-center justify-center">
+                            <span className="text-[8px] sm:text-[10px] font-bold text-white leading-none">{unreadCount > 9 ? '9+' : unreadCount}</span>
                           </div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0 pr-2">
-                        <p className={cn("text-sm font-bold truncate", isActive ? "text-white" : "text-foreground")}>
+                        <p className={cn("text-xs sm:text-sm font-bold truncate", isActive ? "text-white" : "text-foreground")}>
                           {u.name}
                         </p>
-                        <p className={cn("text-[9px] truncate opacity-60 uppercase font-black tracking-widest mt-0.5", isActive ? "text-white" : "text-primary/60")}>
+                        <p className={cn("text-[8px] sm:text-[9px] truncate opacity-60 uppercase font-black tracking-widest mt-0.5", isActive ? "text-white" : "text-primary/60")}>
                           {u.role}
                         </p>
                       </div>
                       {isActive ? (
-                        <div className="w-2 h-2 rounded-full bg-white ml-auto" />
+                        <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white ml-auto" />
                       ) : (
-                         <ChevronRight className="w-4 h-4 opacity-0 group-hover:opacity-40 transition-opacity ml-auto" />
+                         <ChevronRight className="w-3.5 h-3.5 sm:w-4 sm:h-4 opacity-0 group-hover:opacity-40 transition-opacity ml-auto" />
                       )}
                     </button>
                   );
@@ -277,54 +291,65 @@ const AdminMessenger = () => {
           ) : (
             <>
               {/* Chat Header */}
-              <CardHeader className="py-4 px-8 border-b border-border bg-muted/10 shrink-0">
+              <CardHeader className="py-3 sm:py-4 px-4 sm:px-8 border-b border-border bg-muted/10 shrink-0">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="w-12 h-12 ring-2 ring-primary/10 shadow-sm border-2 border-background">
-                      <AvatarFallback className="bg-primary/5 text-primary font-black text-xl">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="lg:hidden h-8 w-8 -ml-1 mr-1" 
+                      onClick={() => {
+                        setSelectedUserId(null);
+                        setSearchParams({});
+                      }}
+                    >
+                      <History className="w-5 h-5 rotate-180" />
+                    </Button>
+                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 ring-2 ring-primary/10 shadow-sm border-2 border-background">
+                      <AvatarFallback className="bg-primary/5 text-primary font-black text-lg sm:text-xl">
                         {selectedUser?.name.charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <CardTitle className="text-xl font-bold tracking-tight">{selectedUser?.name}</CardTitle>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="w-2.5 h-2.5 rounded-full bg-success ring-2 ring-success/20 animate-pulse" />
-                        <span className="text-[10px] uppercase font-bold tracking-widest text-primary">
-                          {selectedUser?.role} • SESSION ACTIVE
+                      <CardTitle className="text-base sm:text-xl font-bold tracking-tight">{selectedUser?.name}</CardTitle>
+                      <div className="flex items-center gap-2 mt-0.5 sm:mt-1">
+                        <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-success ring-2 ring-success/20 animate-pulse" />
+                        <span className="text-[8px] sm:text-[10px] uppercase font-bold tracking-widest text-primary">
+                          {selectedUser?.role} • ACTIVE
                         </span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Button variant="ghost" size="icon" className="rounded-xl h-11 w-11 bg-muted/50 hover:bg-primary/10 hover:text-primary">
-                      <Video className="w-5 h-5" />
+                  <div className="flex items-center gap-1 sm:gap-3">
+                    <Button variant="ghost" size="icon" className="rounded-xl h-9 w-9 sm:h-11 sm:w-11 bg-muted/50 hover:bg-primary/10 hover:text-primary hidden sm:flex">
+                      <Video className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="rounded-xl h-11 w-11 bg-muted/50 hover:bg-primary/10 hover:text-primary">
-                      <Mic className="w-5 h-5" />
+                    <Button variant="ghost" size="icon" className="rounded-xl h-9 w-9 sm:h-11 sm:w-11 bg-muted/50 hover:bg-primary/10 hover:text-primary">
+                      <Mic className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
-                    <Separator orientation="vertical" className="h-8 mx-1" />
-                    <Button variant="ghost" size="icon" className="rounded-xl h-11 w-11 hover:bg-destructive/10 hover:text-destructive" onClick={() => setSelectedUserId(null)}>
-                       <X className="w-5 h-5" />
+                    <Separator orientation="vertical" className="h-6 sm:h-8 mx-0.5 sm:mx-1 hidden sm:block" />
+                    <Button variant="ghost" size="icon" className="rounded-xl h-9 w-9 sm:h-11 sm:w-11 hover:bg-destructive/10 hover:text-destructive hidden sm:flex" onClick={() => setSelectedUserId(null)}>
+                       <X className="w-4 h-4 sm:w-5 sm:h-5" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
 
               {/* Search Bar - In Chat */}
-              <div className="px-8 py-3 bg-muted/5 border-b border-border flex items-center justify-between z-10 relative">
+              <div className="px-4 sm:px-8 py-2 sm:py-3 bg-muted/5 border-b border-border flex items-center justify-between z-10 relative">
                 <div className="relative w-full max-w-sm">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search conversation history..."
+                    placeholder="Search history..."
                     value={chatSearchQuery}
                     onChange={(e) => setChatSearchQuery(e.target.value)}
-                    className="pl-9 h-9 bg-background/50 text-sm border-none shadow-none focus-visible:ring-primary/20 rounded-full"
+                    className="pl-9 h-8 sm:h-9 bg-background/50 text-xs sm:text-sm border-none shadow-none focus-visible:ring-primary/20 rounded-full"
                   />
                 </div>
               </div>
 
               {/* Message Area */}
-              <CardContent id="admin-chat-scroll-area" className="flex-1 overflow-y-auto p-10 space-y-8 bg-muted/2 custom-scrollbar">
+              <CardContent id="admin-chat-scroll-area" className="flex-1 overflow-y-auto p-4 sm:p-10 space-y-6 sm:space-y-8 bg-muted/2 custom-scrollbar">
                 {activeChatMessages.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-full text-center py-20 opacity-30">
                     <MessageSquare className="w-16 h-16 mb-6 stroke-1" />
@@ -332,37 +357,37 @@ const AdminMessenger = () => {
                     <p className="text-sm mt-2">Start the conversation with {selectedUser?.name} below.</p>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-6">
+                  <div className="flex flex-col gap-4 sm:gap-6">
                     {activeChatMessages.map((msg) => {
                       const sId = typeof msg.senderId === 'object' && msg.senderId ? (msg.senderId as any).id : msg.senderId;
                       const isOwn = sId === currentUser.id;
                       return (
                         <div key={msg.id} className={cn("flex flex-col", isOwn ? "items-end" : "items-start")}>
                           <div className={cn(
-                            "max-w-[75%] px-6 py-4 rounded-3xl text-sm shadow-card transition-all hover:shadow-xl relative",
+                            "max-w-[85%] sm:max-w-[75%] px-4 sm:px-6 py-3 sm:py-4 rounded-2xl sm:rounded-3xl text-sm shadow-card transition-all hover:shadow-lg relative",
                             isOwn 
                               ? "bg-primary text-primary-foreground rounded-tr-none" 
                               : "bg-background border border-border text-foreground rounded-tl-none"
                           )}>
-                            <p className="leading-relaxed text-[15px] whitespace-pre-wrap">{msg.message}</p>
+                            <p className="leading-relaxed text-[13px] sm:text-[15px] whitespace-pre-wrap">{msg.message}</p>
                             
                             {msg.attachmentUrl && (
                               <a href={msg.attachmentUrl.startsWith('http') ? msg.attachmentUrl : `http://localhost:5000${msg.attachmentUrl}`} target="_blank" rel="noopener noreferrer" 
-                                 className={cn("mt-4 flex items-center gap-3 p-3.5 rounded-2xl transition hover:brightness-110", isOwn ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
-                                <div className="w-10 h-10 rounded-xl bg-background/10 border border-background/20 flex items-center justify-center shrink-0">
-                                  <FileText className="w-5 h-5" />
+                                 className={cn("mt-3 sm:mt-4 flex items-center gap-2 sm:gap-3 p-2.5 sm:p-3.5 rounded-xl sm:rounded-2xl transition hover:brightness-110", isOwn ? "bg-white/20 text-white" : "bg-primary/10 text-primary")}>
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-background/10 border border-background/20 flex items-center justify-center shrink-0">
+                                  <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-bold truncate pr-4">{msg.attachmentName || "Attachment"}</p>
-                                  <p className="text-[10px] uppercase font-black opacity-70 mt-0.5">Click to view/download</p>
+                                  <p className="text-[11px] sm:text-sm font-bold truncate pr-2 sm:pr-4">{msg.attachmentName || "Attachment"}</p>
+                                  <p className="text-[8px] sm:text-[10px] uppercase font-black opacity-70 mt-0.5">Click to view</p>
                                 </div>
-                                <Download className="w-5 h-5 ml-1 opacity-80" />
+                                <Download className="w-4 h-4 sm:w-5 sm:h-5 ml-1 opacity-80" />
                               </a>
                             )}
 
-                            <div className={cn("flex items-center gap-2 mt-3", isOwn ? "justify-end" : "justify-start")}>
+                            <div className={cn("flex items-center gap-1.5 sm:gap-2 mt-2 sm:mt-3", isOwn ? "justify-end" : "justify-start")}>
                                <Clock className="w-2.5 h-2.5 opacity-40" />
-                               <p className="text-[10px] font-black opacity-40 uppercase tracking-tighter">
+                               <p className="text-[9px] sm:text-[10px] font-black opacity-40 uppercase tracking-tighter">
                                 {new Date(msg.date || msg.createdAt || 0).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                </p>
                             </div>
@@ -375,40 +400,40 @@ const AdminMessenger = () => {
               </CardContent>
 
               {/* Chat Input */}
-              <div className="p-8 bg-background border-t border-border shrink-0 relative z-20">
-                <form onSubmit={handleChatSend} className="flex gap-4 max-w-5xl mx-auto items-center">
-                  <div className="flex flex-1 items-center gap-3 relative">
+              <div className="p-4 sm:p-8 bg-background border-t border-border shrink-0 relative z-20">
+                <form onSubmit={handleChatSend} className="flex gap-2 sm:gap-4 max-w-5xl mx-auto items-center">
+                  <div className="flex flex-1 items-center gap-2 sm:gap-3 relative">
                     {attachment && (
-                      <div className="absolute -top-16 left-0 right-0 p-3 bg-muted/90 backdrop-blur-md rounded-xl flex items-center gap-4 text-sm animate-in fade-in slide-in-from-bottom-2 border border-border shadow-lg">
-                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                          <Paperclip className="w-4 h-4" />
+                      <div className="absolute -top-14 sm:-top-16 left-0 right-0 p-2 sm:p-3 bg-muted/90 backdrop-blur-md rounded-xl flex items-center gap-3 sm:gap-4 text-xs sm:text-sm animate-in fade-in slide-in-from-bottom-2 border border-border shadow-lg">
+                        <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                          <Paperclip className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </div>
                         <span className="flex-1 truncate font-bold text-foreground">{attachment.name}</span>
-                        <button type="button" onClick={() => setAttachment(null)} className="p-2 hover:bg-black/10 hover:text-destructive dark:hover:bg-white/10 rounded-full transition text-muted-foreground border border-border bg-background">
-                          <X className="w-4 h-4" />
+                        <button type="button" onClick={() => setAttachment(null)} className="p-1.5 sm:p-2 hover:bg-black/10 hover:text-destructive dark:hover:bg-white/10 rounded-full transition text-muted-foreground border border-border bg-background">
+                          <X className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     )}
                     
                     <input type="file" id="chat-attachment" className="hidden" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
-                    <Button type="button" variant="outline" size="icon" className={cn("h-16 w-16 rounded-2xl border-none shadow-inner shrink-0 transition-colors", attachment ? "bg-primary/20 text-primary" : "bg-muted/40 hover:bg-primary/10 hover:text-primary")} onClick={() => document.getElementById("chat-attachment")?.click()}>
-                      <Paperclip className="w-6 h-6" />
+                    <Button type="button" variant="outline" size="icon" className={cn("h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl border-none shadow-inner shrink-0 transition-colors", attachment ? "bg-primary/20 text-primary" : "bg-muted/40 hover:bg-primary/10 hover:text-primary")} onClick={() => document.getElementById("chat-attachment")?.click()}>
+                      <Paperclip className="w-5 h-5 sm:w-6 sm:h-6" />
                     </Button>
                     
                     <Input
-                      placeholder={`Message ${selectedUser?.name}...`}
+                      placeholder={`Message...`}
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       disabled={isSendingChat}
-                      className="h-16 bg-muted/40 border-none shadow-inner focus-visible:ring-primary/40 rounded-2xl text-[16px] px-6 placeholder:opacity-50 flex-1"
+                      className="h-12 sm:h-16 bg-muted/40 border-none shadow-inner focus-visible:ring-primary/40 rounded-xl sm:rounded-2xl text-sm sm:text-[16px] px-4 sm:px-6 placeholder:opacity-50 flex-1"
                     />
                   </div>
                   <Button 
                     type="submit" 
                     disabled={isSendingChat || (!newMessage.trim() && !attachment)}
-                    className="h-16 w-16 rounded-2xl gradient-primary shadow-2xl shadow-primary/20 transition-all hover:scale-110 active:scale-95 shrink-0"
+                    className="h-12 w-12 sm:h-16 sm:w-16 rounded-xl sm:rounded-2xl gradient-primary shadow-2xl shadow-primary/20 transition-all hover:scale-110 active:scale-95 shrink-0"
                   >
-                    {isSendingChat ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-6 h-6" />}
+                    {isSendingChat ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : <Send className="w-5 h-5 sm:w-6 sm:h-6" />}
                   </Button>
                 </form>
               </div>

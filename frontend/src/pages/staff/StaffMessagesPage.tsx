@@ -25,6 +25,7 @@ const StaffMessagesPage = () => {
   const [isLoadingStudents, setIsLoadingStudents] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [showMobileList, setShowMobileList] = useState(true);
   const [adminUser, setAdminUser] = useState<UserType | null>(null);
 
   // Fetch all authorized contacts (Coordinators, Colleagues, assigned Students)
@@ -75,8 +76,11 @@ const StaffMessagesPage = () => {
   useEffect(() => {
     if (selectedStudentId) {
       fetchMessages();
+      setShowMobileList(false);
       const intervalId = setInterval(fetchMessages, 10000);
       return () => clearInterval(intervalId);
+    } else {
+      setShowMobileList(true);
     }
   }, [selectedStudentId, fetchMessages]);
 
@@ -111,13 +115,16 @@ const StaffMessagesPage = () => {
         <Badge variant="outline" className="border-border text-muted-foreground uppercase text-[10px] font-bold tracking-wider px-2 py-0.5 mb-2">
            COMMUNICATION HUB
         </Badge>
-        <h1 className="text-4xl font-display font-bold text-foreground">Secure Messaging</h1>
-        <p className="text-sm text-muted-foreground mt-1 font-medium">Communicate with students and stakeholders from your assigned projects.</p>
+        <h1 className="text-2xl sm:text-4xl font-display font-bold text-foreground">Secure Messaging</h1>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-1 font-medium">Communicate with students and stakeholders from your assigned projects.</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="flex-1 flex overflow-hidden relative min-h-[600px] border border-border rounded-xl bg-card">
         {/* Student list */}
-        <Card className="shadow-card lg:col-span-1">
+        <div className={cn(
+          "absolute inset-0 z-20 bg-background lg:relative lg:inset-auto lg:z-0 lg:flex lg:w-80 flex-col shrink-0 border-r border-border overflow-hidden transition-transform duration-300",
+          showMobileList ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        )}>
           <CardHeader className="pb-3 px-4">
             <CardTitle className="text-base">Students</CardTitle>
             <CardDescription>Select a student to chat</CardDescription>
@@ -185,12 +192,20 @@ const StaffMessagesPage = () => {
               </div>
             )}
           </CardContent>
-        </Card>
+        </div>
 
         {/* Chat area */}
-        <Card className="shadow-card lg:col-span-2 flex flex-col h-[600px]">
-          <CardHeader className="py-3 px-4 border-b border-border">
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+          <CardHeader className="py-3 px-4 border-b border-border bg-muted/10">
             <div className="flex items-center gap-3">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="lg:hidden h-8 w-8 -ml-1 mr-1" 
+                onClick={() => setShowMobileList(true)}
+              >
+                <MessageSquare className="w-5 h-5 rotate-180" />
+              </Button>
               {selectedStudent ? (
                 <>
                   <Avatar className="w-8 h-8 border border-border">
@@ -280,7 +295,7 @@ const StaffMessagesPage = () => {
               </div>
             </div>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   );

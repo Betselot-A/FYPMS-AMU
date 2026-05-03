@@ -161,15 +161,16 @@ const AnnouncementsPage = () => {
   return (
     <div className="max-w-4xl mx-auto space-y-10 mb-20 animate-in fade-in duration-500">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Announcements</h1>
-          <p className="text-sm text-muted-foreground mt-1">Create and manage system announcements</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Announcements</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">Create and manage system announcements</p>
         </div>
         {!isComposing && (
           <Button 
             onClick={() => setIsComposing(true)}
-            className="gradient-primary text-white font-bold px-6 h-11 rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2 transition-all hover:scale-[1.02]"
+            size="sm"
+            className="gradient-primary text-white font-bold px-6 h-10 sm:h-11 rounded-xl shadow-lg shadow-primary/20 flex items-center gap-2 transition-all hover:scale-[1.02] w-full sm:w-auto"
           >
             <Plus className="w-4 h-4" /> New Announcement
           </Button>
@@ -179,10 +180,10 @@ const AnnouncementsPage = () => {
       {/* Creation Form */}
       {isComposing && (
         <Card className="shadow-2xl border-none overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
-          <CardHeader className="py-6 px-8 border-b border-border bg-muted/5">
-            <CardTitle className="text-lg font-bold text-foreground font-display">Create Announcement</CardTitle>
+          <CardHeader className="py-4 sm:py-6 px-4 sm:px-8 border-b border-border bg-muted/5">
+            <CardTitle className="text-base sm:text-lg font-bold text-foreground font-display">Create Announcement</CardTitle>
           </CardHeader>
-          <CardContent className="p-8">
+          <CardContent className="p-4 sm:p-8">
             <form onSubmit={handleComposeSend} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider ml-1">SUBJECT TITLE</label>
@@ -205,14 +206,14 @@ const AnnouncementsPage = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider ml-1">DISPLAY DATE</label>
                   <Input 
                     type="date"
                     value={composeForm.date}
                     onChange={(e) => setComposeForm(f => ({ ...f, date: e.target.value }))}
-                    className="h-12 border-border/50 bg-muted/20 rounded-xl focus-visible:ring-primary/20"
+                    className="h-11 sm:h-12 border-border/50 bg-muted/20 rounded-xl focus-visible:ring-primary/20 text-xs sm:text-sm"
                   />
                 </div>
                 <div className="space-y-2">
@@ -221,7 +222,7 @@ const AnnouncementsPage = () => {
                     value={composeForm.target} 
                     onValueChange={(v) => setComposeForm(f => ({ ...f, target: v as any }))}
                   >
-                    <SelectTrigger className="h-12 border-border/50 bg-muted/20 rounded-xl focus-visible:ring-primary/20 font-medium">
+                    <SelectTrigger className="h-11 sm:h-12 border-border/50 bg-muted/20 rounded-xl focus-visible:ring-primary/20 font-medium text-xs sm:text-sm">
                       <SelectValue placeholder="Select Audience" />
                     </SelectTrigger>
                     <SelectContent>
@@ -234,11 +235,11 @@ const AnnouncementsPage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider ml-1">ALERT LEVEL</label>
                   <Select value={composeForm.type} onValueChange={(v) => setComposeForm(f => ({ ...f, type: v as NotifType }))}>
-                    <SelectTrigger className="h-12 border-border/50 bg-muted/20 rounded-xl focus-visible:ring-primary/20 font-medium">
+                    <SelectTrigger className="h-11 sm:h-12 border-border/50 bg-muted/20 rounded-xl focus-visible:ring-primary/20 font-medium text-xs sm:text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -266,11 +267,11 @@ const AnnouncementsPage = () => {
                 </div>
               )}
 
-              <div className="flex items-center gap-3 pt-4">
+              <div className="flex flex-col sm:flex-row items-center gap-3 pt-4">
                 <Button 
                   type="submit" 
                   disabled={isSendingCompose || !composeForm.message.trim() || (composeForm.target === "specific" && composeForm.userIds.length === 0)}
-                  className="h-12 px-10 rounded-xl flex items-center justify-center gap-2 font-bold gradient-primary shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
+                  className="h-11 sm:h-12 w-full sm:w-auto px-10 rounded-xl flex items-center justify-center gap-2 font-bold gradient-primary shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
                 >
                   {isSendingCompose ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                   Publish
@@ -279,7 +280,7 @@ const AnnouncementsPage = () => {
                   type="button"
                   variant="outline"
                   onClick={() => setIsComposing(false)}
-                  className="h-12 px-10 rounded-xl font-bold border-border bg-white hover:bg-muted transition-all"
+                  className="h-11 sm:h-12 w-full sm:w-auto px-10 rounded-xl font-bold border-border bg-white hover:bg-muted transition-all"
                 >
                   Cancel
                 </Button>
@@ -312,46 +313,47 @@ const AnnouncementsPage = () => {
         ) : (
           <Card className="border-none shadow-card overflow-hidden">
              <Table>
-                <TableHeader className="bg-muted/30 text-nowrap">
-                   <TableRow>
-                      <TableHead className="py-4 pl-8 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Subject Title</TableHead>
-                      <TableHead className="py-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Message</TableHead>
-                      <TableHead className="py-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-center">Users</TableHead>
-                      <TableHead className="py-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-center">Alert</TableHead>
-                      <TableHead className="py-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-right pr-8">Date with Time</TableHead>
-                   </TableRow>
-                </TableHeader>
+                 <TableHeader className="bg-muted/30">
+                    <TableRow>
+                       <TableHead className="py-4 pl-4 sm:pl-8 text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Subject Title</TableHead>
+                       <TableHead className="py-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider hidden sm:table-cell">Message</TableHead>
+                       <TableHead className="py-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-center">Users</TableHead>
+                       <TableHead className="py-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-center hidden md:table-cell">Alert</TableHead>
+                       <TableHead className="py-4 text-[10px] text-muted-foreground font-bold uppercase tracking-wider text-right pr-4 sm:pr-8">Date</TableHead>
+                    </TableRow>
+                 </TableHeader>
                 <TableBody>
-                   {groupedAnnouncements.map((ann, idx) => (
-                      <TableRow key={idx} className="hover:bg-muted/10 transition-colors group">
-                         <TableCell className="py-6 pl-8 align-top">
-                            <p className="font-bold text-foreground text-sm leading-tight group-hover:text-primary transition-colors">{ann.data.subject || "No Title"}</p>
-                         </TableCell>
-                         <TableCell className="py-6 align-top">
-                            <p className="text-xs text-muted-foreground/80 leading-relaxed italic line-clamp-2 max-w-[300px]">{ann.data.message}</p>
-                         </TableCell>
-                         <TableCell className="py-6 align-top">
-                            <div className="flex flex-col items-center">
-                               <div className="flex items-center gap-1.5 text-foreground font-bold text-[10px]">
-                                  <Users className="w-3 h-3 opacity-60" />
-                                  <span>{ann.count}</span>
-                               </div>
-                            </div>
-                         </TableCell>
-                         <TableCell className="py-6 align-top">
-                            <div className="flex justify-center">
-                               <div className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-foreground">
-                                  <span className="opacity-60">{typeConfig[ann.data.type as NotifType]?.icon}</span>
-                                  {typeConfig[ann.data.type as NotifType]?.label}
-                               </div>
-                            </div>
-                         </TableCell>
-                         <TableCell className="py-6 pr-8 text-right align-top">
-                            <p className="text-xs font-semibold text-foreground/80">{format(parseISO(ann.data.createdAt), "MMM d, yyyy")}</p>
-                            <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">{format(parseISO(ann.data.createdAt), "HH:mm:ss")}</p>
-                         </TableCell>
-                      </TableRow>
-                   ))}
+                    {groupedAnnouncements.map((ann, idx) => (
+                       <TableRow key={idx} className="hover:bg-muted/10 transition-colors group">
+                          <TableCell className="py-4 sm:py-6 pl-4 sm:pl-8 align-top">
+                             <p className="font-bold text-foreground text-[13px] sm:text-sm leading-tight group-hover:text-primary transition-colors line-clamp-2">{ann.data.subject || "No Title"}</p>
+                             <p className="text-[10px] text-muted-foreground mt-1 sm:hidden line-clamp-1">{ann.data.message}</p>
+                          </TableCell>
+                          <TableCell className="py-6 align-top hidden sm:table-cell">
+                             <p className="text-xs text-muted-foreground/80 leading-relaxed italic line-clamp-2 max-w-[300px]">{ann.data.message}</p>
+                          </TableCell>
+                          <TableCell className="py-4 sm:py-6 align-top">
+                             <div className="flex flex-col items-center">
+                                <div className="flex items-center gap-1.5 text-foreground font-bold text-[10px]">
+                                   <Users className="w-3 h-3 opacity-60" />
+                                   <span>{ann.count}</span>
+                                </div>
+                             </div>
+                          </TableCell>
+                          <TableCell className="py-6 align-top hidden md:table-cell">
+                             <div className="flex justify-center">
+                                <div className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-foreground">
+                                   <span className="opacity-60">{typeConfig[ann.data.type as NotifType]?.icon}</span>
+                                   {typeConfig[ann.data.type as NotifType]?.label}
+                                </div>
+                             </div>
+                          </TableCell>
+                          <TableCell className="py-4 sm:py-6 pr-4 sm:pr-8 text-right align-top">
+                             <p className="text-[11px] sm:text-xs font-semibold text-foreground/80">{format(parseISO(ann.data.createdAt), "MMM d, yyyy")}</p>
+                             <p className="text-[8px] sm:text-[9px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">{format(parseISO(ann.data.createdAt), "HH:mm")}</p>
+                          </TableCell>
+                       </TableRow>
+                    ))}
                 </TableBody>
              </Table>
           </Card>

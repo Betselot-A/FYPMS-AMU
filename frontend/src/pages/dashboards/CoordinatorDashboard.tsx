@@ -115,112 +115,112 @@ const CoordinatorDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Coordinator Dashboard</h1>
-          <p className="text-muted-foreground text-sm mt-1">Operational Overview and Status Hub</p>
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Coordinator Dashboard</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Operational Overview and Status Hub</p>
         </div>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={fetchData} disabled={isLoading}>
-             <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" className="h-9 text-xs" onClick={fetchData} disabled={isLoading}>
+             <RefreshCw className={`w-3.5 h-3.5 mr-2 ${isLoading ? "animate-spin" : ""}`} />
              Refresh
           </Button>
-          <Button asChild className="gradient-primary text-primary-foreground gap-2">
+          <Button asChild size="sm" className="gradient-primary text-primary-foreground gap-2 h-9 text-xs">
             <Link to="/dashboard/coordinator/grouping">
               Grouping Engine
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </Button>
         </div>
       </div>
 
       {/* Metrics Row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         <Card className="shadow-card border-none bg-background/50 backdrop-blur">
-          <CardContent className="p-4 flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                <FolderOpen className="w-5 h-5 text-primary" />
+          <CardContent className="p-3 sm:p-4 flex flex-col gap-1 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <FolderOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
               </div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Groups</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Groups</p>
             </div>
-            <div className="flex items-baseline gap-2 mt-2">
-               <span className="text-3xl font-display font-bold text-foreground">{totalProjects}</span>
+            <div className="flex items-baseline gap-2 mt-1">
+               <span className="text-xl sm:text-3xl font-display font-bold text-foreground">{totalProjects}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-card border-none bg-background/50 backdrop-blur relative overflow-hidden">
-          {proposalsPending > 0 && <div className="absolute top-0 right-0 w-2 h-full bg-warning"></div>}
-          <CardContent className="p-4 flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
-                <FileText className="w-5 h-5 text-warning" />
+          {proposalsPending > 0 && <div className="absolute top-0 right-0 w-1 sm:w-2 h-full bg-warning"></div>}
+          <CardContent className="p-3 sm:p-4 flex flex-col gap-1 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-warning/10 flex items-center justify-center">
+                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
               </div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pending Review</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Pending</p>
             </div>
-            <div className="flex items-baseline gap-2 mt-2">
-               <span className="text-3xl font-display font-bold text-foreground">{proposalsPending}</span>
+            <div className="flex items-baseline gap-2 mt-1">
+               <span className="text-xl sm:text-3xl font-display font-bold text-foreground">{proposalsPending}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-card border-none bg-background/50 backdrop-blur relative overflow-hidden">
-           {missingStaff > 0 && <div className="absolute top-0 right-0 w-2 h-full bg-destructive"></div>}
-          <CardContent className="p-4 flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
-                <UserPlus className="w-5 h-5 text-destructive" />
+           {missingStaff > 0 && <div className="absolute top-0 right-0 w-1 sm:w-2 h-full bg-destructive"></div>}
+          <CardContent className="p-3 sm:p-4 flex flex-col gap-1 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-destructive/10 flex items-center justify-center">
+                <UserPlus className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
               </div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Missing Staff</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">No Staff</p>
             </div>
-            <div className="flex items-baseline gap-2 mt-2">
-               <span className="text-3xl font-display font-bold text-foreground">{missingStaff}</span>
+            <div className="flex items-baseline gap-2 mt-1">
+               <span className="text-xl sm:text-3xl font-display font-bold text-foreground">{missingStaff}</span>
             </div>
           </CardContent>
         </Card>
 
         <Card className="shadow-card border-none bg-background/50 backdrop-blur">
-          <CardContent className="p-4 flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-info/10 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-info" />
+          <CardContent className="p-3 sm:p-4 flex flex-col gap-1 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-info/10 flex items-center justify-center">
+                <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-info" />
               </div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Projects</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Active</p>
             </div>
-            <div className="flex items-baseline gap-2 mt-2">
-               <span className="text-3xl font-display font-bold text-foreground">{activeProjectsCount}</span>
+            <div className="flex items-baseline gap-2 mt-1">
+               <span className="text-xl sm:text-3xl font-display font-bold text-foreground">{activeProjectsCount}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-card border-none bg-background/50 backdrop-blur">
-          <CardContent className="p-4 flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-success" />
+        <Card className="shadow-card border-none bg-background/50 backdrop-blur col-span-2 lg:col-span-1">
+          <CardContent className="p-3 sm:p-4 flex flex-row sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-1 sm:gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-success/10 flex items-center justify-center">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
               </div>
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Students</p>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">Students</p>
             </div>
-            <div className="flex items-baseline gap-2 mt-2">
-               <span className="text-3xl font-display font-bold text-foreground">{totalStudentsCount}</span>
+            <div className="flex items-baseline gap-2 mt-1 sm:mt-0">
+               <span className="text-xl sm:text-3xl font-display font-bold text-foreground">{totalStudentsCount}</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
       <Tabs defaultValue="actions" className="space-y-6">
-        <TabsList className="bg-muted w-full justify-start border-b border-border rounded-none h-auto p-0 gap-6">
-          <TabsTrigger value="actions" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-2 py-3 text-sm">
+        <TabsList className="bg-muted w-full justify-start border-b border-border rounded-none h-auto p-0 flex-wrap">
+          <TabsTrigger value="actions" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4 py-3 text-xs sm:text-sm">
             Action Center 
-            {proposalsPending + missingStaff > 0 && <Badge variant="secondary" className="ml-2 bg-primary text-primary-foreground leading-none">{proposalsPending + missingStaff}</Badge>}
+            {proposalsPending + missingStaff > 0 && <Badge variant="secondary" className="ml-2 bg-primary text-primary-foreground leading-none text-[10px]">{proposalsPending + missingStaff}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="rejected" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-destructive data-[state=active]:text-destructive rounded-none px-2 py-3 text-sm">
-            Rejected Proposals
-            {proposalsRejected > 0 && <Badge variant="secondary" className="ml-2 bg-destructive/10 text-destructive border-transparent leading-none">{proposalsRejected}</Badge>}
+          <TabsTrigger value="rejected" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-destructive data-[state=active]:text-destructive rounded-none px-4 py-3 text-xs sm:text-sm">
+            Rejected
+            {proposalsRejected > 0 && <Badge variant="secondary" className="ml-2 bg-destructive/10 text-destructive border-transparent leading-none text-[10px]">{proposalsRejected}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="active" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-info data-[state=active]:text-info rounded-none px-2 py-3 text-sm">
-            Active Groups
+          <TabsTrigger value="active" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-info data-[state=active]:text-info rounded-none px-4 py-3 text-xs sm:text-sm">
+            Active
           </TabsTrigger>
         </TabsList>
 
@@ -435,53 +435,53 @@ const CoordinatorDashboard = () => {
 
       {/* Assign Staff Dialog */}
       <Dialog open={isStaffModalOpen} onOpenChange={setIsStaffModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="w-[95vw] max-w-[425px] p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Assign Faculty Staff</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg">Assign Faculty Staff</DialogTitle>
+            <DialogDescription className="text-xs">
               Assign the project advisor and examiner for: <br/>
-              <span className="font-semibold text-foreground">{selectedProject?.finalTitle || selectedProject?.title}</span>
+              <span className="font-semibold text-foreground line-clamp-1">{selectedProject?.finalTitle || selectedProject?.title}</span>
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
              <div className="space-y-2">
-                <Label className="text-xs uppercase font-bold text-muted-foreground mb-1">Main Advisor</Label>
+                <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Main Advisor</Label>
                 <Select 
                   value={staffAssignment.advisorId} 
                   onValueChange={(v) => setStaffAssignment({...staffAssignment, advisorId: v})}
                 >
-                  <SelectTrigger className="h-10 text-sm">
-                    <SelectValue placeholder="Select an Advisor" />
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue placeholder="Select Advisor" />
                   </SelectTrigger>
                   <SelectContent>
                     {staff.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name} ({s.department})</SelectItem>
+                      <SelectItem key={s.id} value={s.id} className="text-xs">{s.name} ({s.department})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label className="text-xs uppercase font-bold text-muted-foreground mb-1">Internal Examiner</Label>
+                <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Internal Examiner</Label>
                 <Select 
                   value={staffAssignment.examinerId} 
                   onValueChange={(v) => setStaffAssignment({...staffAssignment, examinerId: v})}
                 >
-                  <SelectTrigger className="h-10 text-sm">
-                    <SelectValue placeholder="Select an Examiner" />
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue placeholder="Select Examiner" />
                   </SelectTrigger>
                   <SelectContent>
                     {staff.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name} ({s.department})</SelectItem>
+                      <SelectItem key={s.id} value={s.id} className="text-xs">{s.name} ({s.department})</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsStaffModalOpen(false)}>Cancel</Button>
-            <Button onClick={handleAssignStaff} disabled={!staffAssignment.advisorId || !staffAssignment.examinerId || isAssigningStaff} className="gradient-primary">
-              {isAssigningStaff ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Confirm Assignments
+          <DialogFooter className="flex-row gap-2 justify-end">
+            <Button variant="outline" size="sm" className="h-9 text-xs" onClick={() => setIsStaffModalOpen(false)}>Cancel</Button>
+            <Button size="sm" onClick={handleAssignStaff} disabled={!staffAssignment.advisorId || !staffAssignment.examinerId || isAssigningStaff} className="gradient-primary h-9 text-xs">
+              {isAssigningStaff ? <RefreshCw className="w-3.5 h-3.5 mr-2 animate-spin" /> : null}
+              Confirm
             </Button>
           </DialogFooter>
         </DialogContent>

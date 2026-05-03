@@ -8,7 +8,7 @@ import { Mail, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { notificationService, userService } from "@/api";
+import { notificationService } from "@/api";
 
 const faqs = [
   { q: "How do I get an account?", a: "Your administrator creates accounts for all users. Contact your department admin to receive your login credentials." },
@@ -40,32 +40,18 @@ const SupportPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Find the Admin user to receive this support request
-      const usersRes = await userService.getAll({ limit: 1000 });
-      const admin = usersRes.data.users.find(u => u.role === "admin");
-
-      if (admin) {
-        await notificationService.create({
-          userId: admin.id,
-          subject: `Support Request from ${name}`,
-          message: `Contact Email: ${email}\n\nMessage: ${message}`,
-          type: "warning" // Mark as warning to catch admin's attention
-        });
-        
-        toast({ 
-          title: "Message sent to Admin!", 
-          description: "Your report has been logged in the system. We'll get back to you soon." 
-        });
-        
-        if (!user) {
-          setName("");
-          setEmail("");
-        }
-        setMessage("");
-      } else {
-        // Fallback for public users or if no admin found
-        toast({ title: "Message sent!", description: "We'll get back to you as soon as possible via email." });
+      await notificationService.supportRequest({ name, email, message });
+      
+      toast({ 
+        title: "Message sent!", 
+        description: "Your report has been logged. We'll get back to you as soon as possible." 
+      });
+      
+      if (!user) {
+        setName("");
+        setEmail("");
       }
+      setMessage("");
     } catch (error) {
       toast({ 
         variant: "destructive", 

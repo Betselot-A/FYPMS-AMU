@@ -259,69 +259,23 @@ const AdminDashboard = () => {
       </div>
 
       {/* Users Table */}
-      <Card className="shadow-card">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
+      <Card className="shadow-card overflow-hidden">
+        <CardHeader className="pb-3 border-b">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle className="text-lg">User Management</CardTitle>
-              <CardDescription>Manage all system users. Temporary passwords are shown once and cleared after first login.</CardDescription>
+              <CardDescription className="text-xs">Manage all system users. Temporary passwords are shown once.</CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {selectedUserIds.length > 0 && (
-                <Button size="sm" variant="destructive" className="text-xs" onClick={handleBulkDelete} disabled={isSubmitting}>
-                  <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete Selected ({selectedUserIds.length})
+                <Button size="sm" variant="destructive" className="text-xs h-8" onClick={handleBulkDelete} disabled={isSubmitting}>
+                  <Trash2 className="w-3.5 h-3.5 mr-1.5" /> <span className="hidden sm:inline">Delete Selected</span> ({selectedUserIds.length})
                 </Button>
               )}
-              <Button size="sm" variant="outline" onClick={fetchUsers} disabled={isLoading}>
+              <Button size="sm" variant="outline" className="h-8 w-8 p-0" onClick={fetchUsers} disabled={isLoading}>
                 <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
               </Button>
-              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button size="sm" className="gradient-primary text-primary-foreground text-xs">+ Add User</Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <form onSubmit={handleCreateUser}>
-                    <DialogHeader>
-                      <DialogTitle>Add New User</DialogTitle>
-                      <DialogDescription>
-                        Create a new account. A temporary password will appear in the table — share it with the user, and it disappears after they log in and change it.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input id="name" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Role</Label>
-                        <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="student">Student</SelectItem>
-                            <SelectItem value="staff">Staff</SelectItem>
-                            <SelectItem value="coordinator">Coordinator</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="department">Department</Label>
-                        <Input id="department" required placeholder="e.g. Computer Science" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button type="submit" disabled={isSubmitting}>
-                        {isSubmitting ? "Creating..." : "Create User"}
-                      </Button>
-                    </DialogFooter>
-                  </form>
-                </DialogContent>
-              </Dialog>
-
+              
               <Dialog open={isBulkDialogOpen} onOpenChange={(open) => {
                 setIsBulkDialogOpen(open);
                 if (!open) {
@@ -330,35 +284,36 @@ const AdminDashboard = () => {
                 }
               }}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="text-xs">
-                    <FileUp className="w-3.5 h-3.5 mr-1.5" /> Bulk Import
+                  <Button size="sm" variant="outline" className="text-xs h-8">
+                    <FileUp className="w-3.5 h-3.5 mr-1.5" /> Bulk
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+                {/* Dialog content remains same but ensured it's responsive */}
+                <DialogContent className="w-[95vw] max-w-[600px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
                   <DialogHeader>
                     <DialogTitle>Bulk Import Users</DialogTitle>
                     <DialogDescription>
-                      Upload a CSV file with user details. We'll generate temporary passwords for each.
+                      Upload a CSV file with user details.
                     </DialogDescription>
                   </DialogHeader>
 
                   {!bulkResults ? (
                     <form onSubmit={handleBulkUpload} className="space-y-6 py-4">
-                      <div className="bg-muted/50 p-6 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-center">
-                        <FileUp className="w-10 h-10 text-muted-foreground mb-3" />
-                        <p className="text-sm font-medium mb-1">Click to select or drag and drop</p>
-                        <p className="text-xs text-muted-foreground mb-4">Supported formats: .csv, .xlsx, .xls</p>
+                      <div className="bg-muted/50 p-4 sm:p-6 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-center">
+                        <FileUp className="w-8 h-8 sm:w-10 sm:h-10 text-muted-foreground mb-3" />
+                        <p className="text-sm font-medium mb-1">Click to select</p>
+                        <p className="text-[10px] text-muted-foreground mb-4">.csv, .xlsx, .xls</p>
                         <Input 
                           type="file" 
                           accept=".csv, .xlsx, .xls" 
                           required 
                           onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                          className="max-w-[250px] cursor-pointer"
+                          className="max-w-[200px] cursor-pointer text-xs"
                         />
                       </div>
 
                       <div className="flex items-center justify-end">
-                        <Button type="submit" disabled={!selectedFile || isSubmitting} className="gradient-primary">
+                        <Button type="submit" disabled={!selectedFile || isSubmitting} className="gradient-primary h-9 text-xs">
                           {isSubmitting ? "Uploading..." : "Import Users"}
                         </Button>
                       </div>
@@ -368,48 +323,36 @@ const AdminDashboard = () => {
                       <Alert className={bulkResults.errors.length > 0 ? "bg-amber-500/10 border-amber-500/20" : "bg-green-500/10 border-green-500/20"}>
                         <CheckCircle2 className="h-4 w-4" />
                         <AlertTitle>Import Complete</AlertTitle>
-                        <AlertDescription>
-                          Created {bulkResults.createdCount} users. {bulkResults.errors.length > 0 ? `Encountered ${bulkResults.errors.length} errors.` : "All rows processed successfully."}
+                        <AlertDescription className="text-xs">
+                          Created {bulkResults.createdCount} users.
                         </AlertDescription>
                       </Alert>
 
                       {bulkResults.createdUsers.length > 0 && (
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-semibold">Generated Passwords</h4>
-                            <div className="flex items-center gap-2">
-                              <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={handleDownloadResults}>
-                                <Download className="w-3 h-3 mr-1" /> Download CSV
-                              </Button>
-                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Copy these now</p>
-                            </div>
+                            <h4 className="text-xs font-semibold">Passwords</h4>
+                            <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={handleDownloadResults}>
+                              <Download className="w-3 h-3 mr-1" /> Download
+                            </Button>
                           </div>
-                          <div className="border rounded-lg overflow-hidden border-border bg-card">
-                            <table className="w-full text-xs">
+                          <div className="border rounded-lg overflow-x-auto border-border bg-card">
+                            <table className="w-full text-[10px]">
                               <thead className="bg-muted/50 border-b border-border">
                                 <tr>
-                                  <th className="text-left py-2 px-3 font-medium">Name</th>
-                                  <th className="text-left py-2 px-3 font-medium">Email</th>
-                                  <th className="text-left py-2 px-3 font-medium">Temp Password</th>
+                                  <th className="text-left py-2 px-2 font-medium">Name</th>
+                                  <th className="text-left py-2 px-2 font-medium">Email</th>
+                                  <th className="text-left py-2 px-2 font-medium">PW</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-border">
                                 {bulkResults.createdUsers.map((u, i) => (
                                   <tr key={i} className="hover:bg-muted/20">
-                                    <td className="py-2 px-3 text-foreground font-medium">{u.name}</td>
-                                    <td className="py-2 px-3 text-muted-foreground">{u.email}</td>
-                                    <td className="py-2 px-3">
-                                      <div className="flex items-center gap-2">
-                                        <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-primary">{u.tempPassword}</code>
-                                        <button 
-                                          onClick={() => {
-                                            navigator.clipboard.writeText(u.tempPassword);
-                                            toast.info(`Copied password for ${u.name}`);
-                                          }}
-                                          className="text-muted-foreground hover:text-primary"
-                                        >
-                                          <Copy className="w-3 h-3" />
-                                        </button>
+                                    <td className="py-2 px-2 text-foreground font-medium truncate max-w-[80px]">{u.name}</td>
+                                    <td className="py-2 px-2 text-muted-foreground truncate max-w-[100px]">{u.email}</td>
+                                    <td className="py-2 px-2">
+                                      <div className="flex items-center gap-1">
+                                        <code className="bg-muted px-1 rounded font-mono text-primary">{u.tempPassword}</code>
                                       </div>
                                     </td>
                                   </tr>
@@ -420,26 +363,58 @@ const AdminDashboard = () => {
                         </div>
                       )}
 
-                      {bulkResults.errors.length > 0 && (
-                        <div className="space-y-2">
-                          <h4 className="text-sm font-semibold text-destructive flex items-center gap-1.5">
-                            <AlertCircle className="w-4 h-4" /> Errors
-                          </h4>
-                          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 max-h-[150px] overflow-y-auto">
-                            <ul className="text-xs text-destructive space-y-1">
-                              {bulkResults.errors.map((err, i) => (
-                                <li key={i}>{err}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      )}
-
-                      <DialogFooter>
-                        <Button onClick={() => setIsBulkDialogOpen(false)}>Close</Button>
+                      <DialogFooter className="flex-row gap-2 justify-end">
+                        <Button className="h-9 text-xs" onClick={() => setIsBulkDialogOpen(false)}>Close</Button>
                       </DialogFooter>
                     </div>
                   )}
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" className="gradient-primary text-primary-foreground text-xs h-8">+ User</Button>
+                </DialogTrigger>
+                <DialogContent className="w-[95vw] max-w-[425px] p-4 sm:p-6">
+                  <form onSubmit={handleCreateUser}>
+                    <DialogHeader>
+                      <DialogTitle>Add New User</DialogTitle>
+                      <DialogDescription className="text-xs">
+                        Create a new account.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-3 py-4">
+                      <div className="space-y-1">
+                        <Label htmlFor="name" className="text-xs">Full Name</Label>
+                        <Input id="name" required className="h-9 text-xs" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="email" className="text-xs">Email Address</Label>
+                        <Input id="email" type="email" required className="h-9 text-xs" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Role</Label>
+                        <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value as UserRole })}>
+                          <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="student">Student</SelectItem>
+                            <SelectItem value="staff">Staff</SelectItem>
+                            <SelectItem value="coordinator">Coordinator</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor="department" className="text-xs">Department</Label>
+                        <Input id="department" required className="h-9 text-xs" placeholder="e.g. CS" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button type="submit" disabled={isSubmitting} className="h-9 text-xs w-full sm:w-auto">
+                        {isSubmitting ? "Creating..." : "Create User"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
                 </DialogContent>
               </Dialog>
             </div>
@@ -458,10 +433,10 @@ const AdminDashboard = () => {
                     />
                   </th>
                   <th className="text-left py-3 px-2 text-muted-foreground font-medium">User</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">Email</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">Role</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">Department</th>
-                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">Temp Password</th>
+                  <th className="text-left py-3 px-2 text-muted-foreground font-medium hidden sm:table-cell">Email</th>
+                  <th className="text-left py-3 px-2 text-muted-foreground font-medium hidden lg:table-cell">Role</th>
+                  <th className="text-left py-3 px-2 text-muted-foreground font-medium hidden md:table-cell">Dept</th>
+                  <th className="text-left py-3 px-2 text-muted-foreground font-medium">PW Status</th>
                   <th className="text-right py-3 px-2 text-muted-foreground font-medium">Actions</th>
                 </tr>
               </thead>
@@ -487,40 +462,38 @@ const AdminDashboard = () => {
                         </td>
                         <td className="py-3 px-2">
                           <div className="flex items-center gap-2">
-                            <Avatar className="w-7 h-7">
-                              <AvatarFallback className="text-xs bg-secondary text-secondary-foreground">{initials}</AvatarFallback>
+                            <Avatar className="w-7 h-7 hidden xs:flex">
+                              <AvatarFallback className="text-[10px] bg-secondary text-secondary-foreground">{initials}</AvatarFallback>
                             </Avatar>
-                            <span className="font-medium text-foreground">{u.name}</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-foreground text-xs sm:text-sm truncate max-w-[100px] sm:max-w-none">{u.name}</span>
+                              <span className="text-[10px] text-muted-foreground sm:hidden truncate max-w-[100px]">{u.email}</span>
+                            </div>
                           </div>
                         </td>
-                        <td className="py-3 px-2 text-muted-foreground">{u.email}</td>
-                        <td className="py-3 px-2">
-                          <Badge variant="outline" className="capitalize text-xs">{u.role}</Badge>
+                        <td className="py-3 px-2 text-muted-foreground hidden sm:table-cell text-xs">{u.email}</td>
+                        <td className="py-3 px-2 hidden lg:table-cell">
+                          <Badge variant="outline" className="capitalize text-[10px]">{u.role}</Badge>
                         </td>
-                        <td className="py-3 px-2 text-muted-foreground">{u.department}</td>
+                        <td className="py-3 px-2 text-muted-foreground hidden md:table-cell text-xs">{u.department}</td>
                         <td className="py-3 px-2">
                           {/* Show temp password if available and still pending (new user just created) */}
                           {(tempPw && u.mustChangePassword) ? (
-                            <div className="flex items-center gap-1.5">
-                              <code className="text-xs bg-amber-500/10 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded font-mono border border-amber-500/20">
-                                {isVisible ? tempPw : "••••••••••••"}
+                            <div className="flex items-center gap-1">
+                              <code className="text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded font-mono border border-amber-500/20">
+                                {isVisible ? tempPw : "••••"}
                               </code>
                               <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => togglePasswordVisibility(u.id)}>
                                 {isVisible ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                               </Button>
-                              <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-muted-foreground" onClick={() => handleCopyPassword(u.id)}>
-                                <Copy className="w-3 h-3" />
-                              </Button>
                             </div>
                           ) : u.mustChangePassword ? (
-                            /* User still hasn't logged in and changed their password */
-                            <span className="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                              <Shield className="w-3 h-3" /> Pending login
+                            <span className="text-[10px] text-amber-600 dark:text-amber-400 flex items-center gap-1 font-medium">
+                              <Shield className="w-3 h-3" /> <span className="hidden xs:inline">Pending</span>
                             </span>
                           ) : (
-                            /* User has successfully changed their password */
-                            <span className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                              <CheckCircle2 className="w-3 h-3" /> Password set
+                            <span className="text-[10px] text-green-600 dark:text-green-400 flex items-center gap-1 font-medium">
+                              <CheckCircle2 className="w-3 h-3" /> <span className="hidden xs:inline">Set</span>
                             </span>
                           )}
                         </td>
@@ -539,39 +512,48 @@ const AdminDashboard = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
-              <p className="text-xs text-muted-foreground">
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-4 pt-4 border-t border-border gap-4">
+              <p className="text-[10px] text-muted-foreground order-2 sm:order-1">
                 Showing <span className="font-medium text-foreground">{(currentPage - 1) * limit + 1}</span> to{" "}
                 <span className="font-medium text-foreground">{Math.min(currentPage * limit, totalUsers)}</span> of{" "}
-                <span className="font-medium text-foreground">{totalUsers}</span> users
+                <span className="font-medium text-foreground">{totalUsers}</span>
               </p>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 order-1 sm:order-2">
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="h-8 text-xs px-3" 
+                  className="h-7 text-[10px] px-2" 
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  Prev
                 </Button>
-                <div className="flex items-center gap-1 mx-2">
-                  {Array.from({ length: totalPages }).map((_, i) => (
-                    <Button 
-                      key={i} 
-                      size="sm" 
-                      variant={currentPage === i + 1 ? "default" : "ghost"} 
-                      className={`h-7 w-7 p-0 text-xs ${currentPage === i + 1 ? "gradient-primary" : ""}`}
-                      onClick={() => setCurrentPage(i + 1)}
-                    >
-                      {i + 1}
-                    </Button>
-                  ))}
+                <div className="flex items-center gap-1">
+                  {/* Show only current, first, last, and neighbors on mobile */}
+                  {Array.from({ length: totalPages }).map((_, i) => {
+                    const page = i + 1;
+                    const isEdge = page === 1 || page === totalPages;
+                    const isNear = Math.abs(page - currentPage) <= 1;
+                    
+                    if (!isEdge && !isNear) return null;
+                    
+                    return (
+                      <Button 
+                        key={i} 
+                        size="sm" 
+                        variant={currentPage === page ? "default" : "ghost"} 
+                        className={`h-7 w-7 p-0 text-[10px] ${currentPage === page ? "gradient-primary" : ""}`}
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    );
+                  })}
                 </div>
                 <Button 
                   size="sm" 
                   variant="outline" 
-                  className="h-8 text-xs px-3" 
+                  className="h-7 text-[10px] px-2" 
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                 >

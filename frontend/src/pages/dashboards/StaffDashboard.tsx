@@ -53,15 +53,17 @@ const StaffDashboard = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground">Welcome, {user.name.split(" ")[0]}!</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Staff Dashboard
-          {isAdvisor && isExaminer && " — Advisor & Examiner"}
-          {isAdvisor && !isExaminer && " — Advisor"}
-          {!isAdvisor && isExaminer && " — Examiner"}
-          {!isAdvisor && !isExaminer && " — No assignments yet"}
-        </p>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Welcome, {user.name.split(" ")[0]}!</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+            Staff Dashboard
+            {isAdvisor && isExaminer && " — Advisor & Examiner"}
+            {isAdvisor && !isExaminer && " — Advisor"}
+            {!isAdvisor && isExaminer && " — Examiner"}
+            {!isAdvisor && !isExaminer && " — No assignments yet"}
+          </p>
+        </div>
       </div>
 
       {/* No assignment message */}
@@ -78,37 +80,40 @@ const StaffDashboard = () => {
       )}
 
       {/* Quick stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6">
         <Card className="shadow-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FolderOpen className="w-5 h-5 text-primary" />
+          <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <FolderOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{advisorProjects.length}</p>
-              <p className="text-xs text-muted-foreground">Advising</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{advisorProjects.length}</p>
+              <p className="text-[10px] text-muted-foreground">Advising</p>
             </div>
           </CardContent>
         </Card>
         <Card className="shadow-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-              <Award className="w-5 h-5 text-warning" />
+          <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
+              <Award className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{examinerProjects.length}</p>
-              <p className="text-xs text-muted-foreground">Examining</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{examinerProjects.length}</p>
+              <p className="text-[10px] text-muted-foreground">Examining</p>
             </div>
           </CardContent>
         </Card>
-        <Card className="shadow-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-info/10 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-info" />
+        <Card className="shadow-card col-span-2 sm:col-span-1">
+          <CardContent className="p-3 sm:p-4 flex flex-row sm:flex-col items-center sm:items-start justify-between sm:justify-start gap-2 sm:gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-info/10 flex items-center justify-center shrink-0">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-info" />
+              </div>
+              <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider sm:hidden">Alerts</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{unreadNotifications.length}</p>
-              <p className="text-xs text-muted-foreground">Recent Alerts</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{unreadNotifications.length}</p>
+              <p className="text-[10px] text-muted-foreground hidden sm:block">Recent Alerts</p>
             </div>
           </CardContent>
         </Card>

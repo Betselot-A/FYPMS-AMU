@@ -105,12 +105,12 @@ const ProjectManagementPage = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Project Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Project Management</h1>
           <p className="text-sm text-muted-foreground mt-1">Modify project titles, advisors, and examiners</p>
         </div>
-        <Button size="sm" variant="outline" onClick={fetchData} disabled={isLoading}>
+        <Button size="sm" variant="outline" onClick={fetchData} disabled={isLoading} className="w-full sm:w-auto">
           <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? "animate-spin" : ""}`} />
           Refresh
         </Button>
@@ -145,51 +145,53 @@ const ProjectManagementPage = () => {
 
             return (
               <Card key={project.id} className="shadow-card overflow-hidden">
-                <CardHeader className="pb-4 bg-muted/5 border-b border-border/50">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 space-y-2.5">
+                <CardHeader className="pb-4 bg-muted/5 border-b border-border/50 px-4 sm:px-6">
+                  <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                    <div className="flex-1 space-y-2.5 w-full">
                       {/* Identity Row */}
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-primary" />
+                        <Users className="w-4 h-4 text-primary shrink-0" />
                         {isEditing ? (
-                          <div className="space-y-1 flex-1 max-w-md">
+                          <div className="space-y-1 flex-1">
                             <Label className="text-[10px] uppercase font-bold text-muted-foreground">Group Identity</Label>
                             <Input
                               value={editForm.title}
                               onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
                               placeholder="Group Name"
-                              className="h-9 font-bold"
+                              className="h-9 font-bold bg-background"
                             />
                           </div>
                         ) : (
-                          <span className="text-sm font-bold text-foreground">{project.title || "Untitled Group"}</span>
+                          <span className="text-sm font-bold text-foreground truncate">{project.title || "Untitled Group"}</span>
                         )}
                       </div>
 
                       {/* Official Title Row */}
-                      <div className="flex items-center gap-2 pt-1">
-                        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                      <div className="flex items-center gap-3 pt-1">
+                        <div className="w-9 h-9 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
                           <FolderOpen className="w-4 h-4 text-accent" />
                         </div>
-                        <div className="flex-1">
-                          <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Official Project Topic</p>
-                          <p className="text-base font-medium leading-tight">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-widest">Official Project Topic</p>
+                          <p className="text-[13px] sm:text-base font-medium leading-tight truncate">
                             {project.finalTitle || (project.proposalStatus === 'approved' ? "Topic Pending Sync" : "Selection in Progress")}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex gap-2 shrink-0">
+                    <div className="flex gap-2 shrink-0 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-3 sm:pt-0">
                       {isEditing ? (
                         <>
-                          <Button size="sm" variant="outline" className="h-9 px-3 border-success/30 text-success hover:bg-success/5" onClick={() => handleSave(project.id)} disabled={isSaving === project.id}>
-                            {isSaving === project.id ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                            Save Changes
+                          <Button size="sm" variant="outline" className="h-9 px-3 border-success/30 text-success hover:bg-success/5 flex-1 sm:flex-none" onClick={() => handleSave(project.id)} disabled={isSaving === project.id}>
+                            {isSaving === project.id ? <RefreshCw className="w-4 h-4 animate-spin sm:mr-2" /> : <Save className="w-4 h-4 sm:mr-2" />}
+                            <span className="hidden sm:inline">Save Changes</span>
+                            <span className="sm:hidden">Save</span>
                           </Button>
-                          <Button size="sm" variant="ghost" className="h-9 px-3" onClick={handleCancelEdit} disabled={isSaving === project.id}>
-                            <X className="w-4 h-4 mr-2" />
-                            Cancel
+                          <Button size="sm" variant="ghost" className="h-9 px-3 flex-1 sm:flex-none" onClick={handleCancelEdit} disabled={isSaving === project.id}>
+                            <X className="w-4 h-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Cancel</span>
+                            <span className="sm:hidden">Cancel</span>
                           </Button>
                         </>
                       ) : (
@@ -201,57 +203,57 @@ const ProjectManagementPage = () => {
                   </div>
                 </CardHeader>
 
-                <CardContent className="pt-6 space-y-6">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <CardContent className="pt-6 space-y-6 px-4 sm:px-6 pb-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
                     {/* Left: Staff Assignment */}
                     <div className="space-y-4">
                       <p className="text-[10px] font-black tracking-widest uppercase text-muted-foreground/60 border-b border-border/50 pb-2">Academic Guidance</p>
                       {isEditing ? (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold text-muted-foreground">Advisor</Label>
+                            <Label className="text-[10px] font-bold text-muted-foreground uppercase">Advisor</Label>
                             <Select
                               value={editForm.advisorId || "none"}
                               onValueChange={(v) => setEditForm((f) => ({ ...f, advisorId: v === "none" ? "" : v }))}
                             >
-                              <SelectTrigger className="h-10 text-sm">
+                              <SelectTrigger className="h-10 text-xs sm:text-sm bg-background">
                                 <SelectValue placeholder="Select Advisor" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="none">— Unassigned —</SelectItem>
                                 {staffList.map((s) => (
-                                  <SelectItem key={s.id} value={s.id}>{s.name} ({s.department})</SelectItem>
+                                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-semibold text-muted-foreground">Examiner</Label>
+                            <Label className="text-[10px] font-bold text-muted-foreground uppercase">Examiner</Label>
                             <Select
                               value={editForm.examinerId || "none"}
                               onValueChange={(v) => setEditForm((f) => ({ ...f, examinerId: v === "none" ? "" : v }))}
                             >
-                              <SelectTrigger className="h-10 text-sm">
+                              <SelectTrigger className="h-10 text-xs sm:text-sm bg-background">
                                 <SelectValue placeholder="Select Examiner" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="none">— Unassigned —</SelectItem>
                                 {staffList.map((s) => (
-                                  <SelectItem key={s.id} value={s.id}>{s.name} ({s.department})</SelectItem>
+                                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
                           </div>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-3 bg-muted/30 rounded-xl border border-border/50">
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase mb-1">Advisor</p>
-                            <p className="text-sm font-medium">{advName}</p>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-2 sm:p-3 bg-muted/30 rounded-xl border border-border/50">
+                            <p className="text-[8px] sm:text-[9px] font-bold text-muted-foreground uppercase mb-1">Advisor</p>
+                            <p className="text-xs sm:text-sm font-medium truncate">{advName}</p>
                           </div>
-                          <div className="p-3 bg-muted/30 rounded-xl border border-border/50">
-                            <p className="text-[9px] font-bold text-muted-foreground uppercase mb-1">Examiner</p>
-                            <p className="text-sm font-medium">{exmName}</p>
+                          <div className="p-2 sm:p-3 bg-muted/30 rounded-xl border border-border/50">
+                            <p className="text-[8px] sm:text-[9px] font-bold text-muted-foreground uppercase mb-1">Examiner</p>
+                            <p className="text-xs sm:text-sm font-medium truncate">{exmName}</p>
                           </div>
                         </div>
                       )}
@@ -262,7 +264,7 @@ const ProjectManagementPage = () => {
                       <div className="flex items-center justify-between border-b border-border/50 pb-2">
                         <p className="text-[10px] font-black tracking-widest uppercase text-muted-foreground/60">Research Squad</p>
                         <Badge variant="outline" className={cn(
-                          "text-[9px] px-2 py-0 uppercase font-black",
+                          "text-[8px] sm:text-[9px] px-2 py-0 uppercase font-black",
                           project.status === 'in-progress' ? "bg-success/5 text-success border-success/20" : "bg-warning/5 text-warning border-warning/20"
                         )}>
                           {project.status.replace('-', ' ')}
@@ -270,7 +272,7 @@ const ProjectManagementPage = () => {
                       </div>
                       <div className="flex flex-wrap gap-1.5">
                         {(project.groupMembers as any[]).map((member) => (
-                          <Badge key={member.id || member} variant="secondary" className="bg-background border border-border/50 font-medium text-xs px-2.5 py-1">
+                          <Badge key={member.id || member} variant="secondary" className="bg-background border border-border/50 font-medium text-[10px] sm:text-xs px-2 sm:px-2.5 py-1">
                             {member.name || "Student"}
                           </Badge>
                         ))}

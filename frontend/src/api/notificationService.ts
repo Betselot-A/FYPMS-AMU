@@ -65,6 +65,10 @@ const notificationService = {
 
   create: (data: CreateNotificationRequest) =>
     apiClient.post<{ sent: number }>("/notifications", data),
+
+  // POST /api/notifications/support (public)
+  supportRequest: (data: { name: string; email: string; message: string }) =>
+    apiClient.post<{ message: string }>("/notifications/support", data),
 };
 
 export default notificationService;

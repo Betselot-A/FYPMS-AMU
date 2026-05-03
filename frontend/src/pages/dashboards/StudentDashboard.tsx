@@ -91,54 +91,56 @@ const StudentDashboard = () => {
 
   return (
     <div>
-      <div className="mb-6">
-        <h1 className="text-2xl font-display font-bold text-foreground">Welcome back, {user.name.split(" ")[0]}!</h1>
-        <p className="text-muted-foreground text-sm mt-1">Here's an overview of your project progress</p>
+      <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-xl sm:text-2xl font-display font-bold text-foreground">Welcome back, {user.name.split(" ")[0]}!</h1>
+          <p className="text-muted-foreground text-xs sm:text-sm mt-1">Here's an overview of your project progress</p>
+        </div>
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         <Card className="shadow-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-              <FolderOpen className="w-5 h-5 text-primary" />
+          <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <FolderOpen className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{projects.length}</p>
-              <p className="text-xs text-muted-foreground">My Groups</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{projects.length}</p>
+              <p className="text-[10px] text-muted-foreground">My Groups</p>
             </div>
           </CardContent>
         </Card>
         <Card className="shadow-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
-              <Plus className="w-5 h-5 text-accent" />
+          <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5 text-accent" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{currentProject?.proposals?.length || 0}</p>
-              <p className="text-xs text-muted-foreground">Proposals ({currentProject?.proposals?.length || 0}/3)</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{currentProject?.proposals?.length || 0}</p>
+              <p className="text-[10px] text-muted-foreground">Proposals</p>
             </div>
           </CardContent>
         </Card>
         <Card className="shadow-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
-              <CheckCircle className="w-5 h-5 text-success" />
+          <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-success/10 flex items-center justify-center shrink-0">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-success" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{progressPercent}%</p>
-              <p className="text-xs text-muted-foreground">Overall Progress</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{progressPercent}%</p>
+              <p className="text-[10px] text-muted-foreground">Progress</p>
             </div>
           </CardContent>
         </Card>
         <Card className="shadow-card">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-warning/10 flex items-center justify-center">
-              <Bell className="w-5 h-5 text-warning" />
+          <CardContent className="p-3 sm:p-4 flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-warning/10 flex items-center justify-center shrink-0">
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-warning" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">{unreadNotifications.length}</p>
-              <p className="text-xs text-muted-foreground">Direct Alerts</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{unreadNotifications.length}</p>
+              <p className="text-[10px] text-muted-foreground">Alerts</p>
             </div>
           </CardContent>
         </Card>
@@ -150,21 +152,21 @@ const StudentDashboard = () => {
         <div className="lg:col-span-2 space-y-6">
           {currentProject ? (
             <Card className="shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex-1">
                   {isEditingName ? (
-                    <div className="flex items-center gap-2 max-w-md">
+                    <div className="flex items-center gap-2 max-w-full">
                       <Input 
                         value={editedName}
                         onChange={(e) => setEditedName(e.target.value)}
-                        className="h-9 font-bold text-lg"
-                        placeholder="Enter new group name..."
+                        className="h-9 font-bold text-base sm:text-lg"
+                        placeholder="Group name..."
                         autoFocus
                       />
                       <Button 
                         size="icon" 
                         variant="ghost" 
-                        className="h-9 w-9 text-success hover:bg-success/10"
+                        className="h-8 w-8 sm:h-9 sm:w-9 text-success hover:bg-success/10"
                         onClick={() => handleSaveName(currentProject.id)}
                         disabled={isSavingName}
                       >
@@ -173,7 +175,7 @@ const StudentDashboard = () => {
                       <Button 
                         size="icon" 
                         variant="ghost" 
-                        className="h-9 w-9 text-destructive hover:bg-destructive/10"
+                        className="h-8 w-8 sm:h-9 sm:w-9 text-destructive hover:bg-destructive/10"
                         onClick={() => setIsEditingName(false)}
                         disabled={isSavingName}
                       >
@@ -182,7 +184,7 @@ const StudentDashboard = () => {
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 group/title">
-                      <CardTitle className="text-lg">Project Group: {currentProject.title}</CardTitle>
+                      <CardTitle className="text-base sm:text-lg line-clamp-1">Project Group: {currentProject.title}</CardTitle>
                       <Button 
                         variant="ghost" 
                         size="icon" 
@@ -193,16 +195,16 @@ const StudentDashboard = () => {
                       </Button>
                     </div>
                   )}
-                  <CardDescription>Status: <span className="capitalize font-medium text-foreground">{currentProject.status}</span></CardDescription>
+                  <CardDescription className="text-xs">Status: <span className="capitalize font-medium text-foreground">{currentProject.status}</span></CardDescription>
                 </div>
                 {!isEditingName && currentProject.proposalStatus !== "approved" && (
                   <Button
                     size="sm"
-                    className="gradient-primary text-primary-foreground gap-2"
+                    className="gradient-primary text-primary-foreground gap-2 h-9 text-xs sm:text-sm w-full sm:w-auto"
                     onClick={() => navigate("/dashboard/project/submit")}
                   >
                     <Send className="w-3.5 h-3.5" />
-                    {currentProject.proposalStatus === "rejected" ? "Revise Proposal" : "Submit Proposal"}
+                    {currentProject.proposalStatus === "rejected" ? "Revise Proposal" : "Submit"}
                   </Button>
                 )}
               </CardHeader>

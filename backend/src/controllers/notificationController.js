@@ -185,6 +185,43 @@ const markFromUserRead = async (req, res, next) => {
 };
 
 /**
+ * POST /api/notifications/support
+ * Public — Submit a support request (used by contact form)
+ * Body: { name, email, message }
+ */
+const submitSupportRequest = async (req, res, next) => {
+  try {
+    const { name, email, message } = req.body;
+
+    if (!message || message.trim() === "") {
+      return res.status(400).json({ error: "VALIDATION", message: "Message is required" });
+    }
+
+    // Find first available admin
+    const admin = await User.findOne({ role: "admin" });
+
+    if (!admin) {
+      // If no admin found, we still return success but log it
+      console.warn("Support request received but no admin found in system.");
+      return res.status(200).json({ message: "Request received" });
+    }
+
+    const supportNotification = new Notification({
+      userId: admin._id,
+      senderId: null, // Public user
+      subject: `Support Request from ${name || "Guest"}`,
+      message: `Contact Email: ${email || "Not provided"}\n\nMessage: ${message}`,
+      type: "warning"
+    });
+
+    await supportNotification.save();
+    res.status(201).json({ message: "Support request submitted successfully" });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
  * POST /api/notifications/upload
  * Upload an attachment for messaging
  */
@@ -208,6 +245,7 @@ module.exports = {
   markAsRead,
   markAllAsRead,
   createNotification,
+  submitSupportRequest,
   markFromUserRead,
   uploadAttachment,
 };

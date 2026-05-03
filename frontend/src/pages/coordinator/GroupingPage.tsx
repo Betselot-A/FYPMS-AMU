@@ -191,41 +191,41 @@ const GroupingPage = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-display font-bold text-foreground">Student Grouping</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Create groups manually or auto-generate them based on CGPA rankings.
+          <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Student Grouping</h1>
+          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+            Create groups manually or auto-generate them.
           </p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={fetchData} disabled={isLoading}>
+          <Button size="sm" variant="outline" onClick={fetchData} disabled={isLoading} className="w-full sm:w-auto">
             <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${isLoading ? "animate-spin" : ""}`} />
-            Refresh Data
+            Refresh
           </Button>
         </div>
       </div>
 
       <Tabs defaultValue="manual" className="space-y-6">
-        <TabsList className="bg-muted w-full max-w-sm grid grid-cols-2">
-          <TabsTrigger value="manual" className="data-[state=active]:bg-background">Manual & Proposals</TabsTrigger>
-          <TabsTrigger value="auto" className="data-[state=active]:bg-background">Auto Generation</TabsTrigger>
+        <TabsList className="bg-muted w-full max-w-full sm:max-w-sm grid grid-cols-2 h-auto p-1">
+          <TabsTrigger value="manual" className="data-[state=active]:bg-background text-xs sm:text-sm py-2">Manual & Proposals</TabsTrigger>
+          <TabsTrigger value="auto" className="data-[state=active]:bg-background text-xs sm:text-sm py-2">Auto Generation</TabsTrigger>
         </TabsList>
 
         {/* Tab 1: Manual Grouping and Proposals */}
         <TabsContent value="manual" className="space-y-4 outline-none animate-fade-in">
-          <div className="flex justify-between items-center bg-muted/20 p-4 border border-border rounded-xl">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-muted/20 p-4 border border-border rounded-xl gap-4">
             <div>
               <h3 className="font-semibold text-sm">Active Groups</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Review current groups and natively approve submitted project proposals.</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Review current groups and approve proposals.</p>
             </div>
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" className="gradient-primary text-primary-foreground shadow-sm">
-                  <Plus className="w-4 h-4 mr-1.5" /> Create Group Manually
+                <Button size="sm" className="gradient-primary text-primary-foreground shadow-sm w-full sm:w-auto">
+                  <Plus className="w-4 h-4 mr-1.5" /> Create Group
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[480px]">
+              <DialogContent className="w-[95vw] sm:max-w-[480px]">
                 <DialogHeader>
                   <DialogTitle>Create Student Group</DialogTitle>
                   <DialogDescription>
@@ -355,11 +355,11 @@ const GroupingPage = () => {
                     </CardHeader>
 
                     {isExpanded && (
-                      <CardContent className="space-y-4 pt-0 animate-fade-in">
+                      <CardContent className="space-y-4 pt-0 animate-fade-in px-4 sm:px-6">
                         {/* Members */}
                         <div>
                           <p className="text-sm font-medium text-foreground mb-2">Group Members</p>
-                          <div className="space-y-2">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {(project.groupMembers as any[]).map((m) => {
                               const member = typeof m === "object" ? m : students.find((s) => s.id === m);
                               if (!member) return null;
@@ -368,9 +368,9 @@ const GroupingPage = () => {
                                   <Avatar className="w-7 h-7">
                                     <AvatarFallback className="text-xs">{member.name?.split(" ").map((n: string) => n[0]).join("")}</AvatarFallback>
                                   </Avatar>
-                                  <div>
-                                    <p className="text-sm font-medium text-foreground">{member.name}</p>
-                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{member.email}</p>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-medium text-foreground truncate">{member.name}</p>
+                                    <p className="text-[9px] text-muted-foreground uppercase tracking-wider truncate">{member.email}</p>
                                   </div>
                                 </div>
                               );
@@ -379,7 +379,7 @@ const GroupingPage = () => {
                         </div>
 
                         {/* Proposals */}
-                        <div>
+                        <div className="pt-2">
                           <p className="text-sm font-medium text-foreground mb-2 flex items-center gap-2">
                             Project Proposals
                             <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">({project.proposals?.length || 0}/3)</Badge>
@@ -387,7 +387,7 @@ const GroupingPage = () => {
                           {!project.proposals || project.proposals.length === 0 ? (
                             <div className="bg-muted/20 border border-dashed border-border rounded-lg p-4 text-center">
                               <p className="text-xs text-muted-foreground italic">
-                                No proposals submitted yet. Group members need to log in and submit their ideas.
+                                No proposals submitted yet.
                               </p>
                             </div>
                           ) : (
@@ -404,11 +404,11 @@ const GroupingPage = () => {
                                           : "bg-muted/20 border-border"
                                       }`}
                                   >
-                                    <div className="flex items-start justify-between gap-3">
-                                      <div>
+                                    <div className="flex flex-col sm:flex-row items-start justify-between gap-3">
+                                      <div className="flex-1 min-w-0">
                                         <p className="text-sm font-semibold text-foreground flex items-center gap-2">
                                           <span className="flex items-center justify-center w-5 h-5 rounded-full bg-background border text-[10px] shrink-0 font-bold">v{proposal.version}</span>
-                                          {isApproved ? project.finalTitle : proposal.titles[0]} {proposal.titles.length > 1 && `(+${proposal.titles.length - 1} more)`}
+                                          <span className="truncate">{isApproved ? project.finalTitle : proposal.titles[0]} {proposal.titles.length > 1 && `(+${proposal.titles.length - 1})`}</span>
                                         </p>
                                         {isApproved ? (
                                           <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed bg-background/50 p-2 rounded border border-border/50 line-clamp-2 italic">
@@ -421,17 +421,17 @@ const GroupingPage = () => {
                                         )}
                                       </div>
                                       {isApproved ? (
-                                        <Badge className="bg-success/10 text-success border-success/20 shrink-0">
+                                        <Badge className="bg-success/10 text-success border-success/20 shrink-0 text-[10px]">
                                           <CheckCircle2 className="w-3 h-3 mr-1" /> Approved
                                         </Badge>
                                       ) : project.proposalStatus === "pending" || project.proposalStatus === "rejected" ? (
                                         <Button
                                           size="sm"
                                           variant="outline"
-                                          className={`shrink-0 text-xs ${project.proposalStatus === "rejected" ? 'border-destructive/20 text-destructive' : ''}`}
+                                          className={`shrink-0 text-[10px] h-8 w-full sm:w-auto ${project.proposalStatus === "rejected" ? 'border-destructive/20 text-destructive' : ''}`}
                                           onClick={() => handleOpenReview(project)}
                                         >
-                                          {project.proposalStatus === "rejected" ? "Follow Up (Rejected)" : "Review Submission"}
+                                          {project.proposalStatus === "rejected" ? "Review Rejected" : "Review Submission"}
                                         </Button>
                                       ) : null}
                                     </div>
@@ -452,15 +452,15 @@ const GroupingPage = () => {
 
         {/* Tab 2: Auto-Generation */}
         <TabsContent value="auto" className="space-y-6 outline-none animate-fade-in">
-          <div className="flex justify-between items-center bg-muted/20 p-4 border border-border rounded-xl">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-muted/20 p-4 border border-border rounded-xl gap-4">
             <div>
               <h3 className="font-semibold text-sm">Automated Grouping Engine</h3>
               <p className="text-xs text-muted-foreground max-w-lg mt-0.5">
-                Automatically divides all ungrouped students in your department into fair squads of max {maxGroupSize}, strategically sorted by CGPA (merit rank) so top performers are grouped systematically.
+                Automatically divides all ungrouped students into squads based on CGPA rankings.
               </p>
             </div>
-            <div className="flex gap-2 items-center">
-              <div className="flex items-center gap-2 mr-2 bg-background/50 border border-border px-3 py-1.5 rounded-lg">
+            <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center w-full sm:w-auto">
+              <div className="flex items-center justify-between gap-2 bg-background/50 border border-border px-3 py-1.5 rounded-lg">
                 <span className="text-[10px] font-black uppercase text-muted-foreground">Squad Size:</span>
                 <Input 
                   type="number" 
@@ -472,19 +472,19 @@ const GroupingPage = () => {
                     setMaxGroupSize(val);
                     setAutoGroups(calculateAutoGroups(ungroupedStudents, val));
                   }}
-                  className="w-14 h-7 bg-transparent border-none text-xs font-bold text-primary p-0 text-center focus-visible:ring-0"
+                  className="w-10 h-6 bg-transparent border-none text-xs font-bold text-primary p-0 text-center focus-visible:ring-0"
                 />
               </div>
-              <Button size="sm" variant="secondary" onClick={handleRegenerateAutoGroups} disabled={isLoading || isSavingAuto || ungroupedStudents.length === 0}>
-                <Shuffle className="w-4 h-4 mr-1.5" /> Re-roll
+              <Button size="sm" variant="secondary" onClick={handleRegenerateAutoGroups} disabled={isLoading || isSavingAuto || ungroupedStudents.length === 0} className="text-xs">
+                <Shuffle className="w-3.5 h-3.5 mr-1.5" /> Re-roll
               </Button>
-              <Button size="sm" onClick={handleSaveAutoGroups} disabled={isLoading || isSavingAuto || autoGroups.length === 0} className="gradient-primary">
+              <Button size="sm" onClick={handleSaveAutoGroups} disabled={isLoading || isSavingAuto || autoGroups.length === 0} className="gradient-primary text-xs">
                 {isSavingAuto ? (
-                  <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                 ) : (
-                  <Save className="w-4 h-4 mr-1.5" />
+                  <Save className="w-3.5 h-3.5 mr-1.5" />
                 )}
-                Commit Auto-Groups
+                Commit Groups
               </Button>
             </div>
           </div>
@@ -557,13 +557,13 @@ const GroupingPage = () => {
                       </span>
                     </h2>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {deptGroups.map((group, idx) => (
                         <Card key={idx} className="shadow-card border-dashed">
-                          <CardHeader className="pb-2 bg-muted/20 rounded-t-xl border-b border-border/50">
-                            <CardTitle className="text-sm flex items-center justify-between">
+                          <CardHeader className="pb-2 bg-muted/20 rounded-t-xl border-b border-border/50 px-4">
+                            <CardTitle className="text-xs sm:text-sm flex items-center justify-between">
                               <span className="flex items-center gap-2"><Play className="w-3 h-3 text-primary" /> Squad {idx + 1}</span>
-                              <Badge variant="outline" className="text-[10px] bg-background">
+                              <Badge variant="outline" className="text-[9px] bg-background">
                                 {group.members.length}/{maxGroupSize} Filled
                               </Badge>
                             </CardTitle>
@@ -574,25 +574,25 @@ const GroupingPage = () => {
                               return (
                                 <div
                                   key={m.id}
-                                  className={`flex items-center justify-between px-3 py-2 rounded border border-transparent hover:border-border hover:bg-muted/10 transition-colors`}
+                                  className={`flex items-center justify-between px-3 py-1.5 rounded border border-transparent hover:border-border hover:bg-muted/10 transition-colors`}
                                 >
-                                  <div className="flex items-center gap-3">
-                                    <Avatar className="w-6 h-6 border">
-                                      <AvatarFallback className="text-[10px] bg-background text-foreground">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Avatar className="w-5 h-5 border">
+                                      <AvatarFallback className="text-[8px] bg-background text-foreground">
                                         {initials}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <div>
-                                      <p className="text-sm font-medium text-foreground leading-none">{m.name}</p>
+                                    <div className="min-w-0">
+                                      <p className="text-xs font-medium text-foreground leading-none truncate">{m.name}</p>
                                     </div>
                                   </div>
-                                  <div className="text-right">
+                                  <div className="text-right shrink-0">
                                     <Badge
                                       variant="outline"
                                       className={
                                         mIdx === 0
-                                          ? "bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px] px-1.5 py-0 shadow-sm"
-                                          : "text-[10px] px-1.5 py-0 bg-muted/50 text-muted-foreground"
+                                          ? "bg-amber-500/10 text-amber-600 border-amber-500/20 text-[8px] px-1 py-0 shadow-sm"
+                                          : "text-[8px] px-1 py-0 bg-muted/50 text-muted-foreground"
                                       }
                                     >
                                       CGPA: {m.cgpa?.toFixed(2) ?? "—"}

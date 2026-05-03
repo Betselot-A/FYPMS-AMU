@@ -134,20 +134,20 @@ const ProjectSubmissionsPage = () => {
    if (!project) return <div className="p-20 text-center text-muted-foreground">Project records not found.</div>;
 
    return (
-      <div className="max-w-5xl mx-auto pb-20">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-20">
          <Link to={`/dashboard/staff/project/${projectId}?role=${role}`} className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-primary mb-6 transition-all group">
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Project Overview
+            Back to Project
          </Link>
 
-         <div className="mb-10">
+         <div className="mb-8 sm:mb-10">
             <div className="flex items-center gap-2 mb-2">
                <Badge variant="outline" className="text-muted-foreground border-border uppercase text-[10px] font-bold tracking-wider px-2 py-0.5">
                   Review Hub
                </Badge>
             </div>
-            <h1 className="text-3xl font-display font-bold text-foreground">Formal Submissions</h1>
-            <p className="text-sm text-muted-foreground mt-1">Review academic deliverables submitted by the group, provide structured feedback, and track revisions.</p>
+            <h1 className="text-2xl sm:text-3xl font-display font-bold text-foreground">Formal Submissions</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">Review deliverables and track revisions.</p>
          </div>
 
          {/* Formal Submissions Section */}
@@ -172,24 +172,24 @@ const ProjectSubmissionsPage = () => {
             ) : (
                submissions.map((sub) => (
                   <Card key={sub.id} className="shadow-card border-border/50 overflow-hidden">
-                     <div className="p-6">
+                     <div className="p-4 sm:p-6">
                         {/* Submission Header */}
-                        <div className="flex flex-col md:flex-row items-start justify-between gap-6">
-                           <div>
-                              <div className="flex items-center gap-3 mb-2">
-                                 <Badge variant="outline" className={cn("px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", getStatusColor(sub.status))}>
+                        <div className="flex flex-col lg:flex-row items-start justify-between gap-4 sm:gap-6">
+                           <div className="w-full">
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                                 <Badge variant="outline" className={cn("px-2 py-0.5 text-[9px] sm:text-[10px] font-bold uppercase tracking-wider", getStatusColor(sub.status))}>
                                     {sub.status === "submitted" ? "Pending Review" : sub.status}
                                  </Badge>
-                                 <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-                                    <Clock className="w-3.5 h-3.5" />
-                                    {new Date(sub.submissionDate).toLocaleString()}
+                                 <span className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                                    <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                                    {new Date(sub.submissionDate).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
                                  </span>
                               </div>
-                              <h3 className="font-bold text-foreground text-xl">{sub.title}</h3>
+                              <h3 className="font-bold text-foreground text-lg sm:text-xl leading-tight">{sub.title}</h3>
                            </div>
 
                            {/* Attached Files */}
-                           <div className="flex flex-wrap gap-2 w-full md:w-auto">
+                           <div className="flex flex-wrap gap-2 w-full lg:w-auto pt-2 lg:pt-0">
                               {sub.files && sub.files.map((fileId, idx) => (
                                  <Button 
                                     key={idx}
@@ -197,10 +197,10 @@ const ProjectSubmissionsPage = () => {
                                     size="sm" 
                                     disabled={downloadingId === fileId}
                                     onClick={() => handleDownload(fileId, sub.title)}
-                                    className="h-9 px-4 rounded-xl text-xs font-bold gap-2 hover:bg-primary/5 hover:text-primary border-border"
+                                    className="h-9 px-4 rounded-xl text-[10px] sm:text-xs font-bold gap-2 hover:bg-primary/5 hover:text-primary border-border flex-1 sm:flex-none justify-center"
                                  >
                                     {downloadingId === fileId ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-4 h-4 text-primary" />}
-                                    Review Document
+                                    Review File
                                  </Button>
                               ))}
                            </div>
@@ -230,11 +230,11 @@ const ProjectSubmissionsPage = () => {
 
                         {/* Feedback Form */}
                         <div className="mt-6 pt-6 border-t border-border/50">
-                           <h4 className="text-[11px] font-bold text-foreground uppercase tracking-wider mb-3">Provide New Feedback</h4>
+                           <h4 className="text-[10px] sm:text-[11px] font-bold text-foreground uppercase tracking-wider mb-3">Provide New Feedback</h4>
                            <div className="flex flex-col gap-3">
                               <Textarea
-                                 placeholder="E.g., What is good, what remains, what should be changed or removed..."
-                                 className="min-h-[100px] bg-background border-border/50 resize-none text-sm p-4 hidden-scrollbar"
+                                 placeholder="Provide specific, actionable feedback..."
+                                 className="min-h-[100px] bg-background border-border/50 resize-none text-[13px] p-3 sm:p-4 hidden-scrollbar"
                                  value={feedbackText[sub.id] || ""}
                                  onChange={(e) => setFeedbackText(prev => ({ ...prev, [sub.id]: e.target.value }))}
                               />
@@ -242,7 +242,7 @@ const ProjectSubmissionsPage = () => {
                                  <Button
                                     onClick={() => handleSendFeedback(sub.id)}
                                     disabled={!feedbackText[sub.id]?.trim() || isSubmitting[sub.id]}
-                                    className="gradient-primary h-10 px-6 shadow-lg shadow-primary/20 gap-2 font-semibold"
+                                    className="gradient-primary h-10 px-6 shadow-lg shadow-primary/20 gap-2 font-semibold w-full sm:w-auto"
                                  >
                                     {isSubmitting[sub.id] ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                                     Submit Review

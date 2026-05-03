@@ -10,12 +10,16 @@ const {
   markAsRead,
   markAllAsRead,
   createNotification,
+  submitSupportRequest,
   markFromUserRead,
   uploadAttachment,
 } = require("../controllers/notificationController");
 const { protect } = require("../middleware/authMiddleware");
 const { authorize } = require("../middleware/roleMiddleware");
 const upload = require("../middleware/uploadMiddleware");
+
+// Public routes
+router.post("/support", submitSupportRequest);
 
 router.use(protect);
 

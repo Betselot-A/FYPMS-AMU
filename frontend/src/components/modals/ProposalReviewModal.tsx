@@ -86,22 +86,22 @@ const ProposalReviewModal = ({ isOpen, onClose, project, onSuccess }: ProposalRe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <div className="flex items-center justify-between mb-2">
-            <Badge variant="outline" className="text-[10px] uppercase tracking-widest text-primary border-primary/20 bg-primary/5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+            <Badge variant="outline" className="text-[9px] sm:text-[10px] uppercase tracking-widest text-primary border-primary/20 bg-primary/5 w-fit">
               Revision v{currentProposal.version}
             </Badge>
-            <span className="text-[10px] text-muted-foreground uppercase tracking-widest">
+            <span className="text-[9px] sm:text-[10px] text-muted-foreground uppercase tracking-widest">
               Submitted: {new Date(currentProposal.submittedAt).toLocaleDateString()}
             </span>
           </div>
-          <DialogTitle className="flex items-center gap-2 text-xl font-bold">
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl font-bold">
             <FileText className="w-5 h-5 text-primary" />
             Review Project Proposals
           </DialogTitle>
-          <DialogDescription className="text-xs">
-            Review the 3 title + description pairs submitted by <span className="font-semibold text-foreground">{project.title}</span>.
+          <DialogDescription className="text-[11px] sm:text-xs">
+            Review the options submitted by <span className="font-semibold text-foreground">{project.title}</span>.
           </DialogDescription>
         </DialogHeader>
 
@@ -112,36 +112,38 @@ const ProposalReviewModal = ({ isOpen, onClose, project, onSuccess }: ProposalRe
               Title & Description Options
               <span className="text-[10px] text-primary italic font-normal normal-case">Pick one to approve</span>
             </Label>
-            <div className="grid gap-3">
+            <div className="grid gap-2 sm:gap-3">
               {currentProposal.titles.map((title, idx) => (
                 <div
                   key={idx}
                   onClick={() => setSelectedTitleIndex(idx)}
-                  className={`relative w-full text-left p-4 rounded-xl border transition-all cursor-pointer group ${
+                  className={`relative w-full text-left p-3 sm:p-4 rounded-xl border transition-all cursor-pointer group ${
                     selectedTitleIndex === idx 
                       ? "bg-primary/5 border-primary ring-1 ring-primary/20 shadow-sm" 
                       : "bg-muted/10 border-border hover:bg-muted/30"
                   }`}
                 >
-                  <div className="flex items-start gap-3 mb-2">
-                    <span className={`flex items-center justify-center w-6 h-6 rounded-full text-[10px] font-bold shrink-0 shadow-sm ${
+                  <div className="flex items-start gap-2 sm:gap-3 mb-2">
+                    <span className={`flex items-center justify-center w-5 h-5 sm:w-6 sm:h-6 rounded-full text-[9px] sm:text-[10px] font-bold shrink-0 shadow-sm ${
                       selectedTitleIndex === idx ? "bg-primary text-primary-foreground" : "bg-background border border-border"
                     }`}>
                       {idx + 1}
                     </span>
-                    <div className="flex-1">
-                      <p className={`text-sm font-bold leading-tight ${selectedTitleIndex === idx ? "text-primary" : "text-foreground"}`}>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-[13px] sm:text-sm font-bold leading-tight ${selectedTitleIndex === idx ? "text-primary" : "text-foreground"} line-clamp-2`}>
                         {title}
                       </p>
                     </div>
-                    {selectedTitleIndex === idx && <CheckCircle2 className="w-4 h-4 text-primary shrink-0 animate-in zoom-in" />}
+                    {selectedTitleIndex === idx && <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0 animate-in zoom-in" />}
                   </div>
                   
                   {/* Option description */}
-                  <div className={`mt-2 p-3 rounded-lg text-xs leading-relaxed border transition-colors ${
+                  <div className={`mt-2 p-2 sm:p-3 rounded-lg text-[11px] sm:text-xs leading-relaxed border transition-colors ${
                     selectedTitleIndex === idx ? "bg-background border-primary/20 text-foreground" : "bg-muted/20 border-border/50 text-muted-foreground"
                   }`}>
-                    {currentProposal.descriptions?.[idx] || "No specific description provided for this option."}
+                    <p className="line-clamp-3 group-hover:line-clamp-none transition-all">
+                      {currentProposal.descriptions?.[idx] || "No specific description provided."}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -150,23 +152,23 @@ const ProposalReviewModal = ({ isOpen, onClose, project, onSuccess }: ProposalRe
 
           {/* Accompanying Document */}
           {currentProposal.documentId && (
-            <div className="flex items-center justify-between p-4 bg-muted/20 border border-dashed border-border rounded-xl">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-background border flex items-center justify-center shadow-sm">
-                  <Download className="w-5 h-5 text-primary" />
+            <div className="flex items-center justify-between p-3 sm:p-4 bg-muted/20 border border-dashed border-border rounded-xl">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-background border flex items-center justify-center shadow-sm shrink-0">
+                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 </div>
-                <div className="text-left">
-                  <p className="text-xs font-bold uppercase tracking-wider">Detailed Proposal Document</p>
-                  <p className="text-[10px] text-muted-foreground">PDF/DOCX Reference for all options</p>
+                <div className="text-left min-w-0">
+                  <p className="text-[10px] font-bold uppercase tracking-wider truncate">Proposal Document</p>
+                  <p className="text-[9px] text-muted-foreground truncate">Reference PDF/DOCX</p>
                 </div>
               </div>
-              <Button size="sm" variant="secondary" className="text-[10px] uppercase font-bold h-8" asChild>
+              <Button size="sm" variant="secondary" className="text-[9px] sm:text-[10px] uppercase font-bold h-8 shrink-0" asChild>
                 <a 
                   href={fileService.getDownloadUrl(currentProposal.documentId)} 
                   target="_blank" 
                   rel="noreferrer"
                 >
-                  Download File
+                  Download
                 </a>
               </Button>
             </div>
@@ -219,10 +221,10 @@ const ProposalReviewModal = ({ isOpen, onClose, project, onSuccess }: ProposalRe
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="flex-col sm:flex-row gap-2">
           <Button 
             variant="outline" 
-            className="flex-1 border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive h-11"
+            className="w-full sm:flex-1 border-destructive/20 text-destructive hover:bg-destructive/10 hover:text-destructive h-10 sm:h-11 text-xs sm:text-sm"
             disabled={isSubmitting}
             onClick={() => handleReview("rejected")}
           >
@@ -230,7 +232,7 @@ const ProposalReviewModal = ({ isOpen, onClose, project, onSuccess }: ProposalRe
             Reject Submission
           </Button>
           <Button 
-            className="flex-1 gradient-primary text-primary-foreground h-11 font-bold shadow-lg shadow-primary/20"
+            className="w-full sm:flex-1 gradient-primary text-primary-foreground h-10 sm:h-11 font-bold shadow-lg shadow-primary/20 text-xs sm:text-sm"
             disabled={isSubmitting || selectedTitleIndex === null}
             onClick={() => handleReview("approved")}
           >
