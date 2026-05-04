@@ -6,6 +6,7 @@
 import { ReactNode, useState, useEffect } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useNotifications } from "@/hooks/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -14,6 +15,7 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import { Badge } from "@/components/ui/badge";
 import {
   Sheet,
   SheetContent,
@@ -127,11 +129,13 @@ const NavItems = ({
   items, 
   currentPath, 
   isCollapsed, 
+  unreadCount,
   onItemClick 
 }: { 
   items: NavItem[]; 
   currentPath: string; 
   isCollapsed: boolean;
+  unreadCount: number;
   onItemClick?: () => void;
 }) => {
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
@@ -236,6 +240,7 @@ const NavItems = ({
         }
 
         const isActive = currentPath === item.path;
+        const isNotifications = item.label === "Notifications";
         const link = (
           <Link
             key={item.path}
@@ -252,10 +257,28 @@ const NavItems = ({
                 : "text-sidebar-foreground/70 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground z-10"
             )}
           >
-            <div className={cn("transition-all duration-300 shrink-0 flex items-center justify-center", isCollapsed ? "w-10 h-10 rounded-xl" : "w-6 h-6", isActive ? "scale-110 text-primary" : "group-hover:scale-110")}>
+            <div className={cn("transition-all duration-300 shrink-0 flex items-center justify-center relative", isCollapsed ? "w-10 h-10 rounded-xl" : "w-6 h-6", isActive ? "scale-110 text-primary" : "group-hover:scale-110")}>
               {item.icon}
+              {isNotifications && unreadCount > 0 && (
+                <span className={cn(
+                  "absolute flex h-2.5 w-2.5",
+                  isCollapsed ? "top-1 right-1" : "-top-1 -right-1"
+                )}>
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary border-2 border-sidebar"></span>
+                </span>
+              )}
             </div>
-            {!isCollapsed && <span className="truncate leading-none pt-[1px]">{item.label}</span>}
+            {!isCollapsed && (
+              <span className="truncate leading-none pt-[1px] flex-1 flex items-center justify-between">
+                {item.label}
+                {isNotifications && unreadCount > 0 && (
+                  <Badge className="h-5 min-w-[20px] px-1.5 flex items-center justify-center bg-primary text-[10px] border-none font-black animate-in zoom-in duration-300">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </Badge>
+                )}
+              </span>
+            )}
           </Link>
         );
 
@@ -272,6 +295,7 @@ const NavItems = ({
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const { user, logout } = useAuth();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -336,6 +360,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           items={navItems} 
           currentPath={location.pathname} 
           isCollapsed={collapsed} 
+          unreadCount={unreadCount}
           onItemClick={() => isMobile && setIsMobileOpen(false)}
         />
       </div>

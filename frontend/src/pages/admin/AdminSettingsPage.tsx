@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import {
   Save, Settings, GraduationCap, Bell, Loader2, Calendar,
-  Mail, Server, ShieldCheck, Eye, EyeOff, CheckCircle2, AlertCircle, ExternalLink
+  Mail, Server, ShieldCheck, Eye, EyeOff, CheckCircle2, AlertCircle, ExternalLink, Send
 } from "lucide-react";
 import { toast } from "sonner";
 import type { SystemSettings } from "@/api/settingsService";
@@ -26,6 +26,7 @@ const AdminSettingsPage = () => {
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
@@ -61,6 +62,25 @@ const AdminSettingsPage = () => {
       });
     } finally {
       setIsSaving(false);
+    }
+  };
+  
+  const handleTestEmail = async () => {
+    try {
+      setIsTesting(true);
+      const response = await settingsService.testEmail();
+      toast.success("SMTP Connection Success", {
+        description: response.data.message || "A test email has been dispatched to your admin inbox.",
+        icon: <CheckCircle2 className="w-4 h-4 text-success" />
+      });
+    } catch (error: any) {
+      const errorMsg = error.response?.data?.message || "Failed to establish connection with the SMTP server.";
+      toast.error("SMTP Configuration Error", {
+        description: errorMsg,
+        icon: <AlertCircle className="w-4 h-4 text-destructive" />
+      });
+    } finally {
+      setIsTesting(false);
     }
   };
 
@@ -107,12 +127,12 @@ const AdminSettingsPage = () => {
             <TabsTrigger value="deadlines" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
               <Calendar className="w-3.5 h-3.5" /> Deadlines
             </TabsTrigger>
-            <TabsTrigger value="email" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+            <TabsTrigger value="email" className="gap-1.5 data-[state=active]:bg-background data-[state=active]:shadow-sm group">
               <Mail className="w-3.5 h-3.5" /> Email
               {isSmtpConfigured ? (
-                <span className="w-2 h-2 rounded-full bg-success shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-success shrink-0 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
               ) : (
-                <span className="w-2 h-2 rounded-full bg-destructive shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-destructive shrink-0 animate-pulse" />
               )}
             </TabsTrigger>
           </TabsList>
@@ -315,27 +335,37 @@ const AdminSettingsPage = () => {
 
           {/* TAB 4: Email Services */}
           <TabsContent value="email" className="space-y-6 animate-fade-in outline-none">
-            <div className="flex items-start gap-3 p-4 rounded-xl border border-border bg-muted/20">
-              {isSmtpConfigured ? (
-                <>
-                  <CheckCircle2 className="w-5 h-5 text-success shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Email Service Active</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Your SMTP credentials are configured. The system can send automated emails for password resets, notifications, and alerts.</p>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-5 h-5 text-warning shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">Email Service Not Configured</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Configure your SMTP server below to enable automated email notifications across the platform.</p>
-                  </div>
-                </>
-              )}
+            <div className={`flex items-start gap-4 p-5 rounded-2xl border transition-all duration-300 ${
+              isSmtpConfigured 
+                ? "bg-success/5 border-success/20 shadow-sm" 
+                : "bg-warning/5 border-warning/20 shadow-sm"
+            }`}>
+              <div className={`p-2.5 rounded-xl ${isSmtpConfigured ? "bg-success/10" : "bg-warning/10"}`}>
+                {isSmtpConfigured ? (
+                  <ShieldCheck className="w-5 h-5 text-success" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-warning" />
+                )}
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-bold text-foreground">
+                    {isSmtpConfigured ? "Email Service Active" : "Email Service Pending Configuration"}
+                  </p>
+                  {isSmtpConfigured && (
+                    <Badge variant="outline" className="bg-success/10 text-success border-success/20 text-[10px] uppercase tracking-wider">Verified</Badge>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-2xl">
+                  {isSmtpConfigured 
+                    ? "Your SMTP credentials are securely encrypted and active. The system is ready to dispatch automated notifications, password resets, and system alerts."
+                    : "Configure your SMTP server credentials below to enable automated communications. We recommend using a dedicated service like SendGrid or a Gmail App Password."
+                  }
+                </p>
+              </div>
             </div>
 
-            <Card className="shadow-card">
+            <Card className="shadow-card overflow-hidden border-none bg-card/50 backdrop-blur-sm">
               <CardHeader className="border-b border-border/50">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-lg bg-info/10 flex items-center justify-center">
@@ -408,17 +438,39 @@ const AdminSettingsPage = () => {
 
                 <Separator />
 
-                <div>
-                  <Label className="text-sm font-medium">From Address</Label>
-                  <Input
-                    value={settings.emailFrom}
-                    onChange={(e) => updateField("emailFrom", e.target.value)}
-                    placeholder="noreply@projecthub.edu"
-                    className="mt-1.5 max-w-xs"
-                  />
-                  <p className="text-[11px] text-muted-foreground mt-1.5">
-                    All automated system emails will be sent <em>from</em> this address.
+                  <div>
+                    <Label className="text-sm font-medium">From Address</Label>
+                    <Input
+                      value={settings.emailFrom}
+                      onChange={(e) => updateField("emailFrom", e.target.value)}
+                      placeholder="noreply@projecthub.edu"
+                      className="mt-1.5 max-w-xs"
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      Must be an authorized sender in your SMTP provider's settings.
+                    </p>
+                  </div>
+
+                <div className="pt-4 flex items-center justify-end gap-3 border-t border-border/50 bg-muted/5 -mx-6 -mb-6 p-6 mt-6">
+                  <p className="text-[10px] text-muted-foreground mr-auto flex items-center gap-1">
+                    <ShieldCheck className="w-3 h-3" />
+                    Credentials are encrypted in transit
                   </p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleTestEmail}
+                    disabled={isTesting || !isSmtpConfigured}
+                    className="h-9 px-4 text-xs font-semibold hover:bg-background transition-all active:scale-95"
+                  >
+                    {isTesting ? (
+                      <Loader2 className="w-3.5 h-3.5 mr-2 animate-spin" />
+                    ) : (
+                      <Send className="w-3.5 h-3.5 mr-2" />
+                    )}
+                    Verify Configuration
+                  </Button>
                 </div>
               </CardContent>
             </Card>

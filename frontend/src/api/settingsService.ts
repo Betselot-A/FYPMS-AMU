@@ -25,6 +25,9 @@ const settingsService = {
 
   update: (data: Partial<SystemSettings>) =>
     apiClient.put<SystemSettings>("/settings", data),
+
+  testEmail: () =>
+    apiClient.post<{ message: string }>("/settings/test-email"),
 };
 
 export default settingsService;

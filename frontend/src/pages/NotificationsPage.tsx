@@ -51,6 +51,7 @@ const NotificationsPage = () => {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, read: true } : n))
       );
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
     } catch {
       toast.error("Failed to mark as read");
     }
@@ -63,6 +64,7 @@ const NotificationsPage = () => {
     try {
       await notificationService.markAllAsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+      window.dispatchEvent(new CustomEvent("notifications-updated"));
       toast.success("All notifications marked as read");
     } catch {
       toast.error("Failed to mark all as read");
