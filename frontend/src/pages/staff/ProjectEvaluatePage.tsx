@@ -47,9 +47,10 @@ const ProjectEvaluatePage = () => {
     if (!projectId || !user) return;
     try {
       setIsLoading(true);
-      const [projRes, confRes] = await Promise.all([
+      const [projRes, confRes, evalRes] = await Promise.all([
         projectService.getById(projectId),
-        gradeService.getConfig()
+        gradeService.getConfig(),
+        evaluationService.getEvaluationsByProject(projectId)
       ]);
 
       const fetchedProject = projRes.data;
@@ -63,9 +64,35 @@ const ProjectEvaluatePage = () => {
       if (user.id === advisorId) searchName = "Advisor";
       else if (user.id === examinerId) searchName = "Examiner";
 
+      let currentPhase: EvaluationPhase | null = null;
       if (searchName) {
-        const phase = confRes.data.phases.find(p => p.name.includes(searchName));
-        setPhaseConfig(phase || null);
+        currentPhase = confRes.data.phases.find(p => p.name.includes(searchName)) || null;
+        setPhaseConfig(currentPhase);
+      }
+
+      // Pre-populate scores and comments from existing evaluations
+      if (currentPhase && evalRes.data) {
+        const myEvaluations = evalRes.data.filter(ev => {
+          const evalId = typeof ev.evaluatorId === 'object' ? (ev.evaluatorId as any)._id || (ev.evaluatorId as any).id : ev.evaluatorId;
+          return evalId === user.id && ev.phaseId === currentPhase?.id;
+        });
+
+        const initialScores: Record<string, Record<string, string>> = {};
+        const initialComments: Record<string, string> = {};
+
+        myEvaluations.forEach(ev => {
+          const studentId = typeof ev.studentId === 'object' ? (ev.studentId as any)._id || (ev.studentId as any).id : ev.studentId;
+          initialComments[studentId] = ev.comments || "";
+          
+          const memberScores: Record<string, string> = {};
+          ev.marks.forEach(m => {
+            memberScores[m.criterionId] = m.mark.toString();
+          });
+          initialScores[studentId] = memberScores;
+        });
+
+        setScores(initialScores);
+        setComments(initialComments);
       }
 
     } catch (error) {

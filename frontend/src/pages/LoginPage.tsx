@@ -45,19 +45,13 @@ const LoginPage = () => {
             </div>
             BACK TO HOME
           </Link>
-
-          {/* Abstract circles */}
-          <div className="absolute top-[-10%] left-[-20%] w-[300px] h-[300px] rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[250px] h-[250px] rounded-full bg-blue-600/20 shadow-inner" />
-          <div className="absolute top-[20%] right-[-15%] w-[180px] h-[180px] rounded-full bg-white/5" />
-
           <div className="relative z-10 space-y-6 animate-in fade-in slide-in-from-left-8 duration-700 flex flex-col items-center text-center">
-            <div className="w-36 h-36 rounded-full flex items-center justify-center p-0 overflow-hidden shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] border-8 border-white/20">
+            <div className="w-36 h-36 rounded-full flex items-center justify-center p-0 overflow-hidden">
               <img src="/amu_logo.png" alt="Arba Minch University Logo" className="w-full h-full object-cover scale-105" />
             </div>
             <div>
               <h1 className="text-5xl font-black tracking-tighter mb-2">WELCOME</h1>
-              <h2 className="text-lg font-bold tracking-[0.2em] text-blue-100/80 mb-6 uppercase">ProjectHub Identity</h2>
+              <h2 className="text-lg font-bold tracking-[0.2em] text-blue-100/80 mb-6 uppercase">FCSE TO POJECT HUB</h2>
               <p className="text-blue-100/70 max-w-[280px] leading-relaxed text-sm mx-auto">
                 Empowering academic collaboration through seamless project management and supervision.
               </p>
