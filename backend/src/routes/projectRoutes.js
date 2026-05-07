@@ -41,7 +41,7 @@ router.delete("/:id", authorize("coordinator", "admin"), deleteProject);
 router.post(
   "/:id/proposals",
   authorize("student"),
-  uploadProposal.single("document"),
+  uploadProposal.array("documents", 3),
   submitProposal
 );
 

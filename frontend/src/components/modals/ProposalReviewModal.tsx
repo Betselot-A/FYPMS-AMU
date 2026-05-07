@@ -86,7 +86,7 @@ const ProposalReviewModal = ({ isOpen, onClose, project, onSuccess }: ProposalRe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto scrollbar-hide p-4 sm:p-6">
         <DialogHeader>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
             <Badge variant="outline" className="text-[9px] sm:text-[10px] uppercase tracking-widest text-primary border-primary/20 bg-primary/5 w-fit">
@@ -137,42 +137,43 @@ const ProposalReviewModal = ({ isOpen, onClose, project, onSuccess }: ProposalRe
                     {selectedTitleIndex === idx && <CheckCircle2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-primary shrink-0 animate-in zoom-in" />}
                   </div>
                   
-                  {/* Option description */}
-                  <div className={`mt-2 p-2 sm:p-3 rounded-lg text-[11px] sm:text-xs leading-relaxed border transition-colors ${
-                    selectedTitleIndex === idx ? "bg-background border-primary/20 text-foreground" : "bg-muted/20 border-border/50 text-muted-foreground"
+                  {/* Option file download */}
+                  <div className={`mt-2 p-2 sm:p-3 rounded-lg border transition-colors flex items-center justify-between gap-3 ${
+                    selectedTitleIndex === idx ? "bg-background border-primary/20" : "bg-muted/20 border-border/50"
                   }`}>
-                    <p className="line-clamp-3 group-hover:line-clamp-none transition-all">
-                      {currentProposal.descriptions?.[idx] || "No specific description provided."}
-                    </p>
+                    <div className="flex items-center gap-2 min-w-0">
+                      <FileText className={`w-4 h-4 shrink-0 ${selectedTitleIndex === idx ? "text-primary" : "text-muted-foreground"}`} />
+                      <p className="text-[11px] sm:text-xs font-medium truncate uppercase tracking-wider">
+                        Proposal Option {idx + 1}
+                      </p>
+                    </div>
+                    
+                    {currentProposal.documentIds?.[idx] ? (
+                      <Button 
+                        size="sm" 
+                        variant={selectedTitleIndex === idx ? "default" : "secondary"} 
+                        className="h-7 px-2 text-[9px] uppercase font-bold" 
+                        asChild
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <a 
+                          href={fileService.getDownloadUrl(currentProposal.documentIds[idx])} 
+                          target="_blank" 
+                          rel="noreferrer"
+                        >
+                          <Download className="w-3 h-3 mr-1" />
+                          Download
+                        </a>
+                      </Button>
+                    ) : (
+                      <span className="text-[9px] text-muted-foreground italic">No file provided</span>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Accompanying Document */}
-          {currentProposal.documentId && (
-            <div className="flex items-center justify-between p-3 sm:p-4 bg-muted/20 border border-dashed border-border rounded-xl">
-              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl bg-background border flex items-center justify-center shadow-sm shrink-0">
-                  <Download className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
-                </div>
-                <div className="text-left min-w-0">
-                  <p className="text-[10px] font-bold uppercase tracking-wider truncate">Proposal Document</p>
-                  <p className="text-[9px] text-muted-foreground truncate">Reference PDF/DOCX</p>
-                </div>
-              </div>
-              <Button size="sm" variant="secondary" className="text-[9px] sm:text-[10px] uppercase font-bold h-8 shrink-0" asChild>
-                <a 
-                  href={fileService.getDownloadUrl(currentProposal.documentId)} 
-                  target="_blank" 
-                  rel="noreferrer"
-                >
-                  Download
-                </a>
-              </Button>
-            </div>
-          )}
 
           {/* Decision Area: Staff Assignment (Only if approving) */}
           {selectedTitleIndex !== null && (

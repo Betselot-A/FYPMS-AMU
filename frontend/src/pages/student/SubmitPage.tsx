@@ -21,11 +21,10 @@ const SubmitPage = () => {
   const navigate = useNavigate();
   const [myProject, setMyProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Form State
   const [titles, setTitles] = useState(["", "", ""]);
-  const [descriptions, setDescriptions] = useState(["", "", ""]);
-  const [file, setFile] = useState<File | null>(null);
+  const [files, setFiles] = useState<(File | null)[]>([null, null, null]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchProject = useCallback(async () => {
@@ -34,25 +33,20 @@ const SubmitPage = () => {
       const res = await projectService.getAll();
       const project = res.data[0] || null;
       setMyProject(project);
-      
+
       // If there's an existing pending or rejected proposal, pre-fill the form
       if (project && project.proposals && project.proposals.length > 0) {
         const lastProposal = project.proposals[project.proposals.length - 1];
         if (lastProposal.status !== "approved") {
           // Robust mapping for legacy single-title data or arrays of different lengths
-          const mappedTitles = Array.isArray(lastProposal.titles) 
-            ? [...lastProposal.titles] 
+          const mappedTitles = Array.isArray(lastProposal.titles)
+            ? [...lastProposal.titles]
             : [typeof lastProposal.titles === 'string' ? lastProposal.titles : "", "", ""];
-          
+
           while (mappedTitles.length < 3) mappedTitles.push("");
           setTitles(mappedTitles.slice(0, 3));
 
-          const mappedDescs = Array.isArray(lastProposal.descriptions) 
-            ? [...lastProposal.descriptions] 
-            : [typeof lastProposal.descriptions === 'string' ? lastProposal.descriptions : "", "", ""];
-            
-          while (mappedDescs.length < 3) mappedDescs.push("");
-          setDescriptions(mappedDescs.slice(0, 3));
+          setTitles(mappedTitles.slice(0, 3));
         }
       }
     } catch {
@@ -71,25 +65,26 @@ const SubmitPage = () => {
     newTitles[index] = value;
     setTitles(newTitles);
   };
+  // const handleDescriptionChange = (index: number, value: string) => {
+  //   const newDescs = [...descriptions];
+  //   newDescs[index] = value;
+  //   setDescriptions(newDescs);
+  // };
 
-  const handleDescriptionChange = (index: number, value: string) => {
-    const newDescs = [...descriptions];
-    newDescs[index] = value;
-    setDescriptions(newDescs);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       const allowedExtensions = [".pdf", ".doc", ".docx"];
       const ext = selectedFile.name.split(".").pop()?.toLowerCase();
-      
+
       if (!allowedExtensions.includes(`.${ext}`)) {
         toast.error("Invalid file type. Please upload PDF or Word document.");
         return;
       }
-      
-      setFile(selectedFile);
+
+      const newFiles = [...files];
+      newFiles[index] = selectedFile;
+      setFiles(newFiles);
     }
   };
 
@@ -102,12 +97,8 @@ const SubmitPage = () => {
       toast.error("Please provide all 3 project title options.");
       return;
     }
-    if (descriptions.some(d => !d.trim())) {
-      toast.error("Please provide descriptions for all 3 options.");
-      return;
-    }
-    if (!file && (!myProject.proposals || myProject.proposals.length === 0)) {
-      toast.error("Please upload a proposal document.");
+    if (files.some(f => !f) && (!myProject.proposals || myProject.proposals.length === 0)) {
+      toast.error("Please upload a proposal document for all 3 titles.");
       return;
     }
 
@@ -115,19 +106,23 @@ const SubmitPage = () => {
     try {
       const formData = new FormData();
       formData.append("titles", JSON.stringify(titles));
-      formData.append("descriptions", JSON.stringify(descriptions));
-      if (file) {
-        formData.append("document", file);
-      }
+      // Descriptions are now empty but we send them for backend compatibility
+      formData.append("descriptions", JSON.stringify(["", "", ""]));
+
+      files.forEach((f) => {
+        if (f) {
+          formData.append("documents", f);
+        }
+      });
 
       await projectService.submitProposal(myProject.id, formData);
-      toast.success("Proposal Submitted", { 
-        description: "Your academic project ideas have been delivered to the coordinator." 
+      toast.success("Proposal Submitted", {
+        description: "Your academic project ideas have been delivered to the coordinator."
       });
       navigate("/dashboard/project/status");
     } catch (err: any) {
-      toast.error("Submission Failed", { 
-        description: err.response?.data?.message || "Internal server error during proposal transmission." 
+      toast.error("Submission Failed", {
+        description: err.response?.data?.message || "Internal server error during proposal transmission."
       });
     } finally {
       setIsSubmitting(false);
@@ -183,7 +178,7 @@ const SubmitPage = () => {
         <div>
           <h1 className="text-2xl font-display font-bold text-foreground tracking-tight">Project Initiation</h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Propose 3 options (Title + Description) and a single PDF/DOCX for review.
+            Propose 3 options (Title + Detailed Proposal File) for review.
           </p>
         </div>
         <Button size="sm" variant="outline" onClick={fetchProject} disabled={isLoading} className="rounded-full">
@@ -202,7 +197,7 @@ const SubmitPage = () => {
             <div>
               <h3 className="font-bold text-success">Proposal Approved</h3>
               <p className="text-sm text-success/80">
-                Final Title: <span className="font-semibold underline">"{myProject.finalTitle}"</span>. 
+                Final Title: <span className="font-semibold underline">"{myProject.finalTitle}"</span>.
               </p>
               <p className="text-xs text-success/70 mt-1 line-clamp-2 italic">
                 "{myProject.description}"
@@ -251,7 +246,7 @@ const SubmitPage = () => {
             <Card key={idx} className={`shadow-card ${isApproved ? 'opacity-60 pointer-events-none' : ''}`}>
               <CardHeader className="pb-3 border-b bg-muted/10">
                 <div className="flex items-center gap-3">
-                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-sm">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold shadow-sm">
                     {idx + 1}
                   </span>
                   <div>
@@ -276,79 +271,60 @@ const SubmitPage = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor={`desc-${idx}`} className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    <AlertCircle className="w-3.5 h-3.5" />
-                    Description & Problems Solved
+                  <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    <Upload className="w-3.5 h-3.5" />
+                    Option Proposal (PDF/DOCX)
                   </Label>
-                  <Textarea
-                    id={`desc-${idx}`}
-                    placeholder="Briefly explain the problem, proposed solution, and key technologies for this specific title..."
-                    rows={4}
-                    value={descriptions[idx]}
-                    onChange={(e) => handleDescriptionChange(idx, e.target.value)}
-                    disabled={isPending || isApproved}
-                    className="bg-muted/30 focus:bg-background resize-none"
-                  />
+
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="flex-1 h-24 border-dashed border-2 flex flex-col gap-1 hover:bg-primary/5 hover:border-primary/50 transition-all relative group"
+                      onClick={() => document.getElementById(`file-upload-${idx}`)?.click()}
+                      disabled={isPending || isApproved}
+                    >
+                      {files[idx] ? (
+                        <>
+                          <FileCheck className="w-6 h-6 text-success animate-in zoom-in" />
+                          <span className="text-xs font-semibold text-foreground truncate max-w-[200px]">{files[idx]?.name}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                          <span className="text-xs font-medium">Upload Option {idx + 1} File</span>
+                        </>
+                      )}
+                      <input
+                        id={`file-upload-${idx}`}
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.doc,.docx"
+                        onChange={(e) => handleFileChange(idx, e)}
+                      />
+                    </Button>
+
+                    {lastProposal?.documentIds?.[idx] && (
+                      <div className="w-full sm:w-32 text-center p-2 border rounded-xl bg-muted/20 flex flex-col items-center justify-center shrink-0">
+                        <p className="text-[9px] uppercase font-bold text-muted-foreground mb-1">Previous</p>
+                        <a
+                          href={fileService.getDownloadUrl(lastProposal.documentIds[idx])}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex flex-col items-center gap-1 group"
+                        >
+                          <FileText className="w-5 h-5 text-primary group-hover:scale-110 transition-transform" />
+                          <span className="text-[9px] text-primary underline truncate max-w-full block">View File</span>
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Global Document Upload */}
-        <Card className={`shadow-card ${isApproved ? 'opacity-60 pointer-events-none' : ''}`}>
-          <CardHeader>
-            <CardTitle className="text-lg">Accompanying Proposal Document</CardTitle>
-            <CardDescription>Upload a single PDF or DOCX file covering more details for all proposed ideas.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 h-32 border-dashed border-2 flex flex-col gap-2 hover:bg-primary/5 hover:border-primary/50 transition-all relative group"
-                onClick={() => document.getElementById("file-upload")?.click()}
-                disabled={isPending || isApproved}
-              >
-                {file ? (
-                  <>
-                    <FileCheck className="w-8 h-8 text-success animate-in zoom-in" />
-                    <span className="text-sm font-semibold text-foreground">{file.name}</span>
-                    <span className="text-[10px] text-muted-foreground">{(file.size / (1024 * 1024)).toFixed(2)} MB</span>
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-                    <span className="text-sm font-medium">Upload File (PDF/DOCX)</span>
-                    <span className="text-[10px] text-muted-foreground">Max size: 10MB</span>
-                  </>
-                )}
-                <input
-                  id="file-upload"
-                  type="file"
-                  className="hidden"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                />
-              </Button>
-              
-              {lastProposal?.documentId && (
-                <div className="w-48 text-center p-4 border rounded-xl bg-muted/20 flex flex-col items-center justify-center">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground mb-2">Current/Previous File</p>
-                  <a 
-                    href={fileService.getDownloadUrl(lastProposal.documentId)} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="flex flex-col items-center gap-1 group"
-                  >
-                    <FileText className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
-                    <span className="text-[10px] text-primary underline truncate max-w-full block">View Attachment</span>
-                  </a>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
         {canSubmit && (
           <Button type="submit" className="w-full gradient-primary text-primary-foreground h-12 text-base font-bold shadow-lg shadow-primary/20" disabled={isSubmitting}>
@@ -356,14 +332,14 @@ const SubmitPage = () => {
             {isSubmitting ? "Submitting Proposal..." : isRejected ? "Submit Revised Proposal (v2+)" : "Submit Full Proposal for Review"}
           </Button>
         )}
-        
+
         {isPending && (
           <div className="bg-info/10 text-info border border-info/20 p-4 rounded-xl text-center font-medium italic">
             Proposal is currently frozen for review. You will be notified of the decision.
           </div>
         )}
       </form>
-      
+
       {/* Version Info */}
       {lastProposal && (
         <p className="text-center text-[10px] text-muted-foreground mt-8 uppercase tracking-[0.3em] opacity-40">

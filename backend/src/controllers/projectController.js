@@ -450,14 +450,17 @@ const submitProposal = async (req, res, next) => {
       return res.status(400).json({ message: "You must provide exactly 3 project description options." });
     }
 
-    // Handle file upload to GridFS
-    let documentId = null;
-    if (req.file) {
-      documentId = await uploadToGridFS(
-        req.file.buffer,
-        req.file.originalname,
-        req.file.mimetype
-      );
+    // Handle file uploads to GridFS
+    let documentIds = [];
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const docId = await uploadToGridFS(
+          file.buffer,
+          file.originalname,
+          file.mimetype
+        );
+        documentIds.push(docId);
+      }
     }
     
     // Versioning logic: if there is a previous proposal, increment version
@@ -465,11 +468,13 @@ const submitProposal = async (req, res, next) => {
     if (project.proposals.length > 0) {
       nextVersion = project.proposals[project.proposals.length - 1].version + 1;
     }
-
+    
+    // Support both single file (legacy) and multiple files
     const newProposal = {
       titles,
-      descriptions,
-      documentId,
+      descriptions: descriptions || ["", "", ""],
+      documentIds,
+      documentId: documentIds[0] || null, // For backward compatibility
       submittedBy: req.user._id,
       status: "pending",
       version: nextVersion

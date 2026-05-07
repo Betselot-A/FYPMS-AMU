@@ -184,4 +184,12 @@
   .animate-orbit-pause:hover .animate-counter-orbit {
     animation-play-state: paused;
   }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }

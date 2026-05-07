@@ -30,9 +30,9 @@ const proposalSchema = new mongoose.Schema({
       (val) => val.length === 3,
       "A proposal must contain exactly 3 project description options.",
     ],
-    required: true,
   },
-  documentId: { type: mongoose.Schema.Types.ObjectId }, // Link to GridFS file
+  documentIds: { type: [mongoose.Schema.Types.ObjectId] }, // Array of GridFS file IDs (one per title)
+  documentId: { type: mongoose.Schema.Types.ObjectId }, // Legacy link to single GridFS file
   status: {
     type: String,
     enum: ["pending", "approved", "rejected"],
