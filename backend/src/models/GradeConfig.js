@@ -18,6 +18,7 @@ const evaluationPhaseSchema = new mongoose.Schema({
 });
 
 const gradeBandSchema = new mongoose.Schema({
+  id: { type: String }, // unique string ID for frontend syncing
   label: { type: String, required: true },
   minScore: { type: Number, required: true },
   maxScore: { type: Number, required: true },

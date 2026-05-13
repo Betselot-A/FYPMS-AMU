@@ -54,8 +54,9 @@ const GradeSystemPage = () => {
       const uniqueColors = new Set(rawBands.map((b) => b.color));
       const allSameColor = rawBands.length > 0 && uniqueColors.size === 1;
 
-      const loaded = rawBands.map((band) => ({
+      const loaded = rawBands.map((band: any) => ({
         ...band,
+        id: band.id || band._id, // Ensure unique ID for frontend reconciliation
         color: allSameColor || !validColorClasses.has(band.color)
           ? getRecommendedColor(band.label)
           : band.color,

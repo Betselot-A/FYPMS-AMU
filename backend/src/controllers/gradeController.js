@@ -15,11 +15,11 @@ const getGradeConfig = async (req, res, next) => {
     if (!config) {
       config = await GradeConfig.create({
         bands: [
-          { label: "A+", minScore: 90, maxScore: 100, color: "bg-success/10 text-success border-success/20" },
-          { label: "A", minScore: 80, maxScore: 89, color: "bg-success/10 text-success border-success/20" },
-          { label: "B", minScore: 70, maxScore: 79, color: "bg-info/10 text-info border-info/20" },
-          { label: "C", minScore: 50, maxScore: 69, color: "bg-warning/10 text-warning border-warning/20" },
-          { label: "F", minScore: 0, maxScore: 49, color: "bg-destructive/10 text-destructive border-destructive/20" },
+          { id: "g-1", label: "A+", minScore: 90, maxScore: 100, color: "bg-success/10 text-success border-success/20" },
+          { id: "g-2", label: "A", minScore: 80, maxScore: 89, color: "bg-success/10 text-success border-success/20" },
+          { id: "g-3", label: "B", minScore: 70, maxScore: 79, color: "bg-info/10 text-info border-info/20" },
+          { id: "g-4", label: "C", minScore: 50, maxScore: 69, color: "bg-warning/10 text-warning border-warning/20" },
+          { id: "g-5", label: "F", minScore: 0, maxScore: 49, color: "bg-destructive/10 text-destructive border-destructive/20" },
         ],
         phases: [
           {
