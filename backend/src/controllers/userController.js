@@ -152,7 +152,7 @@ const getUserById = async (req, res, next) => {
  */
 const createUser = async (req, res, next) => {
   try {
-    const { name, email, role, department, studentId, staffAssignment } = req.body;
+    const { name, email, role, department, studentId, staffAssignment, cgpa } = req.body;
 
     const existing = await User.findOne({ email });
     if (existing) {
@@ -178,6 +178,7 @@ const createUser = async (req, res, next) => {
       department: userDept,
       studentId: studentId || "",
       staffAssignment: staffAssignment || { isAdvisor: false, isExaminer: false },
+      cgpa: role === "student" ? cgpa : null,
       mustChangePassword: true,
     });
 
@@ -260,7 +261,7 @@ const bulkCreateUsers = async (req, res, next) => {
 
     for (let i = 0; i < users.length; i++) {
       try {
-        const { name, email, role, department, studentId, staffAssignment } = users[i];
+        const { name, email, role, department, studentId, staffAssignment, cgpa } = users[i];
         const existing = await User.findOne({ email });
         if (existing) {
           errors.push(`Row ${i + 1}: email '${email}' already exists`);
@@ -282,6 +283,7 @@ const bulkCreateUsers = async (req, res, next) => {
           department: userDept,
           studentId: studentId || "",
           staffAssignment: staffAssignment || { isAdvisor: false, isExaminer: false },
+          cgpa: role === "student" ? cgpa : null,
           mustChangePassword: true,
         });
         created++;
@@ -319,6 +321,7 @@ const bulkUploadUsersFromFile = async (req, res, next) => {
       const name = row.name || row.Name || row.fullname || row.FullName || row["Full Name"];
       const email = row.email || row.Email;
       const studentId = row.studentId || row.studentID || row["Student ID"] || row.id || row.ID || "";
+      const cgpa = row.cgpa || row.CGPA || null;
       let role = row.role || row.Role || "student";
       let department = row.department || row.Department || "";
 
@@ -352,6 +355,7 @@ const bulkUploadUsersFromFile = async (req, res, next) => {
           role,
           department,
           studentId: studentId.toString(),
+          cgpa: role === "student" ? cgpa : null,
           mustChangePassword: true,
         });
 

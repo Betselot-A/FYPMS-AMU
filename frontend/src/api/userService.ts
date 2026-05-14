@@ -10,6 +10,8 @@ export interface CreateUserRequest {
   email: string;
   role: UserRole;
   department: string;
+  studentId?: string;
+  cgpa?: number;
   staffAssignment?: StaffAssignment;
 }
 

@@ -38,6 +38,7 @@ const AdminDashboard = () => {
     email: "",
     role: "student" as UserRole,
     department: "",
+    cgpa: "" as string | number,
   });
 
   // Bulk Upload State
@@ -81,14 +82,17 @@ const AdminDashboard = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const response = await userService.create(formData);
+      const response = await userService.create({
+        ...formData,
+        cgpa: formData.cgpa === "" ? undefined : Number(formData.cgpa)
+      });
       const { user, tempPassword } = response.data;
       // store temp password in state so it shows in table
       setTempPasswords((prev) => ({ ...prev, [user.id]: tempPassword }));
       setVisiblePasswords((prev) => ({ ...prev, [user.id]: true }));
       setUsers((prev) => [user, ...prev]);
       setIsDialogOpen(false);
-      setFormData({ name: "", email: "", role: "student" as UserRole, department: "" });
+      setFormData({ name: "", email: "", role: "student" as UserRole, department: "", cgpa: "" });
       toast.success(`Account created for ${user.name}`, {
         description: "Share the temporary password shown in the table with them.",
       });
@@ -408,6 +412,22 @@ const AdminDashboard = () => {
                         <Label htmlFor="department" className="text-xs">Department</Label>
                         <Input id="department" required className="h-9 text-xs" placeholder="e.g. CS" value={formData.department} onChange={(e) => setFormData({ ...formData, department: e.target.value })} />
                       </div>
+                      {formData.role === "student" && (
+                        <div className="space-y-1">
+                          <Label htmlFor="cgpa" className="text-xs">CGPA (Optional)</Label>
+                          <Input 
+                            id="cgpa" 
+                            type="number" 
+                            step="0.01" 
+                            min="0" 
+                            max="4" 
+                            className="h-9 text-xs" 
+                            placeholder="e.g. 3.75"
+                            value={formData.cgpa} 
+                            onChange={(e) => setFormData({ ...formData, cgpa: e.target.value })} 
+                          />
+                        </div>
+                      )}
                     </div>
                     <DialogFooter>
                       <Button type="submit" disabled={isSubmitting} className="h-9 text-xs w-full sm:w-auto">
